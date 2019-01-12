@@ -1,3 +1,7 @@
+from builtins import str
+from builtins import map
+from past.builtins import basestring
+from builtins import object
 from rez.config import config
 from rez.resolved_context import ResolvedContext
 from rez.packages_ import get_latest_package_from_string, Variant
@@ -47,9 +51,18 @@ class PackageTestRunner(object):
     is available, this code will be updated to iterate over a package's
     variants and run tests in each.
     """
-    def __init__(self, package_request, use_current_env=False,
-                 extra_package_requests=None, package_paths=None, stdout=None,
-                 stderr=None, verbose=False, **context_kwargs):
+
+    def __init__(
+        self,
+        package_request,
+        use_current_env=False,
+        extra_package_requests=None,
+        package_paths=None,
+        stdout=None,
+        stderr=None,
+        verbose=False,
+        **context_kwargs
+    ):
         """Create a package tester.
 
         Args:
@@ -76,8 +89,9 @@ class PackageTestRunner(object):
         self.verbose = verbose
         self.context_kwargs = context_kwargs
 
-        self.package_paths = (config.packages_path if package_paths is None
-                              else package_paths)
+        self.package_paths = (
+            config.packages_path if package_paths is None else package_paths
+        )
 
         self.package = None
         self.contexts = {}
@@ -101,11 +115,13 @@ class PackageTestRunner(object):
         if self.use_current_env:
             pass
         else:
-            package = get_latest_package_from_string(str(self.package_request),
-                                                     self.package_paths)
+            package = get_latest_package_from_string(
+                str(self.package_request), self.package_paths
+            )
             if package is None:
-                raise PackageNotFoundError("Could not find package to test: %s"
-                                           % str(self.package_request))
+                raise PackageNotFoundError(
+                    "Could not find package to test: %s" % str(self.package_request)
+                )
 
         self.package = package
         return self.package
@@ -132,6 +148,7 @@ class PackageTestRunner(object):
             int: Returncode - zero if all test(s) passed, otherwise the return
                 code of the failed test.
         """
+
         def print_header(txt, *nargs):
             pr = Printer(sys.stdout)
             pr(txt % nargs, heading)
@@ -139,8 +156,9 @@ class PackageTestRunner(object):
         package = self.get_package()
 
         if test_name not in self.get_test_names():
-            raise PackageTestError("Test '%s' not found in package %s"
-                                   % (test_name, package.uri))
+            raise PackageTestError(
+                "Test '%s' not found in package %s" % (test_name, package.uri)
+            )
 
         if self.use_current_env:
             return self._run_test_in_current_env(test_name)
@@ -163,13 +181,13 @@ class PackageTestRunner(object):
             if isinstance(command, basestring):
                 command = variant.format(command)
             else:
-                command = map(variant.format, command)
+                command = list(map(variant.format, command))
 
             # show progress
             if self.verbose:
                 print_header(
-                    "\nTest: %s\nPackage: %s\n%s\n",
-                    test_name, variant.uri, '-' * 80)
+                    "\nTest: %s\nPackage: %s\n%s\n", test_name, variant.uri, "-" * 80
+                )
 
             # create test env
             key = tuple(requires)
@@ -177,20 +195,25 @@ class PackageTestRunner(object):
 
             if context is None:
                 if self.verbose:
-                    print_header("Resolving test environment: %s\n",
-                                 ' '.join(map(quote, requires)))
+                    print_header(
+                        "Resolving test environment: %s\n",
+                        " ".join(map(quote, requires)),
+                    )
 
-                context = ResolvedContext(package_requests=requires,
-                                          package_paths=self.package_paths,
-                                          buf=self.stdout,
-                                          timestamp=self.timestamp,
-                                          **self.context_kwargs)
+                context = ResolvedContext(
+                    package_requests=requires,
+                    package_paths=self.package_paths,
+                    buf=self.stdout,
+                    timestamp=self.timestamp,
+                    **self.context_kwargs
+                )
 
                 if not context.success:
                     context.print_info(buf=self.stderr)
                     raise PackageTestError(
                         "Cannot run test '%s' of package %s: the environment "
-                        "failed to resolve" % (test_name, variant.uri))
+                        "failed to resolve" % (test_name, variant.uri)
+                    )
 
                 self.contexts[key] = context
 
@@ -201,15 +224,13 @@ class PackageTestRunner(object):
                 if isinstance(command, basestring):
                     cmd_str = command
                 else:
-                    cmd_str = ' '.join(map(quote, command))
+                    cmd_str = " ".join(map(quote, command))
 
                 print_header("\nRunning test command: %s\n" % cmd_str)
 
             retcode, _, _ = context.execute_shell(
-                command=command,
-                stdout=self.stdout,
-                stderr=self.stderr,
-                block=True)
+                command=command, stdout=self.stdout, stderr=self.stderr, block=True
+            )
 
             if retcode:
                 return retcode
@@ -228,9 +249,7 @@ class PackageTestRunner(object):
             return None
 
         if not isinstance(test_entry, dict):
-            test_entry = {
-                "command": test_entry
-            }
+            test_entry = {"command": test_entry}
 
         # construct env request
         requires = []
@@ -242,13 +261,10 @@ class PackageTestRunner(object):
             requires.append(variant.name)
 
         reqs = test_entry.get("requires") or []
-        requires.extend(map(str, reqs))
+        requires.extend(list(map(str, reqs)))
 
         if self.extra_package_requests:
-            reqs = map(str, self.extra_package_requests)
+            reqs = list(map(str, self.extra_package_requests))
             requires.extend(reqs)
 
-        return {
-            "command": test_entry["command"],
-            "requires": requires
-        }
+        return {"command": test_entry["command"], "requires": requires}

@@ -1,6 +1,9 @@
 """
 Publishes a message to the broker.
 """
+from __future__ import print_function
+from builtins import str
+from past.builtins import basestring
 from rez.release_hook import ReleaseHook
 from rez.utils.logging_ import print_error, print_debug
 from rez.utils.amqp import publish_message
@@ -27,15 +30,17 @@ class AmqpReleaseHook(ReleaseHook):
             ]
         }
     """
+
     schema_dict = {
-        "host":                     basestring,
-        "userid":                   basestring,
-        "password":                 basestring,
-        "connect_timeout":          int,
-        "exchange_name":            basestring,
-        "exchange_routing_key":     basestring,
-        "message_delivery_mode":    int,
-        "message_attributes":       dict}
+        "host": basestring,
+        "userid": basestring,
+        "password": basestring,
+        "connect_timeout": int,
+        "exchange_name": basestring,
+        "exchange_routing_key": basestring,
+        "message_delivery_mode": int,
+        "message_attributes": dict,
+    }
 
     @classmethod
     def name(cls):
@@ -57,10 +62,12 @@ class AmqpReleaseHook(ReleaseHook):
             version=str(package.version),
             qualified_name=package.qualified_name,
             uri=package.uri,
-            handle=package.handle.to_dict())
+            handle=package.handle.to_dict(),
+        )
 
         # FIXME Do this until user added as package attribute
         from getpass import getuser
+
         data["package"]["user"] = getuser()
 
         data["variants"] = []
@@ -79,13 +86,13 @@ class AmqpReleaseHook(ReleaseHook):
             return
 
         routing_key = self.settings.exchange_routing_key
-        print "Publishing AMQP message on %s..." % routing_key
+        print("Publishing AMQP message on %s..." % routing_key)
 
         publish_message(
             host=self.settings.host,
             amqp_settings=self.settings,
             routing_key=routing_key,
-            data=data
+            data=data,
         )
 
         if config.debug("package_release"):

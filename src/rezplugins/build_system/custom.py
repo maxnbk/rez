@@ -1,6 +1,9 @@
 """
 Package-defined build command
 """
+from builtins import str
+from builtins import map
+from past.builtins import basestring
 from pipes import quote
 import functools
 import os.path
@@ -34,6 +37,7 @@ class CustomBuildSystem(BuildSystem):
     The '{install}' string will expand to 'install' if an install is occuring,
     and the empty string ('') otherwise.
     """
+
     @classmethod
     def name(cls):
         return "custom"
@@ -46,10 +50,18 @@ class CustomBuildSystem(BuildSystem):
             except PackageMetadataError:
                 return False
 
-        return (getattr(package, "build_command", None) is not None)
+        return getattr(package, "build_command", None) is not None
 
-    def __init__(self, working_dir, opts=None, package=None, write_build_scripts=False,
-                 verbose=False, build_args=[], child_build_args=[]):
+    def __init__(
+        self,
+        working_dir,
+        opts=None,
+        package=None,
+        write_build_scripts=False,
+        verbose=False,
+        build_args=[],
+        child_build_args=[],
+    ):
         super(CustomBuildSystem, self).__init__(
             working_dir,
             opts=opts,
@@ -57,7 +69,8 @@ class CustomBuildSystem(BuildSystem):
             write_build_scripts=write_build_scripts,
             verbose=verbose,
             build_args=build_args,
-            child_build_args=child_build_args)
+            child_build_args=child_build_args,
+        )
 
     @classmethod
     def bind_cli(cls, parser):
@@ -74,7 +87,7 @@ class CustomBuildSystem(BuildSystem):
         before_args = set(x.dest for x in parser._actions)
 
         try:
-            exec source in {"parser": parser}
+            exec(source, {"parser": parser})
         except Exception as e:
             print_warning("Error in ./parse_build_args.py: %s" % str(e))
 
@@ -84,8 +97,15 @@ class CustomBuildSystem(BuildSystem):
         # store extra args onto parser so we can get to it in self.build()
         setattr(parser, "_rezbuild_extra_args", list(extra_args))
 
-    def build(self, context, variant, build_path, install_path, install=False,
-              build_type=BuildType.local):
+    def build(
+        self,
+        context,
+        variant,
+        build_path,
+        install_path,
+        install=False,
+        build_type=BuildType.local,
+    ):
         """Perform the build.
 
         Note that most of the func args aren't used here - that's because this
@@ -98,14 +118,16 @@ class CustomBuildSystem(BuildSystem):
             # write out the script that places the user in a build env, where
             # they can run bez directly themselves.
             build_env_script = os.path.join(build_path, "build-env")
-            create_forwarding_script(build_env_script,
-                                     module=("build_system", "custom"),
-                                     func_name="_FWD__spawn_build_shell",
-                                     working_dir=self.working_dir,
-                                     build_path=build_path,
-                                     variant_index=variant.index,
-                                     install=install,
-                                     install_path=install_path)
+            create_forwarding_script(
+                build_env_script,
+                module=("build_system", "custom"),
+                func_name="_FWD__spawn_build_shell",
+                working_dir=self.working_dir,
+                build_path=build_path,
+                variant_index=variant.index,
+                install=install,
+                install_path=install_path,
+            )
 
             ret["success"] = True
             ret["build_env_script"] = build_env_script
@@ -121,19 +143,19 @@ class CustomBuildSystem(BuildSystem):
 
         def expand(txt):
             root = self.package.root
-            install_ = "install" if install else ''
+            install_ = "install" if install else ""
             return txt.format(root=root, install=install_).strip()
 
         if isinstance(command, basestring):
             if self.build_args:
-                command = command + ' ' + ' '.join(map(quote, self.build_args))
+                command = command + " " + " ".join(map(quote, self.build_args))
 
             command = expand(command)
             cmd_str = command
         else:  # list
             command = command + self.build_args
-            command = map(expand, command)
-            cmd_str = ' '.join(map(quote, command))
+            command = list(map(expand, command))
+            cmd_str = " ".join(map(quote, command))
 
         if self.verbose:
             pr = Printer(sys.stdout)
@@ -141,20 +163,22 @@ class CustomBuildSystem(BuildSystem):
 
         # run the build command
         def _callback(executor):
-            self._add_build_actions(executor,
-                                    context=context,
-                                    package=self.package,
-                                    variant=variant,
-                                    build_type=build_type,
-                                    install=install,
-                                    build_path=build_path,
-                                    install_path=install_path)
+            self._add_build_actions(
+                executor,
+                context=context,
+                package=self.package,
+                variant=variant,
+                build_type=build_type,
+                install=install,
+                build_path=build_path,
+                install_path=install_path,
+            )
 
             if self.opts:
                 # write args defined in ./parse_build_args.py out as env vars
                 extra_args = getattr(self.opts.parser, "_rezbuild_extra_args", [])
 
-                for key, value in vars(self.opts).iteritems():
+                for key, value in vars(self.opts).items():
                     if key in extra_args:
                         varname = "__PARSE_ARG_%s" % key.upper()
 
@@ -162,50 +186,64 @@ class CustomBuildSystem(BuildSystem):
                         if isinstance(value, bool):
                             value = 1 if value else 0
                         elif isinstance(value, (list, tuple)):
-                            value = map(str, value)
-                            value = map(quote, value)
-                            value = ' '.join(value)
+                            value = list(map(str, value))
+                            value = list(map(quote, value))
+                            value = " ".join(value)
 
                         executor.env[varname] = value
 
-        retcode, _, _ = context.execute_shell(command=command,
-                                              block=True,
-                                              cwd=build_path,
-                                              actions_callback=_callback)
-        ret["success"] = (not retcode)
+        retcode, _, _ = context.execute_shell(
+            command=command, block=True, cwd=build_path, actions_callback=_callback
+        )
+        ret["success"] = not retcode
         return ret
 
     @classmethod
-    def _add_build_actions(cls, executor, context, package, variant,
-                           build_type, install, build_path, install_path=None):
-        cls.set_standard_vars(executor=executor,
-                              context=context,
-                              variant=variant,
-                              build_type=build_type,
-                              install=install,
-                              build_path=build_path,
-                              install_path=install_path)
+    def _add_build_actions(
+        cls,
+        executor,
+        context,
+        package,
+        variant,
+        build_type,
+        install,
+        build_path,
+        install_path=None,
+    ):
+        cls.set_standard_vars(
+            executor=executor,
+            context=context,
+            variant=variant,
+            build_type=build_type,
+            install=install,
+            build_path=build_path,
+            install_path=install_path,
+        )
 
 
-def _FWD__spawn_build_shell(working_dir, build_path, variant_index, install,
-                            install_path=None):
+def _FWD__spawn_build_shell(
+    working_dir, build_path, variant_index, install, install_path=None
+):
     # This spawns a shell that the user can run the build command in directly
     context = ResolvedContext.load(os.path.join(build_path, "build.rxt"))
     package = get_developer_package(working_dir)
     variant = package.get_variant(variant_index)
     config.override("prompt", "BUILD>")
 
-    callback = functools.partial(CustomBuildSystem._add_build_actions,
-                                 context=context,
-                                 package=package,
-                                 variant=variant,
-                                 build_type=BuildType.local,
-                                 install=install,
-                                 build_path=build_path,
-                                 install_path=install_path)
+    callback = functools.partial(
+        CustomBuildSystem._add_build_actions,
+        context=context,
+        package=package,
+        variant=variant,
+        build_type=BuildType.local,
+        install=install,
+        build_path=build_path,
+        install_path=install_path,
+    )
 
-    retcode, _, _ = context.execute_shell(block=True, cwd=build_path,
-                                          actions_callback=callback)
+    retcode, _, _ = context.execute_shell(
+        block=True, cwd=build_path, actions_callback=callback
+    )
     sys.exit(retcode)
 
 

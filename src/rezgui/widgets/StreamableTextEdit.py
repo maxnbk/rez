@@ -1,3 +1,4 @@
+from builtins import str
 from rezgui.qt import QtCore, QtGui
 from rezgui.widgets.SearchableTextEdit import SearchableTextEdit
 import threading
@@ -8,6 +9,7 @@ class StreamableTextEdit(SearchableTextEdit):
 
     The object is threadsafe and can be written to from any thread.
     """
+
     written = QtCore.Signal()
 
     def __init__(self, parent=None):
@@ -43,7 +45,7 @@ class StreamableTextEdit(SearchableTextEdit):
             self.lock.release()
 
         if buffer_:
-            txt = ''.join(buffer_)
+            txt = "".join(buffer_)
             self._write(txt)
 
     def _write(self, txt):

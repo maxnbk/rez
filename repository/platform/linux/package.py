@@ -2,12 +2,9 @@ name = "platform"
 
 version = "linux"
 
-authors = [
-    "ajohns"
-]
+authors = ["ajohns"]
 
-description = \
-    """
+description = """
     Package representing the platform.
     """
 

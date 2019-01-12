@@ -2,12 +2,9 @@ name = "arch"
 
 version = "x86_64"
 
-authors = [
-    "ajohns"
-]
+authors = ["ajohns"]
 
-description = \
-    """
+description = """
     Package representing the architecture.
     """
 

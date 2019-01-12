@@ -1,6 +1,8 @@
 """
 Svn version control
 """
+from __future__ import print_function
+from builtins import str
 from rez.release_vcs import ReleaseVCS
 from rez.exceptions import ReleaseVCSError
 import os.path
@@ -28,13 +30,13 @@ def get_last_changed_revision(client, url):
     util func, get last revision of url
     """
     try:
-        svn_entries = client.info2(url,
-                                   pysvn.Revision(pysvn.opt_revision_kind.head),
-                                   recurse=False)
+        svn_entries = client.info2(
+            url, pysvn.Revision(pysvn.opt_revision_kind.head), recurse=False
+        )
         if not svn_entries:
             raise ReleaseVCSError("svn.info2() returned no results on url %s" % url)
         return svn_entries[0][1].last_changed_rev
-    except pysvn.ClientError, ce:
+    except pysvn.ClientError as ce:
         raise ReleaseVCSError("svn.info2() raised ClientError: %s" % ce)
 
 
@@ -45,8 +47,8 @@ def get_svn_login(realm, username, may_save):
     """
     import getpass
 
-    print "svn requires a password for the user %s:" % username
-    pwd = ''
+    print("svn requires a password for the user %s:" % username)
+    pwd = ""
     while not pwd.strip():
         pwd = getpass.getpass("--> ")
 
@@ -56,7 +58,7 @@ def get_svn_login(realm, username, may_save):
 class SvnReleaseVCS(ReleaseVCS):
     @classmethod
     def name(cls):
-        return 'svn'
+        return "svn"
 
     def __init__(self, pkg_root, vcs_root=None):
         super(SvnReleaseVCS, self).__init__(pkg_root, vcs_root=vcs_root)
@@ -64,13 +66,12 @@ class SvnReleaseVCS(ReleaseVCS):
         self.svnc = svn_get_client()
         svn_entry = self.svnc.info(self.pkg_root)
         if not svn_entry:
-            raise SvnReleaseVCSError("%s is not an svn working copy"
-                                     % self.pkg_root)
+            raise SvnReleaseVCSError("%s is not an svn working copy" % self.pkg_root)
         self.this_url = str(svn_entry["url"])
 
     @classmethod
     def is_valid_root(cls, path):
-        return os.path.isdir(os.path.join(path, '.svn'))
+        return os.path.isdir(os.path.join(path, ".svn"))
 
     @classmethod
     def search_parents_for_root(cls):
@@ -87,11 +88,12 @@ class SvnReleaseVCS(ReleaseVCS):
         if status_list_known:
             raise ReleaseVCSError(
                 "'%s' is not in a state to release - you may need to svn-checkin "
-                "and/or svn-update: %s" % (self.pkg_root, str(status_list_known)))
+                "and/or svn-update: %s" % (self.pkg_root, str(status_list_known))
+            )
 
     def _create_tag_impl(self, tag_name, message=None):
         tag_url = self.get_tag_url(tag_name)
-        print "rez-release: creating project tag in: %s..." % tag_url
+        print("rez-release: creating project tag in: %s..." % tag_url)
         self.svnc.callback_get_log_message = lambda x: (True, x)
         self.svnc.copy2([(self.this_url,)], tag_url, make_parents=True)
 
@@ -103,13 +105,13 @@ class SvnReleaseVCS(ReleaseVCS):
         pos_tr = self.this_url.find("/trunk")
         pos_br = self.this_url.find("/branches")
         pos = max(pos_tr, pos_br)
-        if (pos == -1):
+        if pos == -1:
             raise ReleaseVCSError("%s is not in a branch or trunk" % self.pkg_root)
         base_url = self.this_url[:pos]
         tag_url = base_url + "/tags"
 
         if tag_name:
-            tag_url += '/' + tag_name
+            tag_url += "/" + tag_name
         return tag_url
 
     def svn_url_exists(self, url):
@@ -120,7 +122,7 @@ class SvnReleaseVCS(ReleaseVCS):
             return False
 
     def get_current_revision(self):
-        return self.svnc.info(self.pkg_root)['revision'].number
+        return self.svnc.info(self.pkg_root)["revision"].number
 
     def create_release_tag(self, tag_name, message=None):
         # svn requires a message - if not provided, make it the same as the
@@ -129,6 +131,7 @@ class SvnReleaseVCS(ReleaseVCS):
             message = tag_name
         self.svnc.callback_get_log_message = lambda: (True, message)
         self.svnc.copy(self.pkg_root, self.get_tag_url(tag_name))
+
 
 def register_plugin():
     return SvnReleaseVCS

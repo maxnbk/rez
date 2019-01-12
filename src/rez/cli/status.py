@@ -1,20 +1,27 @@
-'''
+"""
 Report current status of the environment, or a tool or package etc.
-'''
+"""
 
 
 def setup_parser(parser, completions=False):
     tools_action = parser.add_argument(
-        "-t", "--tools", action="store_true",
+        "-t",
+        "--tools",
+        action="store_true",
         help="List visible tools. In this mode, OBJECT can be a glob pattern "
-        "such as 'foo*'")
+        "such as 'foo*'",
+    )
     parser.add_argument(
-        "OBJECT", type=str, nargs='?',
+        "OBJECT",
+        type=str,
+        nargs="?",
         help="object to query - this could be a tool, package, context or suite."
-        " If not provided, a summary of the current environment is shown.")
+        " If not provided, a summary of the current environment is shown.",
+    )
 
     if completions:
         from rez.cli._complete_util import ExecutablesCompleter
+
         tools_action.completer = ExecutablesCompleter
 
 

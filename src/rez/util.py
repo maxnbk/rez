@@ -1,6 +1,8 @@
 """
 Misc useful stuff.
 """
+from builtins import str
+from builtins import range
 import stat
 import sys
 import atexit
@@ -12,17 +14,18 @@ from rez.utils.yaml import dump_yaml
 from rez.vendor.progress.bar import Bar
 
 
-DEV_NULL = open(os.devnull, 'w')
+DEV_NULL = open(os.devnull, "w")
 
 
 class ProgressBar(Bar):
     def __init__(self, label, max):
         from rez.config import config
+
         if config.quiet or not config.show_progress:
             self.file = DEV_NULL
             self.hide_cursor = False
 
-        super(Bar, self).__init__(label, max=max, bar_prefix=' [', bar_suffix='] ')
+        super(Bar, self).__init__(label, max=max, bar_prefix=" [", bar_suffix="] ")
 
 
 # TODO: use distlib.ScriptMaker
@@ -40,13 +43,14 @@ def create_executable_script(filepath, body, program=None):
     program = program or "python"
     if callable(body):
         from rez.utils.sourcecode import SourceCode
+
         code = SourceCode(func=body)
         body = code.source
 
-    if not body.endswith('\n'):
-        body += '\n'
+    if not body.endswith("\n"):
+        body += "\n"
 
-    with open(filepath, 'w') as f:
+    with open(filepath, "w") as f:
         # TODO: make cross platform
         f.write("#!/usr/bin/env %s\n" % program)
         f.write(body)
@@ -56,8 +60,15 @@ def create_executable_script(filepath, body, program=None):
     # clean up the files once the test has run.  Temporarily we don't bother
     # setting the permissions, but this will need to change.
     if os.name == "posix":
-    	os.chmod(filepath, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
-             | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        os.chmod(
+            filepath,
+            stat.S_IRUSR
+            | stat.S_IRGRP
+            | stat.S_IROTH
+            | stat.S_IXUSR
+            | stat.S_IXGRP
+            | stat.S_IXOTH,
+        )
 
 
 def create_forwarding_script(filepath, module, func_name, *nargs, **kwargs):
@@ -67,9 +78,7 @@ def create_forwarding_script(filepath, module, func_name, *nargs, **kwargs):
     is used internally by Rez to dynamically create a script that uses Rez,
     even though the parent environment may not be configured to do so.
     """
-    doc = dict(
-        module=module,
-        func_name=func_name)
+    doc = dict(module=module, func_name=func_name)
 
     if nargs:
         doc["nargs"] = nargs
@@ -93,10 +102,10 @@ def shlex_join(value):
     import pipes
 
     def quote(s):
-        return pipes.quote(s) if '$' not in s else s
+        return pipes.quote(s) if "$" not in s else s
 
-    if hasattr(value, '__iter__'):
-        return ' '.join(quote(x) for x in value)
+    if hasattr(value, "__iter__"):
+        return " ".join(quote(x) for x in value)
     else:
         return str(value)
 
@@ -104,6 +113,7 @@ def shlex_join(value):
 # returns path to first program in the list to be successfully found
 def which(*programs, **shutilwhich_kwargs):
     from rez.backport.shutilwhich import which as which_
+
     for prog in programs:
         path = which_(prog, **shutilwhich_kwargs)
         if path:
@@ -142,15 +152,15 @@ def get_close_matches(term, fields, fuzziness=0.4, key=None):
 # fuzzy string matching on package names, such as 'boost', 'numpy-3.4'
 def get_close_pkgs(pkg, pkgs, fuzziness=0.4):
     matches = get_close_matches(pkg, pkgs, fuzziness=fuzziness)
-    fam_matches = get_close_matches(pkg.split('-')[0], pkgs,
-                                    fuzziness=fuzziness,
-                                    key=lambda x: x.split('-')[0])
+    fam_matches = get_close_matches(
+        pkg.split("-")[0], pkgs, fuzziness=fuzziness, key=lambda x: x.split("-")[0]
+    )
 
     d = {}
-    for pkg_, r in (matches + fam_matches):
+    for pkg_, r in matches + fam_matches:
         d[pkg_] = d.get(pkg_, 0.0) + r
 
-    combined = [(k, v * 0.5) for k, v in d.iteritems()]
+    combined = [(k, v * 0.5) for k, v in d.items()]
     return sorted(combined, key=lambda x: -x[1])
 
 
@@ -160,8 +170,8 @@ def find_last_sublist(list_, sublist):
     Returns:
         Index where the sublist starts, or None if there is no match.
     """
-    for i in reversed(range(len(list_) - len(sublist) + 1)):
-        if list_[i] == sublist[0] and list_[i:i + len(sublist)] == sublist:
+    for i in reversed(list(range(len(list_) - len(sublist) + 1))):
+        if list_[i] == sublist[0] and list_[i : i + len(sublist)] == sublist:
             return i
     return None
 
@@ -170,6 +180,7 @@ def find_last_sublist(list_, sublist):
 def _atexit():
     try:
         from rez.resolved_context import ResolvedContext
+
         ResolvedContext.tmpdir_manager.clear()
     except RezError:
         pass

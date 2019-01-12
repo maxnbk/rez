@@ -86,6 +86,7 @@ def replace_atomic(src, dst):
     '''
     Move ``src`` to ``dst``. If ``dst`` exists, it will be silently
     overwritten.
+
     Both paths must reside on the same filesystem for the operation to be
     atomic.
     '''
@@ -97,6 +98,7 @@ def move_atomic(src, dst):
     Move ``src`` to ``dst``. There might a timewindow where both filesystem
     entries exist. If ``dst`` already exists, :py:exc:`FileExistsError` will be
     raised.
+
     Both paths must reside on the same filesystem for the operation to be
     atomic.
     '''
@@ -106,14 +108,17 @@ def move_atomic(src, dst):
 class AtomicWriter(object):
     '''
     A helper class for performing atomic writes. Usage::
+
         with AtomicWriter(path).open() as f:
             f.write(...)
+
     :param path: The destination filepath. May or may not exist.
     :param mode: The filemode for the temporary file. This defaults to `wb` in
         Python 2 and `w` in Python 3.
     :param overwrite: If set to false, an error is raised if ``path`` exists.
         Errors are only raised after the file has been written to.  Either way,
         the operation is atomic.
+
     If you need further control over the exact behavior, you are encouraged to
     subclass.
     '''
@@ -194,12 +199,15 @@ class AtomicWriter(object):
 def atomic_write(path, writer_cls=AtomicWriter, **cls_kwargs):
     '''
     Simple atomic writes. This wraps :py:class:`AtomicWriter`::
+
         with atomic_write(path) as f:
             f.write(...)
+
     :param path: The target path to write to.
     :param writer_cls: The writer class to use. This parameter is useful if you
         subclassed :py:class:`AtomicWriter` to change some behavior and want to
         use that new subclass.
+
     Additional keyword arguments are passed to the writer class. See
     :py:class:`AtomicWriter`.
     '''

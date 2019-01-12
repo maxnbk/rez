@@ -12,8 +12,8 @@ from rez.rex import EscapedString
 
 
 class CSH(UnixShell):
-    norc_arg = '-f'
-    last_command_status = '$status'
+    norc_arg = "-f"
+    last_command_status = "$status"
     histfile = "~/.history"
     histvar = "histfile"
     _executable = None
@@ -21,16 +21,16 @@ class CSH(UnixShell):
     @property
     def executable(cls):
         if cls._executable is None:
-            cls._executable = Shell.find_executable('csh')
+            cls._executable = Shell.find_executable("csh")
         return cls._executable
 
     @classmethod
     def name(cls):
-        return 'csh'
+        return "csh"
 
     @classmethod
     def file_extension(cls):
-        return 'csh'
+        return "csh"
 
     @classmethod
     def get_syspaths(cls):
@@ -42,15 +42,16 @@ class CSH(UnixShell):
             return cls.syspaths
 
         # detect system paths using registry
-        cmd = "cmd=`which %s`; unset PATH; $cmd %s 'echo __PATHS_ $PATH'" \
-              % (cls.name(), cls.command_arg)
-        p = popen(cmd, stdout=subprocess.PIPE,
-                  stderr=subprocess.PIPE, shell=True)
+        cmd = "cmd=`which %s`; unset PATH; $cmd %s 'echo __PATHS_ $PATH'" % (
+            cls.name(),
+            cls.command_arg,
+        )
+        p = popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out_, err_ = p.communicate()
         if p.returncode:
             paths = []
         else:
-            lines = out_.split('\n')
+            lines = out_.split("\n")
             line = [x for x in lines if "__PATHS_" in x.split()][0]
             paths = line.strip().split()[-1].split(os.pathsep)
 
@@ -62,27 +63,23 @@ class CSH(UnixShell):
         return cls.syspaths
 
     @classmethod
-    def startup_capabilities(cls, rcfile=False, norc=False, stdin=False,
-                             command=False):
-        cls._unsupported_option('rcfile', rcfile)
+    def startup_capabilities(cls, rcfile=False, norc=False, stdin=False, command=False):
+        cls._unsupported_option("rcfile", rcfile)
         rcfile = False
         if command is not None:
-            cls._overruled_option('stdin', 'command', stdin)
+            cls._overruled_option("stdin", "command", stdin)
             stdin = False
         return (rcfile, norc, stdin, command)
 
     @classmethod
     def get_startup_sequence(cls, rcfile, norc, stdin, command):
-        rcfile, norc, stdin, command = \
-            cls.startup_capabilities(rcfile, norc, stdin, command)
+        rcfile, norc, stdin, command = cls.startup_capabilities(
+            rcfile, norc, stdin, command
+        )
 
         files = []
         if not norc:
-            for file in (
-                    "~/.tcshrc",
-                    "~/.cshrc",
-                    "~/.login",
-                    "~/.cshdirs"):
+            for file in ("~/.tcshrc", "~/.cshrc", "~/.login", "~/.cshdirs"):
                 if os.path.exists(os.path.expanduser(file)):
                     files.append(file)
 
@@ -92,16 +89,14 @@ class CSH(UnixShell):
             do_rcfile=False,
             envvar=None,
             files=files,
-            bind_files=(
-                "~/.tcshrc",
-                "~/.cshrc"),
-            source_bind_files=(not norc)
+            bind_files=("~/.tcshrc", "~/.cshrc"),
+            source_bind_files=(not norc),
         )
 
     def escape_string(self, value):
         value = EscapedString.promote(value)
         value = value.expanduser()
-        result = ''
+        result = ""
 
         for is_literal, txt in value.strings:
             if is_literal:
@@ -110,7 +105,7 @@ class CSH(UnixShell):
                     txt = "'%s'" % txt
             else:
                 txt = txt.replace('"', '"\\""')
-                txt = txt.replace('!', '\\!')
+                txt = txt.replace("!", "\\!")
                 txt = '"%s"' % txt
             result += txt
         return result
@@ -124,19 +119,20 @@ class CSH(UnixShell):
                 self.setenv("REZ_STORED_PROMPT", '"%s"' % curr_prompt)
 
             new_prompt = "$REZ_ENV_PROMPT"
-            new_prompt = (new_prompt + " %s") if config.prefix_prompt \
-                else ("%s " + new_prompt)
+            new_prompt = (
+                (new_prompt + " %s") if config.prefix_prompt else ("%s " + new_prompt)
+            )
 
             new_prompt = new_prompt % curr_prompt
             new_prompt = self.escape_string(new_prompt)
-            self._addline('set prompt=%s' % new_prompt)
+            self._addline("set prompt=%s" % new_prompt)
 
     def _saferefenv(self, key):
         self._addline("if (!($?%s)) setenv %s" % (key, key))
 
     def setenv(self, key, value):
         value = self.escape_string(value)
-        self._addline('setenv %s %s' % (key, value))
+        self._addline("setenv %s %s" % (key, value))
 
     def unsetenv(self, key):
         self._addline("unsetenv %s" % key)
@@ -147,7 +143,7 @@ class CSH(UnixShell):
 
     def source(self, value):
         value = self.escape_string(value)
-        self._addline('source %s' % value)
+        self._addline("source %s" % value)
 
 
 def register_plugin():

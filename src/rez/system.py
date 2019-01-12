@@ -1,3 +1,6 @@
+from builtins import str
+from builtins import next
+from builtins import object
 import os
 import os.path
 import re
@@ -12,6 +15,7 @@ from rez.utils.data_utils import cached_property
 class System(object):
     """Access to underlying system data.
     """
+
     @property
     def rez_version(self):
         """Returns the current version of Rez."""
@@ -56,9 +60,7 @@ class System(object):
     def variant(self):
         """Returns a list of the form ["platform-X", "arch-X", "os-X"] suitable
         for use as a variant in a system-dependent package."""
-        return ["platform-%s" % self.platform,
-                "arch-%s" % self.arch,
-                "os-%s" % self.os]
+        return ["platform-%s" % self.platform, "arch-%s" % self.arch, "os-%s" % self.os]
 
     # TODO: move shell detection into shell plugins
     @cached_property
@@ -70,6 +72,7 @@ class System(object):
             tcsh
         """
         from rez.shells import get_shell_types
+
         shells = set(get_shell_types())
         if not shells:
             raise RezSystemError("no shells available")
@@ -78,20 +81,21 @@ class System(object):
             return "cmd"
         else:
             import subprocess as sp
+
             shell = None
 
             # check parent process via ps
             try:
-                args = ['ps', '-o', 'args=', '-p', str(os.getppid())]
+                args = ["ps", "-o", "args=", "-p", str(os.getppid())]
                 proc = sp.Popen(args, stdout=sp.PIPE)
                 output = proc.communicate()[0]
-                shell = os.path.basename(output.strip().split()[0]).replace('-', '')
+                shell = os.path.basename(output.strip().split()[0]).replace("-", "")
             except Exception:
                 pass
 
             # check $SHELL
             if shell not in shells:
-                shell = os.path.basename(os.getenv("SHELL", ''))
+                shell = os.path.basename(os.getenv("SHELL", ""))
 
             # traverse parent procs via /proc/(pid)/status
             if shell not in shells:
@@ -102,7 +106,7 @@ class System(object):
                     try:
                         file = os.path.join(os.sep, "proc", pid, "status")
                         with open(file) as f:
-                            loc = f.read().split('\n')
+                            loc = f.read().split("\n")
 
                         for line in loc:
                             line = line.strip()
@@ -124,7 +128,7 @@ class System(object):
             elif (shell not in shells) and ("bash" in shells):
                 shell = "bash"  # failed detection, fall back on 'bash'
             elif shell not in shells:
-                shell = iter(shells).next()  # give up - just choose a shell
+                shell = next(iter(shells))  # give up - just choose a shell
 
             # sh has to be handled as a special case
             if shell == "sh":
@@ -146,7 +150,9 @@ class System(object):
                             if "bash" in shells:
                                 shell = "bash"  # fall back on bash
                             else:
-                                shell = iter(shells).next()  # give up - just choose a shell
+                                shell = next(iter(
+                                    shells
+                                ))  # give up - just choose a shell
 
             # TODO: remove this when/if dash support added
             if shell == "dash":
@@ -158,6 +164,7 @@ class System(object):
     def user(self):
         """Get the current user."""
         import getpass
+
         return getpass.getuser()
 
     @cached_property
@@ -171,6 +178,7 @@ class System(object):
         @returns Fully qualified domain name, eg 'somesvr.somestudio.com'
         """
         import socket
+
         return socket.getfqdn()
 
     @cached_property
@@ -178,14 +186,14 @@ class System(object):
         """
         @returns The machine hostname, eg 'somesvr'
         """
-        return self.fqdn.split('.', 1)[0]
+        return self.fqdn.split(".", 1)[0]
 
     @cached_property
     def domain(self):
         """
         @returns The domain, eg 'somestudio.com'
         """
-        return self.fqdn.split('.', 1)[1]
+        return self.fqdn.split(".", 1)[1]
 
     @cached_property
     def rez_bin_path(self):
@@ -195,9 +203,13 @@ class System(object):
         binpath = None
         if sys.argv and sys.argv[0]:
             executable = sys.argv[0]
-            path = which("rezolve", env={"PATH":os.path.dirname(executable),
-                                         "PATHEXT":os.environ.get("PATHEXT",
-                                                                  "")})
+            path = which(
+                "rezolve",
+                env={
+                    "PATH": os.path.dirname(executable),
+                    "PATHEXT": os.environ.get("PATHEXT", ""),
+                },
+            )
             binpath = os.path.dirname(path) if path else None
 
         # TODO: improve this, could still pick up non-production 'rezolve'
@@ -256,7 +268,7 @@ class System(object):
         sep_regex = re.compile("[\.\-]")
         char_regex = re.compile("[a-zA-Z0-9_]")
 
-        s = s.strip('.').strip('-')
+        s = s.strip(".").strip("-")
         toks = sep_regex.split(s)
         seps = sep_regex.findall(s)
         valid_toks = []
@@ -267,12 +279,12 @@ class System(object):
                 tok = toks[0]
                 toks = toks[1:]
                 if tok:
-                    valid_tok = ''
+                    valid_tok = ""
                     for ch in tok:
                         if char_regex.match(ch):
                             valid_tok += ch
                         else:
-                            valid_tok += '_'
+                            valid_tok += "_"
                     valid_toks.append(valid_tok)
                 else:
                     seps = seps[1:]  # skip empty string between seps
@@ -283,7 +295,7 @@ class System(object):
                 valid_toks.append(sep)
             b = not b
 
-        return ''.join(valid_toks)
+        return "".join(valid_toks)
 
 
 # singleton

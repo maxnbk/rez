@@ -1,6 +1,7 @@
 """
 test the release system
 """
+from builtins import str
 from rez.build_process_ import create_build_process
 from rez.build_system import create_build_system
 from rez.resolved_context import ResolvedContext
@@ -10,8 +11,7 @@ from rez.vendor import yaml
 from rez.system import system
 from rez.exceptions import ReleaseError, ReleaseVCSError
 import rez.vendor.unittest2 as unittest
-from rez.tests.util import TestBase, TempdirMixin, shell_dependent, \
-    install_dependent
+from rez.tests.util import TestBase, TempdirMixin, shell_dependent, install_dependent
 from rez.package_serialise import dump_package_data
 from rez.serialise import FileFormat
 import shutil
@@ -34,7 +34,8 @@ class TestRelease(TestBase, TempdirMixin):
             release_packages_path=cls.install_root,
             resolve_caching=False,
             warn_untimestamped=False,
-            implicit_packages=[])
+            implicit_packages=[],
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -67,7 +68,7 @@ class TestRelease(TestBase, TempdirMixin):
 
         # make the stub file
         self.stubfile = os.path.join(self.src_root, ".stub")
-        with open(self.stubfile, 'w'):
+        with open(self.stubfile, "w"):
             pass
 
         # create the vcs - should work now
@@ -75,29 +76,31 @@ class TestRelease(TestBase, TempdirMixin):
         self.assertEqual(self.vcs.name(), "stub")
 
     def _write_package(self):
-        with open(self.packagefile, 'w') as f:
+        with open(self.packagefile, "w") as f:
             dump_package_data(self.package_data, f, format_=FileFormat.yaml)
 
     def _create_builder(self, ensure_latest=True):
         buildsys = create_build_system(self.src_root, verbose=True)
 
-        return create_build_process(process_type="local",
-                                    working_dir=self.src_root,
-                                    build_system=buildsys,
-                                    vcs=self.vcs,
-                                    ensure_latest=ensure_latest,
-                                    ignore_existing_tag=True,
-                                    verbose=True)
+        return create_build_process(
+            process_type="local",
+            working_dir=self.src_root,
+            build_system=buildsys,
+            vcs=self.vcs,
+            ensure_latest=ensure_latest,
+            ignore_existing_tag=True,
+            verbose=True,
+        )
 
     def assertVariantsEqual(self, vars1, vars2):
         """Utility function to compare string-variants with formal lists of
         "PackageRequest" objects
         """
+
         def _standardize_variants(variants):
             return [list(str(req) for req in variant) for variant in variants]
 
-        self.assertEqual(_standardize_variants(vars1),
-                         _standardize_variants(vars2))
+        self.assertEqual(_standardize_variants(vars1), _standardize_variants(vars2))
 
     @shell_dependent()
     @install_dependent
@@ -114,8 +117,7 @@ class TestRelease(TestBase, TempdirMixin):
         builder.release()
 
         # check a file to see the release made it
-        filepath = os.path.join(self.install_root,
-                                "foo", "1.0", "data", "data.txt")
+        filepath = os.path.join(self.install_root, "foo", "1.0", "data", "data.txt")
         self.assertTrue(os.path.exists(filepath))
 
         # failed release (same version released again)
@@ -176,8 +178,10 @@ class TestRelease(TestBase, TempdirMixin):
 
         # copy the spangle package onto the packages path
         os.mkdir(self.install_root)
-        shutil.copytree(os.path.join(self.src_root, 'spangle'),
-                        os.path.join(self.install_root, 'spangle'))
+        shutil.copytree(
+            os.path.join(self.src_root, "spangle"),
+            os.path.join(self.install_root, "spangle"),
+        )
 
         # release the bar package, which has spangle-1.0 and 1.1 variants
         builder = self._create_builder()
@@ -188,15 +192,15 @@ class TestRelease(TestBase, TempdirMixin):
         rel_packages = list(iter_packages("bar", paths=[self.install_root]))
         self.assertEqual(len(rel_packages), 1)
         rel_package = rel_packages[0]
-        self.assertVariantsEqual(rel_package.variants, [['spangle-1.0'],
-                                                        ['spangle-1.1']])
-        self.assertEqual(rel_package.description,
-                         'a package with two variants')
+        self.assertVariantsEqual(
+            rel_package.variants, [["spangle-1.0"], ["spangle-1.1"]]
+        )
+        self.assertEqual(rel_package.description, "a package with two variants")
 
         # now, change the package so it has a single spangle-2.0 variant...
-        self.package_data['variants'] = [['spangle-2.0']]
-        new_desc = 'added spangle-2.0 variant'
-        self.package_data['description'] = new_desc
+        self.package_data["variants"] = [["spangle-2.0"]]
+        new_desc = "added spangle-2.0 variant"
+        self.package_data["description"] = new_desc
         self._write_package()
 
         # ...then try to re-release
@@ -208,16 +212,16 @@ class TestRelease(TestBase, TempdirMixin):
         rel_packages = list(iter_packages("bar", paths=[self.install_root]))
         self.assertEqual(len(rel_packages), 1)
         rel_package = rel_packages[0]
-        self.assertVariantsEqual(rel_package.variants, [['spangle-1.0'],
-                                                        ['spangle-1.1'],
-                                                        ['spangle-2.0']])
+        self.assertVariantsEqual(
+            rel_package.variants, [["spangle-1.0"], ["spangle-1.1"], ["spangle-2.0"]]
+        )
         self.assertEqual(rel_package.description, new_desc)
 
         # finally, release a package that contains a variant already released,
         # but with a different index...
-        self.package_data['variants'] = [['spangle-1.1']]
-        third_desc = 'releasing with already existing variant'
-        self.package_data['description'] = third_desc
+        self.package_data["variants"] = [["spangle-1.1"]]
+        third_desc = "releasing with already existing variant"
+        self.package_data["description"] = third_desc
         self._write_package()
         builder = self._create_builder()
         builder.release()
@@ -226,13 +230,14 @@ class TestRelease(TestBase, TempdirMixin):
         rel_packages = list(iter_packages("bar", paths=[self.install_root]))
         self.assertEqual(len(rel_packages), 1)
         rel_package = rel_packages[0]
-        self.assertVariantsEqual(rel_package.variants, [['spangle-1.0'],
-                                                        ['spangle-1.1'],
-                                                        ['spangle-2.0']])
+        self.assertVariantsEqual(
+            rel_package.variants, [["spangle-1.0"], ["spangle-1.1"], ["spangle-2.0"]]
+        )
         # ...but that the description was updated
         self.assertEqual(rel_package.description, third_desc)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
 
 

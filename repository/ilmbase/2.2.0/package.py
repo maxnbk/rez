@@ -2,24 +2,18 @@ name = "ilmbase"
 
 version = "2.2.0"
 
-authors = [
-    "ILM"
-]
+authors = ["ILM"]
 
-description = \
-    """
+description = """
     Utility libraries from ILM used by OpenEXR.
     """
 
-build_requires = [
-    "gcc-4.8.2"
-]
+build_requires = ["gcc-4.8.2"]
 
-variants = [
-    ["platform-linux", "arch-x86_64", "os-Ubuntu-12.04"]
-]
+variants = [["platform-linux", "arch-x86_64", "os-Ubuntu-12.04"]]
 
 uuid = "repository.ilmbase"
+
 
 def commands():
     if building:

@@ -1,8 +1,14 @@
+from builtins import object
 import os
 import os.path
 from fnmatch import fnmatch
-from rez.vendor.argcomplete import CompletionFinder, default_validator, \
-    sys_encoding, split_line, debug
+from rez.vendor.argcomplete import (
+    CompletionFinder,
+    default_validator,
+    sys_encoding,
+    split_line,
+    debug,
+)
 
 
 class RezCompletionFinder(CompletionFinder):
@@ -11,35 +17,47 @@ class RezCompletionFinder(CompletionFinder):
         self.always_complete_options = False
         self.exclude = None
         self.validator = default_validator
-        self.wordbreaks = " \t\"'@><=;|&(:"  # TODO: might need to be configurable/OS specific
+        self.wordbreaks = (
+            " \t\"'@><=;|&(:"
+        )  # TODO: might need to be configurable/OS specific
 
         comp_point = len(comp_line[:comp_point].decode(sys_encoding))
         comp_line = comp_line.decode(sys_encoding)
 
-        cword_prequote, cword_prefix, cword_suffix, comp_words, \
-            first_colon_pos = split_line(comp_line, comp_point)
+        cword_prequote, cword_prefix, cword_suffix, comp_words, first_colon_pos = split_line(
+            comp_line, comp_point
+        )
 
-        debug("\nLINE: '{l}'\nPREQUOTE: '{pq}'\nPREFIX: '{p}'".format(l=comp_line, pq=cword_prequote, p=cword_prefix),
-              "\nSUFFIX: '{s}'".format(s=cword_suffix),
-              "\nWORDS:", comp_words)
+        debug(
+            "\nLINE: '{l}'\nPREQUOTE: '{pq}'\nPREFIX: '{p}'".format(
+                l=comp_line, pq=cword_prequote, p=cword_prefix
+            ),
+            "\nSUFFIX: '{s}'".format(s=cword_suffix),
+            "\nWORDS:",
+            comp_words,
+        )
 
-        completions = self._get_completions(comp_words, cword_prefix,
-                                            cword_prequote, first_colon_pos)
+        completions = self._get_completions(
+            comp_words, cword_prefix, cword_prequote, first_colon_pos
+        )
         self.completions = (x.encode(sys_encoding) for x in completions)
 
 
 def ConfigCompleter(prefix, **kwargs):
     from rez.config import config
+
     return config.get_completions(prefix)
 
 
 def PackageCompleter(prefix, **kwargs):
     from rez.packages_ import get_completions
+
     return get_completions(prefix)
 
 
 def PackageFamilyCompleter(prefix, **kwargs):
     from rez.packages_ import get_completions
+
     return get_completions(prefix, family_only=True)
 
 
@@ -91,8 +109,9 @@ class FilesCompleter(object):
             if os.path.isfile(filepath):
                 if not self.files:
                     continue
-                if (not self.file_patterns) \
-                        or any(fnmatch(name, x) for x in self.file_patterns):
+                if (not self.file_patterns) or any(
+                    fnmatch(name, x) for x in self.file_patterns
+                ):
                     matching_names.append(name)
             elif os.path.isdir(filepath):
                 matching_names.append(name + os.path.sep)

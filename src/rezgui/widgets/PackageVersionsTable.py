@@ -1,3 +1,5 @@
+from builtins import str
+from builtins import range
 from rezgui.qt import QtCore, QtGui
 from rezgui.mixins.ContextViewMixin import ContextViewMixin
 from rezgui.models.ContextModel import ContextModel
@@ -50,9 +52,10 @@ class PackageVersionsTable(QtGui.QTableWidget, ContextViewMixin):
         """
         row = -1
         version = None
-        for i, package in self.packages.iteritems():
-            if package.version in version_range \
-                    and (version is None or version < package.version):
+        for i, package in self.packages.items():
+            if package.version in version_range and (
+                version is None or version < package.version
+            ):
                 version = package.version
                 row = i
 
@@ -70,8 +73,7 @@ class PackageVersionsTable(QtGui.QTableWidget, ContextViewMixin):
         busy_cursor = QtGui.QCursor(QtCore.Qt.WaitCursor)
         QtGui.QApplication.setOverrideCursor(busy_cursor)
         try:
-            packages = list(iter_packages(name=str(package_name),
-                            paths=package_paths))
+            packages = list(iter_packages(name=str(package_name), paths=package_paths))
         except RezError:
             packages = []
 
@@ -81,12 +83,14 @@ class PackageVersionsTable(QtGui.QTableWidget, ContextViewMixin):
             QtGui.QApplication.restoreOverrideCursor()
             return
 
-        for i, package in enumerate(sorted(packages, key=lambda x: x.version,
-                                           reverse=True)):
-            version_str = str(package.version) + ' '
+        for i, package in enumerate(
+            sorted(packages, key=lambda x: x.version, reverse=True)
+        ):
+            version_str = str(package.version) + " "
             path_str = package.uri + "  "
-            release_str = get_timestamp_str(package.timestamp) \
-                if package.timestamp else '-'
+            release_str = (
+                get_timestamp_str(package.timestamp) if package.timestamp else "-"
+            )
             enabled = self.callback(package) if self.callback else True
             rows.append((enabled, version_str, path_str, release_str))
             self.packages[i] = package

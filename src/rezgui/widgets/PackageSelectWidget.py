@@ -16,14 +16,20 @@ class PackageSelectWidget(QtGui.QWidget, ContextViewMixin):
         super(PackageSelectWidget, self).__init__(parent)
         ContextViewMixin.__init__(self, context_model)
 
-        self.edit = PackageLineEdit(self.context_model, read_only=read_only,
-                                    parent=self)
+        self.edit = PackageLineEdit(
+            self.context_model, read_only=read_only, parent=self
+        )
         self.edit.setStyleSheet("QLineEdit { border : 0px;}")
         self.btn = IconButton("package", "browse packages")
         self.btn.hide()
 
-        create_pane([(self.edit, 1), self.btn, 2], True, compact=True,
-                    compact_spacing=0, parent_widget=self)
+        create_pane(
+            [(self.edit, 1), self.btn, 2],
+            True,
+            compact=True,
+            compact_spacing=0,
+            parent_widget=self,
+        )
 
         if read_only:
             self.edit.setReadOnly(True)
@@ -64,9 +70,11 @@ class PackageSelectWidget(QtGui.QWidget, ContextViewMixin):
 
     def _browse_package(self, button):
         self.btn.show()
-        dlg = BrowsePackageDialog(context_model=self.context_model,
-                                  package_text=self.text(),
-                                  parent=self.parentWidget())
+        dlg = BrowsePackageDialog(
+            context_model=self.context_model,
+            package_text=self.text(),
+            parent=self.parentWidget(),
+        )
         dlg.exec_()
         if dlg.package:
             txt = dlg.package.qualified_name

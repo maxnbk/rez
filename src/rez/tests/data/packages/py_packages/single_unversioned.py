@@ -1,4 +1,4 @@
-name = 'single_unversioned'
+name = "single_unversioned"
 
 
 # Copyright 2013-2016 Allan Johns.

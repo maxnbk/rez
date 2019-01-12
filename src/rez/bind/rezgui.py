@@ -2,6 +2,7 @@
 Binds rez-gui as a rez package.
 """
 from __future__ import absolute_import
+from builtins import str
 import rez
 from rez.package_maker__ import make_package
 from rez.bind._utils import check_version, make_dirs
@@ -15,17 +16,22 @@ import os.path
 
 def setup_parser(parser):
     parser.add_argument(
-        "--gui-lib", type=str, default="PyQt-4", metavar="PKG",
-        help="manually specify the gui lib to use (default: %(default)s).")
+        "--gui-lib",
+        type=str,
+        default="PyQt-4",
+        metavar="PKG",
+        help="manually specify the gui lib to use (default: %(default)s).",
+    )
 
 
 def commands():
-    env.PYTHONPATH.append('{this.root}')
-    env.PATH.append('{this.root}/bin')
+    env.PYTHONPATH.append("{this.root}")
+    env.PATH.append("{this.root}/bin")
 
 
 def rez_gui_source():
     from rez.cli._main import run
+
     run("gui")
 
 

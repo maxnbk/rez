@@ -69,11 +69,13 @@ class ToolWidget(QtGui.QWidget):
 
     def _launch_tool(self, terminal=False, moniter=False):
         buf = subprocess.PIPE if moniter else None
-        proc = app.execute_shell(context=self.context,
-                                 command=self.tool_name,
-                                 terminal=terminal,
-                                 stdout=buf,
-                                 stderr=buf)
+        proc = app.execute_shell(
+            context=self.context,
+            command=self.tool_name,
+            terminal=terminal,
+            stdout=buf,
+            stderr=buf,
+        )
 
         if self.process_tracker:
             self.process_tracker.add_instance(self.context, self.tool_name, proc)

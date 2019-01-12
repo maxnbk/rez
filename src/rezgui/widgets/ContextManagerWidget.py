@@ -1,3 +1,4 @@
+from builtins import str
 from rezgui.qt import QtCore, QtGui
 from rezgui.util import create_pane, get_icon, add_menu_action
 from rezgui.widgets.ContextToolsWidget import ContextToolsWidget
@@ -52,14 +53,17 @@ class ContextManagerWidget(QtGui.QWidget, ContextViewMixin):
         self.diff_tbtn.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
         self.diff_menu = QtGui.QMenu()
         self.diff_action = add_menu_action(
-            self.diff_menu, "Diff Against Current",
-            self._diff_with_last_resolve, "diff")
+            self.diff_menu, "Diff Against Current", self._diff_with_last_resolve, "diff"
+        )
         self.diff_to_disk_action = add_menu_action(
-            self.diff_menu, "Diff Against Disk",
-            self._diff_with_disk, "diff_to_disk")
+            self.diff_menu, "Diff Against Disk", self._diff_with_disk, "diff_to_disk"
+        )
         self.diff_to_other_action = add_menu_action(
-            self.diff_menu, "Diff Against Other...",
-            self._diff_with_other, "diff_to_other")
+            self.diff_menu,
+            "Diff Against Other...",
+            self._diff_with_other,
+            "diff_to_other",
+        )
         self.diff_tbtn.setMenu(self.diff_menu)
         self.diff_tbtn.setDefaultAction(self.diff_action)
 
@@ -90,22 +94,37 @@ class ContextManagerWidget(QtGui.QWidget, ContextViewMixin):
 
         self.revert_menu = QtGui.QMenu()
         self.revert_action = add_menu_action(
-            self.revert_menu, "Revert To Last Resolve...",
-            self._revert_to_last_resolve, "revert")
+            self.revert_menu,
+            "Revert To Last Resolve...",
+            self._revert_to_last_resolve,
+            "revert",
+        )
         self.revert_diff_action = add_menu_action(
-            self.revert_menu, "Revert To Reference...",
-            self._revert_to_diff, "revert_to_diff")
+            self.revert_menu,
+            "Revert To Reference...",
+            self._revert_to_diff,
+            "revert_to_diff",
+        )
         self.revert_disk_action = add_menu_action(
-            self.revert_menu, "Revert To Disk...",
-            self._revert_to_disk, "revert_to_disk")
+            self.revert_menu,
+            "Revert To Disk...",
+            self._revert_to_disk,
+            "revert_to_disk",
+        )
         self.revert_tbtn.setMenu(self.revert_menu)
 
         resolve_tbtn = QtGui.QToolButton()
         resolve_tbtn.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
         menu = QtGui.QMenu()
-        default_resolve_action = add_menu_action(menu, "Resolve", self._resolve, "resolve")
-        add_menu_action(menu, "Advanced Resolve...",
-                        partial(self._resolve, advanced=True), "advanced_resolve")
+        default_resolve_action = add_menu_action(
+            menu, "Resolve", self._resolve, "resolve"
+        )
+        add_menu_action(
+            menu,
+            "Advanced Resolve...",
+            partial(self._resolve, advanced=True),
+            "advanced_resolve",
+        )
         resolve_tbtn.setDefaultAction(default_resolve_action)
         resolve_tbtn.setMenu(menu)
 
@@ -131,15 +150,18 @@ class ContextManagerWidget(QtGui.QWidget, ContextViewMixin):
         self.revert_tbtn.setCursor(QtCore.Qt.PointingHandCursor)
         resolve_tbtn.setCursor(QtCore.Qt.PointingHandCursor)
 
-        btn_pane = create_pane([self.show_effective_request_checkbox,
-                                None, toolbar],
-                               True, compact=True, compact_spacing=0)
+        btn_pane = create_pane(
+            [self.show_effective_request_checkbox, None, toolbar],
+            True,
+            compact=True,
+            compact_spacing=0,
+        )
 
-        context_pane = create_pane([btn_pane, self.context_table], False,
-                                   compact=True, compact_spacing=0)
+        context_pane = create_pane(
+            [btn_pane, self.context_table], False, compact=True, compact_spacing=0
+        )
 
-        self.package_tab = PackageTabWidget(
-            self.context_model, versions_tab=True)
+        self.package_tab = PackageTabWidget(self.context_model, versions_tab=True)
 
         context_splitter = ConfiguredSplitter(app.config, "layout/splitter/main")
         context_splitter.setOrientation(QtCore.Qt.Vertical)
@@ -186,7 +208,8 @@ class ContextManagerWidget(QtGui.QWidget, ContextViewMixin):
         self.diff_menu.aboutToShow.connect(self._aboutToShowDiffMenu)
         self.revert_menu.aboutToShow.connect(self._aboutToShowRevertMenu)
         self.show_effective_request_checkbox.stateChanged.connect(
-            self._effectiveRequestStateChanged)
+            self._effectiveRequestStateChanged
+        )
 
         self.refresh()
         self._updateToolsCount()
@@ -211,8 +234,9 @@ class ContextManagerWidget(QtGui.QWidget, ContextViewMixin):
             "The context has been modified.",
             "Your changes will be lost. Are you sure?",
             QtGui.QMessageBox.Ok,
-            QtGui.QMessageBox.Cancel)
-        return (ret == QtGui.QMessageBox.Ok)
+            QtGui.QMessageBox.Cancel,
+        )
+        return ret == QtGui.QMessageBox.Ok
 
     def _revert_to_last_resolve(self):
         assert self.context_model.can_revert()
@@ -245,7 +269,8 @@ class ContextManagerWidget(QtGui.QWidget, ContextViewMixin):
 
     def _diff_with_other(self):
         filepath = QtGui.QFileDialog.getOpenFileName(
-            self, "Open Context", filter="Context files (*.rxt)")
+            self, "Open Context", filter="Context files (*.rxt)"
+        )
         if filepath:
             self._diff_with_file(str(filepath))
 
@@ -266,17 +291,21 @@ class ContextManagerWidget(QtGui.QWidget, ContextViewMixin):
         stale = self.context_model.is_stale()
         self.diff_action.setEnabled(not stale)
         self.diff_to_other_action.setEnabled(not stale)
-        self.diff_to_disk_action.setEnabled(bool(self.context_model.filepath())
-                                            and not stale)
+        self.diff_to_disk_action.setEnabled(
+            bool(self.context_model.filepath()) and not stale
+        )
 
     def _aboutToShowRevertMenu(self):
         model = self.context_model
         self.revert_action.setEnabled(model.can_revert())
-        self.revert_disk_action.setEnabled(bool(model.filepath())
-                                           and model.is_modified())
-        self.revert_diff_action.setEnabled(self.context_table.diff_mode
-                                           and self.context_table.diff_from_source
-                                           and not model.is_stale())
+        self.revert_disk_action.setEnabled(
+            bool(model.filepath()) and model.is_modified()
+        )
+        self.revert_diff_action.setEnabled(
+            self.context_table.diff_mode
+            and self.context_table.diff_from_source
+            and not model.is_stale()
+        )
 
     def _contextChanged(self, flags=0):
         stale = self.context_model.is_stale()
@@ -295,7 +324,7 @@ class ContextManagerWidget(QtGui.QWidget, ContextViewMixin):
         tab_text = "context*" if stale else "context"
         self.tab.setTabText(0, tab_text)
 
-        context_changed = (flags & ContextModel.CONTEXT_CHANGED)
+        context_changed = flags & ContextModel.CONTEXT_CHANGED
 
         if context_changed:
             if is_context and context.requested_timestamp:
@@ -307,8 +336,9 @@ class ContextManagerWidget(QtGui.QWidget, ContextViewMixin):
             else:
                 self.time_lock_tbtn_action.setVisible(False)
 
-        settings_modified = ((flags & ContextModel.PACKAGES_PATH_CHANGED)
-                             and not context_changed)
+        settings_modified = (
+            flags & ContextModel.PACKAGES_PATH_CHANGED
+        ) and not context_changed
         label = "settings*" if settings_modified else "settings"
         self.tab.setTabText(1, label)
 

@@ -1,3 +1,4 @@
+from builtins import str
 from rezgui.qt import QtCore, QtGui
 from rez.packages_ import Package
 
@@ -51,8 +52,11 @@ class VariantsList(QtGui.QTableWidget):
         self.variant = variant
 
     def selectionCommand(self, index, event=None):
-        return QtGui.QItemSelectionModel.ClearAndSelect if self.allow_selection \
+        return (
+            QtGui.QItemSelectionModel.ClearAndSelect
+            if self.allow_selection
             else QtGui.QItemSelectionModel.NoUpdate
+        )
 
 
 # Copyright 2013-2016 Allan Johns.

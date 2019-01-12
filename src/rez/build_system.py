@@ -1,3 +1,6 @@
+from builtins import map
+from builtins import str
+from builtins import object
 import os.path
 
 from rez.build_process_ import BuildType
@@ -8,7 +11,8 @@ from rez.packages_ import get_developer_package
 def get_buildsys_types():
     """Returns the available build system implementations - cmake, make etc."""
     from rez.plugin_managers import plugin_manager
-    return plugin_manager.get_plugins('build_system')
+
+    return plugin_manager.get_plugins("build_system")
 
 
 def get_valid_build_systems(working_dir, package=None):
@@ -42,13 +46,13 @@ def get_valid_build_systems(working_dir, package=None):
 
         # package explicitly specifies build system
         if buildsys_name:
-            cls = plugin_manager.get_plugin_class('build_system', buildsys_name)
+            cls = plugin_manager.get_plugin_class("build_system", buildsys_name)
             return [cls]
 
     # detect valid build systems
     clss = []
     for buildsys_name in get_buildsys_types():
-        cls = plugin_manager.get_plugin_class('build_system', buildsys_name)
+        cls = plugin_manager.get_plugin_class("build_system", buildsys_name)
         if cls.is_valid_root(working_dir, package=package):
             clss.append(cls)
 
@@ -62,9 +66,16 @@ def get_valid_build_systems(working_dir, package=None):
     return clss
 
 
-def create_build_system(working_dir, buildsys_type=None, package=None, opts=None,
-                        write_build_scripts=False, verbose=False,
-                        build_args=[], child_build_args=[]):
+def create_build_system(
+    working_dir,
+    buildsys_type=None,
+    package=None,
+    opts=None,
+    write_build_scripts=False,
+    verbose=False,
+    build_args=[],
+    child_build_args=[],
+):
     """Return a new build system that can build the source in working_dir."""
     from rez.plugin_managers import plugin_manager
 
@@ -74,38 +85,54 @@ def create_build_system(working_dir, buildsys_type=None, package=None, opts=None
 
         if not clss:
             raise BuildSystemError(
-                "No build system is associated with the path %s" % working_dir)
+                "No build system is associated with the path %s" % working_dir
+            )
 
         if len(clss) != 1:
-            s = ', '.join(x.name() for x in clss)
-            raise BuildSystemError(("Source could be built with one of: %s; "
-                                   "Please specify a build system") % s)
+            s = ", ".join(x.name() for x in clss)
+            raise BuildSystemError(
+                (
+                    "Source could be built with one of: %s; "
+                    "Please specify a build system"
+                )
+                % s
+            )
 
         buildsys_type = iter(clss).next().name()
 
     # create instance of build system
-    cls_ = plugin_manager.get_plugin_class('build_system', buildsys_type)
+    cls_ = plugin_manager.get_plugin_class("build_system", buildsys_type)
 
-    return cls_(working_dir,
-                opts=opts,
-                package=package,
-                write_build_scripts=write_build_scripts,
-                verbose=verbose,
-                build_args=build_args,
-                child_build_args=child_build_args)
+    return cls_(
+        working_dir,
+        opts=opts,
+        package=package,
+        write_build_scripts=write_build_scripts,
+        verbose=verbose,
+        build_args=build_args,
+        child_build_args=child_build_args,
+    )
 
 
 class BuildSystem(object):
     """A build system, such as cmake, make, Scons etc.
     """
+
     @classmethod
     def name(cls):
         """Return the name of the build system, eg 'make'."""
         raise NotImplementedError
 
-    def __init__(self, working_dir, opts=None, package=None,
-                 write_build_scripts=False, verbose=False, build_args=[],
-                 child_build_args=[]):
+    def __init__(
+        self,
+        working_dir,
+        opts=None,
+        package=None,
+        write_build_scripts=False,
+        verbose=False,
+        build_args=[],
+        child_build_args=[],
+    ):
         """Create a build system instance.
 
         Args:
@@ -126,7 +153,8 @@ class BuildSystem(object):
         if not self.is_valid_root(working_dir):
             raise BuildSystemError(
                 "Not a valid working directory for build system %r: %s"
-                % (self.name(), working_dir))
+                % (self.name(), working_dir)
+            )
 
         self.package = package or get_developer_package(working_dir)
 
@@ -164,8 +192,15 @@ class BuildSystem(object):
         """
         pass
 
-    def build(self, context, variant, build_path, install_path, install=False,
-              build_type=BuildType.local):
+    def build(
+        self,
+        context,
+        variant,
+        build_path,
+        install_path,
+        install=False,
+        build_type=BuildType.local,
+    ):
         """Implement this method to perform the actual build.
 
         Args:
@@ -195,61 +230,74 @@ class BuildSystem(object):
         raise NotImplementedError
 
     @classmethod
-    def get_standard_vars(cls, context, variant, build_type, install,
-                          build_path, install_path=None):
+    def get_standard_vars(
+        cls, context, variant, build_type, install, build_path, install_path=None
+    ):
         """Returns a standard set of environment variables that can be set
         for the build system to use
         """
         from rez.config import config
 
         package = variant.parent
-        variant_requires = map(str, variant.variant_requires)
+        variant_requires = list(map(str, variant.variant_requires))
 
         vars_ = {
-            'REZ_BUILD_ENV': 1,
-            'REZ_BUILD_PATH': build_path,
-            'REZ_BUILD_THREAD_COUNT': package.config.build_thread_count,
-            'REZ_BUILD_VARIANT_INDEX': variant.index or 0,
-            'REZ_BUILD_VARIANT_REQUIRES': ' '.join(variant_requires),
-            'REZ_BUILD_PROJECT_VERSION': str(package.version),
-            'REZ_BUILD_PROJECT_NAME': package.name,
-            'REZ_BUILD_PROJECT_DESCRIPTION': (package.description or '').strip(),
-            'REZ_BUILD_PROJECT_FILE': package.filepath,
-            'REZ_BUILD_SOURCE_PATH': os.path.dirname(package.filepath),
-            'REZ_BUILD_REQUIRES': ' '.join(
+            "REZ_BUILD_ENV": 1,
+            "REZ_BUILD_PATH": build_path,
+            "REZ_BUILD_THREAD_COUNT": package.config.build_thread_count,
+            "REZ_BUILD_VARIANT_INDEX": variant.index or 0,
+            "REZ_BUILD_VARIANT_REQUIRES": " ".join(variant_requires),
+            "REZ_BUILD_PROJECT_VERSION": str(package.version),
+            "REZ_BUILD_PROJECT_NAME": package.name,
+            "REZ_BUILD_PROJECT_DESCRIPTION": (package.description or "").strip(),
+            "REZ_BUILD_PROJECT_FILE": package.filepath,
+            "REZ_BUILD_SOURCE_PATH": os.path.dirname(package.filepath),
+            "REZ_BUILD_REQUIRES": " ".join(
                 str(x) for x in context.requested_packages(True)
             ),
-            'REZ_BUILD_REQUIRES_UNVERSIONED': ' '.join(
+            "REZ_BUILD_REQUIRES_UNVERSIONED": " ".join(
                 x.name for x in context.requested_packages(True)
             ),
-            'REZ_BUILD_TYPE': build_type.name,
-            'REZ_BUILD_INSTALL': 1 if install else 0,
+            "REZ_BUILD_TYPE": build_type.name,
+            "REZ_BUILD_INSTALL": 1 if install else 0,
         }
 
         if install_path:
-            vars_['REZ_BUILD_INSTALL_PATH'] = install_path
+            vars_["REZ_BUILD_INSTALL_PATH"] = install_path
 
-        if config.rez_1_environment_variables and \
-                not config.disable_rez_1_compatibility and \
-                build_type == BuildType.central:
-            vars_['REZ_IN_REZ_RELEASE'] = 1
+        if (
+            config.rez_1_environment_variables
+            and not config.disable_rez_1_compatibility
+            and build_type == BuildType.central
+        ):
+            vars_["REZ_IN_REZ_RELEASE"] = 1
 
         return vars_
 
     @classmethod
-    def set_standard_vars(cls, executor, context, variant, build_type,
-                          install, build_path, install_path=None):
+    def set_standard_vars(
+        cls,
+        executor,
+        context,
+        variant,
+        build_type,
+        install,
+        build_path,
+        install_path=None,
+    ):
         """Sets a standard set of environment variables for the build system to
         use
         """
-        vars = cls.get_standard_vars(context=context,
-                                     variant=variant,
-                                     build_type=build_type,
-                                     install=install,
-                                     build_path=build_path,
-                                     install_path=install_path)
+        vars = cls.get_standard_vars(
+            context=context,
+            variant=variant,
+            build_type=build_type,
+            install=install,
+            build_path=build_path,
+            install_path=install_path,
+        )
 
-        for var, value in vars.iteritems():
+        for var, value in vars.items():
             executor.env[var] = value
 
 

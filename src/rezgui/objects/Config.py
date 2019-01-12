@@ -1,3 +1,5 @@
+from builtins import str
+from builtins import range
 from rezgui.qt import QtCore, QtGui
 from functools import partial
 
@@ -7,8 +9,10 @@ class Config(QtCore.QSettings):
 
     Methods are also provided for easily attaching widgets to settings.
     """
-    def __init__(self, default_settings, organization=None, application=None,
-                 parent=None):
+
+    def __init__(
+        self, default_settings, organization=None, application=None, parent=None
+    ):
         super(Config, self).__init__(organization, application, parent)
         self.default_settings = default_settings
 
@@ -81,7 +85,7 @@ class Config(QtCore.QSettings):
     @classmethod
     def _convert_value(cls, value, type_):
         if type_ is bool:
-            return (str(value).lower() == "true")
+            return str(value).lower() == "true"
         else:
             return type_(value)
 
@@ -91,8 +95,7 @@ class Config(QtCore.QSettings):
 
         value = self.value(key)
         widget.setCheckState(QtCore.Qt.Checked if value else QtCore.Qt.Unchecked)
-        widget.stateChanged.connect(
-            partial(self._checkbox_stateChanged, widget, key))
+        widget.stateChanged.connect(partial(self._checkbox_stateChanged, widget, key))
 
     def _checkbox_stateChanged(self, widget, key):
         value = widget.isChecked()
@@ -107,9 +110,11 @@ class Config(QtCore.QSettings):
             widget.setCurrentIndex(index)
 
         widget.currentIndexChanged.connect(
-            partial(self._combobox_currentIndexChanged, widget, key))
+            partial(self._combobox_currentIndexChanged, widget, key)
+        )
         widget.editTextChanged.connect(
-            partial(self._combobox_editTextChanged, widget, key))
+            partial(self._combobox_editTextChanged, widget, key)
+        )
 
     def _combobox_currentIndexChanged(self, widget, key, index):
         value = widget.itemText(index)
@@ -119,7 +124,7 @@ class Config(QtCore.QSettings):
         self.setValue(key, txt)
 
     def _default_value(self, key):
-        keys = key.lstrip('/').split('/')
+        keys = key.lstrip("/").split("/")
         value = self.default_settings
         for k in keys:
             try:

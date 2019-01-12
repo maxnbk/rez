@@ -1,3 +1,6 @@
+from builtins import str
+from builtins import map
+from builtins import object
 from rez.solver import Solver, SolverStatus, PackageVariantCache
 from rez.package_repository import package_repository_manager
 from rez.packages_ import get_variant, get_last_release_time
@@ -5,7 +8,7 @@ from rez.package_filter import PackageFilterList, TimestampRule
 from rez.utils.memcached import memcached_client, pool_memcached_connections
 from rez.utils.logging_ import log_duration
 from rez.config import config
-from rez.vendor.enum import Enum
+from enum import Enum
 from contextlib import contextmanager
 from hashlib import sha1
 import os
@@ -16,10 +19,10 @@ class ResolverStatus(Enum):
     also includes a human readable description of what the state represents.
     """
 
-    pending = ("The resolve has not yet started.", )
-    solved = ("The resolve has completed successfully.", )
-    failed = ("The resolve is not possible.", )
-    aborted = ("The resolve was stopped by the user (via callback).", )
+    pending = ("The resolve has not yet started.",)
+    solved = ("The resolve has completed successfully.",)
+    failed = ("The resolve is not possible.",)
+    aborted = ("The resolve was stopped by the user (via callback).",)
 
     def __init__(self, description):
         self.description = description
@@ -31,10 +34,24 @@ class Resolver(object):
     The Resolver uses a combination of Solver(s) and cache(s) to resolve a
     package request as quickly as possible.
     """
-    def __init__(self, context, package_requests, package_paths, package_filter=None,
-                 package_orderers=None, timestamp=0, callback=None, building=False,
-                 verbosity=False, buf=None, package_load_callback=None, caching=True,
-                 suppress_passive=False, print_stats=False):
+
+    def __init__(
+        self,
+        context,
+        package_requests,
+        package_paths,
+        package_filter=None,
+        package_orderers=None,
+        timestamp=0,
+        callback=None,
+        building=False,
+        verbosity=False,
+        buf=None,
+        package_load_callback=None,
+        caching=True,
+        suppress_passive=False,
+        print_stats=False,
+    ):
         """Create a Resolver.
 
         Args:
@@ -68,17 +85,17 @@ class Resolver(object):
 
         # store hash of package orderers. This is used in the memcached key
         if package_orderers:
-            sha1s = ''.join(x.sha1 for x in package_orderers)
+            sha1s = "".join(x.sha1 for x in package_orderers)
             self.package_orderers_hash = sha1(sha1s).hexdigest()
         else:
-            self.package_orderers_hash = ''
+            self.package_orderers_hash = ""
 
         # store hash of pre-timestamp-combined package filter. This is used in
         # the memcached key
         if package_filter:
             self.package_filter_hash = package_filter.sha1
         else:
-            self.package_filter_hash = ''
+            self.package_filter_hash = ""
 
         # combine timestamp and package filter into single filter
         if self.timestamp:
@@ -96,10 +113,12 @@ class Resolver(object):
         self.failure_description = None
         self.graph_ = None
         self.from_cache = False
-        self.memcached_servers = config.memcached_uri if config.resolve_caching else None
+        self.memcached_servers = (
+            config.memcached_uri if config.resolve_caching else None
+        )
 
         self.solve_time = 0.0  # time spent solving
-        self.load_time = 0.0   # time spent loading package resources
+        self.load_time = 0.0  # time spent loading package resources
 
         self._print = config.debug_printer("resolve_memcache")
 
@@ -238,9 +257,11 @@ class Resolver(object):
                         # if, ie a package file was deleted on disk, then
                         # an IOError or OSError will be raised when we try to
                         # read from it - assume that the packages have changed!
-                        self._print("Error loading %r (assuming cached state "
-                                    "changed): %s", variant.qualified_name,
-                                    e)
+                        self._print(
+                            "Error loading %r (assuming cached state " "changed): %s",
+                            variant.qualified_name,
+                            e,
+                        )
                         return True
                     variant_states[variant] = new_state
 
@@ -251,7 +272,7 @@ class Resolver(object):
 
         def _releases_since_solve(key, data):
             _, release_times_dict, _ = data
-            for package_name, release_time in release_times_dict.iteritems():
+            for package_name, release_time in release_times_dict.items():
                 time_ = last_release_times.get(package_name)
                 if time_ is None:
                     time_ = get_last_release_time(package_name, self.package_paths)
@@ -261,17 +282,27 @@ class Resolver(object):
                     self._print(
                         "A newer version of %r (%d) has been released since the "
                         "resolve was cached (latest release in cache was %d) "
-                        "(entry: %r)", package_name, time_, release_time, key)
+                        "(entry: %r)",
+                        package_name,
+                        time_,
+                        release_time,
+                        key,
+                    )
                     return True
             return False
 
         def _timestamp_is_earlier(key, data):
             _, release_times_dict, _ = data
-            for package_name, release_time in release_times_dict.iteritems():
+            for package_name, release_time in release_times_dict.items():
                 if self.timestamp < release_time:
-                    self._print("Resolve timestamp (%d) is earlier than %r in "
-                                "solve (%d) (entry: %r)", self.timestamp,
-                                package_name, release_time, key)
+                    self._print(
+                        "Resolve timestamp (%d) is earlier than %r in "
+                        "solve (%d) (entry: %r)",
+                        self.timestamp,
+                        package_name,
+                        release_time,
+                        key,
+                    )
                     return True
             return False
 
@@ -303,8 +334,9 @@ class Resolver(object):
 
     @contextmanager
     def _memcached_client(self):
-        with memcached_client(self.memcached_servers,
-                              debug=config.debug_memcache) as client:
+        with memcached_client(
+            self.memcached_servers, debug=config.debug_memcache
+        ) as client:
             yield client
 
     def _set_cached_solve(self, solver_dict):
@@ -335,9 +367,11 @@ class Resolver(object):
 
             # don't cache if a release time isn't known
             if time_ == 0:
-                self._print("Did not send memcache key: a repository could "
-                            "not provide a most recent release time for %r",
-                            variant.name)
+                self._print(
+                    "Did not send memcache key: a repository could "
+                    "not provide a most recent release time for %r",
+                    variant.name,
+                )
                 return
 
             if self.timestamp and self.timestamp < time_:
@@ -345,10 +379,11 @@ class Resolver(object):
 
             release_times_dict[variant.name] = time_
             repo = variant.resource._repository
-            variant_states_dict[variant.name] = \
-                repo.get_variant_state_handle(variant.resource)
+            variant_states_dict[variant.name] = repo.get_variant_state_handle(
+                variant.resource
+            )
 
-        timestamped = (self.timestamp and releases_since_solve)
+        timestamped = self.timestamp and releases_since_solve
         key = self._memcache_key(timestamped=timestamped)
         data = (solver_dict, release_times_dict, variant_states_dict)
         with self._memcached_client() as client:
@@ -363,13 +398,15 @@ class Resolver(object):
             repo = package_repository_manager.get_repository(path)
             repo_ids.append(repo.uid)
 
-        t = ["resolve",
-             request,
-             tuple(repo_ids),
-             self.package_filter_hash,
-             self.package_orderers_hash,
-             self.building,
-             config.prune_failed_graph]
+        t = [
+            "resolve",
+            request,
+            tuple(repo_ids),
+            self.package_filter_hash,
+            self.package_orderers_hash,
+            self.building,
+            config.prune_failed_graph,
+        ]
 
         if timestamped and self.timestamp:
             t.append(self.timestamp)
@@ -377,19 +414,21 @@ class Resolver(object):
         return str(tuple(t))
 
     def _solve(self):
-        solver = Solver(package_requests=self.package_requests,
-                        package_paths=self.package_paths,
-                        context=self.context,
-                        package_filter=self.package_filter,
-                        package_orderers=self.package_orderers,
-                        callback=self.callback,
-                        package_load_callback=self.package_load_callback,
-                        building=self.building,
-                        verbosity=self.verbosity,
-                        prune_unfailed=config.prune_failed_graph,
-                        buf=self.buf,
-                        suppress_passive=self.suppress_passive,
-                        print_stats=self.print_stats)
+        solver = Solver(
+            package_requests=self.package_requests,
+            package_paths=self.package_paths,
+            context=self.context,
+            package_filter=self.package_filter,
+            package_orderers=self.package_orderers,
+            callback=self.callback,
+            package_load_callback=self.package_load_callback,
+            building=self.building,
+            verbosity=self.verbosity,
+            prune_unfailed=config.prune_failed_graph,
+            buf=self.buf,
+            suppress_passive=self.suppress_passive,
+            print_stats=self.print_stats,
+        )
         solver.solve()
 
         return solver
@@ -438,7 +477,8 @@ class Resolver(object):
             solve_time=solve_time,
             load_time=load_time,
             failure_description=failure_description,
-            variant_handles=variant_handles)
+            variant_handles=variant_handles,
+        )
 
 
 # Copyright 2013-2016 Allan Johns.

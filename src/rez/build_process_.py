@@ -1,13 +1,24 @@
+from __future__ import print_function
+from builtins import map
+from builtins import str
+from builtins import range
+from builtins import object
 from rez.packages_ import iter_packages
-from rez.exceptions import BuildProcessError, BuildContextResolveError, \
-    ReleaseHookCancellingError, RezError, ReleaseError, BuildError, \
-    ReleaseVCSError
+from rez.exceptions import (
+    BuildProcessError,
+    BuildContextResolveError,
+    ReleaseHookCancellingError,
+    RezError,
+    ReleaseError,
+    BuildError,
+    ReleaseVCSError,
+)
 from rez.utils.logging_ import print_warning
 from rez.resolved_context import ResolvedContext
 from rez.release_hook import create_release_hooks
 from rez.resolver import ResolverStatus
 from rez.config import config
-from rez.vendor.enum import Enum
+from enum import Enum
 from contextlib import contextmanager
 from pipes import quote
 import getpass
@@ -20,33 +31,47 @@ debug_print = config.debug_printer("package_release")
 def get_build_process_types():
     """Returns the available build process implementations."""
     from rez.plugin_managers import plugin_manager
-    return plugin_manager.get_plugins('build_process')
+
+    return plugin_manager.get_plugins("build_process")
 
 
-def create_build_process(process_type, working_dir, build_system, package=None,
-                         vcs=None, ensure_latest=True, skip_repo_errors=False,
-                         ignore_existing_tag=False, verbose=False, quiet=False):
+def create_build_process(
+    process_type,
+    working_dir,
+    build_system,
+    package=None,
+    vcs=None,
+    ensure_latest=True,
+    skip_repo_errors=False,
+    ignore_existing_tag=False,
+    verbose=False,
+    quiet=False,
+):
     """Create a `BuildProcess` instance."""
     from rez.plugin_managers import plugin_manager
+
     process_types = get_build_process_types()
     if process_type not in process_types:
         raise BuildProcessError("Unknown build process: %r" % process_type)
 
-    cls = plugin_manager.get_plugin_class('build_process', process_type)
+    cls = plugin_manager.get_plugin_class("build_process", process_type)
 
-    return cls(working_dir,  # ignored (deprecated)
-               build_system,
-               package=package,  # ignored (deprecated)
-               vcs=vcs,
-               ensure_latest=ensure_latest,
-               skip_repo_errors=skip_repo_errors,
-               ignore_existing_tag=ignore_existing_tag,
-               verbose=verbose,
-               quiet=quiet)
+    return cls(
+        working_dir,  # ignored (deprecated)
+        build_system,
+        package=package,  # ignored (deprecated)
+        vcs=vcs,
+        ensure_latest=ensure_latest,
+        skip_repo_errors=skip_repo_errors,
+        ignore_existing_tag=ignore_existing_tag,
+        verbose=verbose,
+        quiet=quiet,
+    )
 
 
 class BuildType(Enum):
     """ Enum to represent the type of build."""
+
     local = 0
     central = 1
 
@@ -61,13 +86,23 @@ class BuildProcess(object):
     VCS. This is an abstract base class, you should use a BuildProcess
     subclass.
     """
+
     @classmethod
     def name(cls):
         raise NotImplementedError
 
-    def __init__(self, working_dir, build_system, package=None, vcs=None,
-                 ensure_latest=True, skip_repo_errors=False,
-                 ignore_existing_tag=False, verbose=False, quiet=False):
+    def __init__(
+        self,
+        working_dir,
+        build_system,
+        package=None,
+        vcs=None,
+        ensure_latest=True,
+        skip_repo_errors=False,
+        ignore_existing_tag=False,
+        verbose=False,
+        quiet=False,
+    ):
         """Create a BuildProcess.
 
         Args:
@@ -98,10 +133,12 @@ class BuildProcess(object):
 
         if vcs and vcs.pkg_root != self.working_dir:
             raise BuildProcessError(
-                "Build process was instantiated with a mismatched VCS instance")
+                "Build process was instantiated with a mismatched VCS instance"
+            )
 
-        self.build_path = os.path.join(self.working_dir,
-                                       self.package.config.build_directory)
+        self.build_path = os.path.join(
+            self.working_dir, self.package.config.build_directory
+        )
 
     @property
     def package(self):
@@ -164,6 +201,7 @@ class BuildProcess(object):
 class BuildProcessHelper(BuildProcess):
     """A BuildProcess base class with some useful functionality.
     """
+
     @contextmanager
     def repo_operation(self):
         exc_type = ReleaseVCSError if self.skip_repo_errors else None
@@ -175,12 +213,13 @@ class BuildProcessHelper(BuildProcess):
     def visit_variants(self, func, variants=None, **kwargs):
         """Iterate over variants and call a function on each."""
         if variants:
-            present_variants = range(self.package.num_variants)
+            present_variants = list(range(self.package.num_variants))
             invalid_variants = set(variants) - set(present_variants)
             if invalid_variants:
                 raise BuildError(
                     "The package does not contain the variants: %s"
-                    % ", ".join(str(x) for x in sorted(invalid_variants)))
+                    % ", ".join(str(x) for x in sorted(invalid_variants))
+                )
 
         # iterate over variants
         results = []
@@ -190,7 +229,8 @@ class BuildProcessHelper(BuildProcess):
             if variants and variant.index not in variants:
                 self._print_header(
                     "Skipping variant %s (%s)..."
-                    % (variant.index, self._n_of_m(variant)))
+                    % (variant.index, self._n_of_m(variant))
+                )
                 continue
 
             # visit the variant
@@ -211,18 +251,16 @@ class BuildProcessHelper(BuildProcess):
         pkg_repo = package_repository_manager.get_repository(path)
 
         return pkg_repo.get_package_payload_path(
-            package_name=self.package.name,
-            package_version=self.package.version
+            package_name=self.package.name, package_version=self.package.version
         )
 
     def create_build_context(self, variant, build_type, build_path):
         """Create a context to build the variant within."""
-        request = variant.get_requires(build_requires=True,
-                                       private_build_requires=True)
+        request = variant.get_requires(build_requires=True, private_build_requires=True)
 
-        req_strs = map(str, request)
-        quoted_req_strs = map(quote, req_strs)
-        self._print("Resolving build environment: %s", ' '.join(quoted_req_strs))
+        req_strs = list(map(str, request))
+        quoted_req_strs = list(map(quote, req_strs))
+        self._print("Resolving build environment: %s", " ".join(quoted_req_strs))
 
         if build_type == BuildType.local:
             packages_path = self.package.config.packages_path
@@ -237,10 +275,12 @@ class BuildProcessHelper(BuildProcess):
         else:
             package_filter = None
 
-        context = ResolvedContext(request,
-                                  package_paths=packages_path,
-                                  package_filter=package_filter,
-                                  building=True)
+        context = ResolvedContext(
+            request,
+            package_paths=packages_path,
+            package_filter=package_filter,
+            building=True,
+        )
         if self.verbose:
             context.print_info()
 
@@ -277,7 +317,8 @@ class BuildProcessHelper(BuildProcess):
                     raise ReleaseError(
                         "Cannot release - the current package version '%s' is "
                         "already tagged in the repository. Use --ignore-existing-tag "
-                        "to force the release" % self.package.version)
+                        "to force the release" % self.package.version
+                    )
 
         it = iter_packages(self.package.name, paths=[release_path])
         packages = sorted(it, key=lambda x: x.version, reverse=True)
@@ -288,7 +329,8 @@ class BuildProcessHelper(BuildProcess):
             latest_package = packages[0]
             if latest_package.uuid and latest_package.uuid != self.package.uuid:
                 raise ReleaseError(
-                    "Cannot release - the packages are not the same (UUID mismatch)")
+                    "Cannot release - the packages are not the same (UUID mismatch)"
+                )
 
         # test that a newer package version hasn't already been released
         if self.ensure_latest:
@@ -296,7 +338,8 @@ class BuildProcessHelper(BuildProcess):
                 if package.version > self.package.version:
                     raise ReleaseError(
                         "Cannot release - a newer package version already "
-                        "exists (%s)" % package.uri)
+                        "exists (%s)" % package.uri
+                    )
                 else:
                     break
 
@@ -325,20 +368,26 @@ class BuildProcessHelper(BuildProcess):
         hooks = create_release_hooks(hook_names, self.working_dir)
 
         for hook in hooks:
-            debug_print("Running %s hook '%s'...",
-                        hook_event.label, hook.name())
+            debug_print("Running %s hook '%s'...", hook_event.label, hook.name())
             try:
-                func = getattr(hook, hook_event.func_name)
+                func = getattr(hook, hook_event.__name__)
                 func(user=getpass.getuser(), **kwargs)
             except ReleaseHookCancellingError as e:
                 raise ReleaseError(
                     "%s cancelled by %s hook '%s': %s:\n%s"
-                    % (hook_event.noun, hook_event.label, hook.name(),
-                       e.__class__.__name__, str(e)))
+                    % (
+                        hook_event.noun,
+                        hook_event.label,
+                        hook.name(),
+                        e.__class__.__name__,
+                        str(e),
+                    )
+                )
             except RezError:
-                debug_print("Error in %s hook '%s': %s:\n%s"
-                            % (hook_event.label, hook.name(),
-                               e.__class__.__name__, str(e)))
+                debug_print(
+                    "Error in %s hook '%s': %s:\n%s"
+                    % (hook_event.label, hook.name(), e.__class__.__name__, str(e))
+                )
 
     def get_previous_release(self):
         release_path = self.package.config.release_packages_path
@@ -360,8 +409,8 @@ class BuildProcessHelper(BuildProcess):
         changelog = None
         with self.repo_operation():
             changelog = self.vcs.get_changelog(
-                previous_revision,
-                max_revisions=config.max_package_changelog_revisions)
+                previous_revision, max_revisions=config.max_package_changelog_revisions
+            )
 
         return changelog
 
@@ -380,8 +429,7 @@ class BuildProcessHelper(BuildProcess):
             previous_revision = None
 
         if self.vcs is None:
-            return dict(vcs="None",
-                        previous_version=previous_version)
+            return dict(vcs="None", previous_version=previous_version)
 
         revision = None
         with self.repo_operation():
@@ -395,30 +443,32 @@ class BuildProcessHelper(BuildProcess):
         if maxlen and changelog and len(changelog) > maxlen + 3:
             changelog = changelog[:maxlen] + "..."
 
-        return dict(vcs=self.vcs.name(),
-                    revision=revision,
-                    changelog=changelog,
-                    previous_version=previous_version,
-                    previous_revision=previous_revision)
+        return dict(
+            vcs=self.vcs.name(),
+            revision=revision,
+            changelog=changelog,
+            previous_version=previous_version,
+            previous_revision=previous_revision,
+        )
 
     def _print(self, txt, *nargs):
         if self.verbose:
             if nargs:
                 txt = txt % nargs
-            print txt
+            print(txt)
 
     def _print_header(self, txt, n=1):
         if self.quiet:
             return
 
-        self._print('')
+        self._print("")
         if n <= 1:
-            self._print('-' * 80)
+            self._print("-" * 80)
             self._print(txt)
-            self._print('-' * 80)
+            self._print("-" * 80)
         else:
             self._print(txt)
-            self._print('-' * len(txt))
+            self._print("-" * len(txt))
 
     def _n_of_m(self, variant):
         num_variants = max(self.package.num_variants, 1)

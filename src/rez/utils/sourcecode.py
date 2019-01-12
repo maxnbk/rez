@@ -1,3 +1,6 @@
+from builtins import map
+from builtins import str
+from builtins import object
 from rez.utils.formatting import indent
 from rez.utils.data_utils import cached_property
 from rez.utils.logging_ import print_debug
@@ -15,6 +18,7 @@ def early():
     The term 'early' refers to the fact these package attribute are evaluated
     early, ie at build time and before a package is installed.
     """
+
     def decorated(fn):
         setattr(fn, "_early", True)
         return fn
@@ -39,8 +43,9 @@ def late():
         # this is done here rather than in standard schema validation because
         # the latter causes a very obfuscated error message
         if fn.__name__ in package_rex_keys:
-            raise ValueError("Cannot use @late decorator on function '%s'"
-                             % fn.__name__)
+            raise ValueError(
+                "Cannot use @late decorator on function '%s'" % fn.__name__
+            )
 
         setattr(fn, "_late", True)
         _add_decorator(fn, "late")
@@ -54,6 +59,7 @@ def include(module_name, *module_names):
 
     See the 'package_definition_python_path' config setting for more info.
     """
+
     def decorated(fn):
         _add_decorator(fn, "include", nargs=[module_name] + list(module_names))
         return fn
@@ -89,9 +95,9 @@ class SourceCode(object):
     This object is aware of the decorators defined in this sourcefile (such as
     'include') and deals with them appropriately.
     """
-    def __init__(self, source=None, func=None, filepath=None,
-                 eval_as_function=True):
-        self.source = (source or '').rstrip()
+
+    def __init__(self, source=None, func=None, filepath=None, eval_as_function=True):
+        self.source = (source or "").rstrip()
         self.func = func
         self.filepath = filepath
         self.eval_as_function = eval_as_function
@@ -109,7 +115,7 @@ class SourceCode(object):
         other.func = self.func
         other.filepath = self.filepath
         other.eval_as_function = self.eval_as_function
-        other.package =self.package
+        other.package = self.package
         other.funcname = self.funcname
         other.decorators = self.decorators
 
@@ -121,27 +127,28 @@ class SourceCode(object):
 
         # get txt of function body. Skips sig and any decorators. Assumes that
         # only the decorators in this file (such as 'include') are used.
-        loc = getsourcelines(self.func)[0][len(self.decorators) + 1:]
-        code = dedent(''.join(loc))
+        loc = getsourcelines(self.func)[0][len(self.decorators) + 1 :]
+        code = dedent("".join(loc))
 
         # align lines that start with a comment (#)
-        codelines = code.split('\n')
+        codelines = code.split("\n")
         linescount = len(codelines)
 
         for i, line in enumerate(codelines):
-            if line.startswith('#'):
+            if line.startswith("#"):
                 nextindex = i + 1 if i < linescount else i - 1
                 nextline = codelines[nextindex]
 
-                while nextline.startswith('#'):
+                while nextline.startswith("#"):
                     nextline = codelines[nextindex]
-                    nextindex = (nextindex + 1 if nextindex < linescount
-                                 else nextindex - 1)
+                    nextindex = (
+                        nextindex + 1 if nextindex < linescount else nextindex - 1
+                    )
 
                 firstchar = len(nextline) - len(nextline.lstrip())
-                codelines[i] = '%s%s' % (nextline[:firstchar], line)
+                codelines[i] = "%s%s" % (nextline[:firstchar], line)
 
-        code = '\n'.join(codelines).rstrip()
+        code = "\n".join(codelines).rstrip()
         code = dedent(code)
 
         self.source = code
@@ -165,9 +172,7 @@ class SourceCode(object):
             funcname = self.funcname or "_unnamed"
 
             code = indent(self.source)
-            code = ("def %s():\n" % funcname
-                    + code
-                    + "\n_result = %s()" % funcname)
+            code = "def %s():\n" % funcname + code + "\n_result = %s()" % funcname
         else:
             code = "if True:\n" + indent(self.source)
 
@@ -188,12 +193,12 @@ class SourceCode(object):
     @cached_property
     def compiled(self):
         try:
-            pyc = compile(self.evaluated_code, self.sourcename, 'exec')
+            pyc = compile(self.evaluated_code, self.sourcename, "exec")
         except Exception as e:
             stack = traceback.format_exc()
             raise SourceCodeCompileError(
-                "Failed to compile %s:\n%s" % (self.sourcename, stack),
-                short_msg=str(e))
+                "Failed to compile %s:\n%s" % (self.sourcename, stack), short_msg=str(e)
+            )
 
         return pyc
 
@@ -212,18 +217,18 @@ class SourceCode(object):
         pyc = self.compiled
 
         try:
-            exec pyc in globals_
+            exec(pyc, globals_)
         except Exception as e:
             stack = traceback.format_exc()
             raise SourceCodeExecError(
-                "Failed to execute %s:\n%s" % (self.sourcename, stack),
-                short_msg=str(e))
+                "Failed to execute %s:\n%s" % (self.sourcename, stack), short_msg=str(e)
+            )
 
         return globals_.get("_result")
 
     def to_text(self, funcname):
         # don't indent code if already indented
-        if self.source[0] in (' ', '\t'):
+        if self.source[0] in (" ", "\t"):
             source = self.source
         else:
             source = indent(self.source)
@@ -235,7 +240,7 @@ class SourceCode(object):
             name_str = entry.get("name")
             sig = "@%s(%s)" % (name_str, nargs_str)
 
-            txt = sig + '\n' + txt
+            txt = sig + "\n" + txt
 
         return txt
 
@@ -252,7 +257,7 @@ class SourceCode(object):
             "filepath": self.filepath,
             "funcname": self.funcname,
             "eval_as_function": self.eval_as_function,
-            "decorators": self.decorators
+            "decorators": self.decorators,
         }
 
     def __setstate__(self, state):
@@ -266,8 +271,7 @@ class SourceCode(object):
         self.package = None
 
     def __eq__(self, other):
-        return (isinstance(other, SourceCode)
-                and other.source == self.source)
+        return isinstance(other, SourceCode) and other.source == self.source
 
     def __ne__(self, other):
         return not (other == self)
@@ -326,7 +330,7 @@ class IncludeModuleManager(object):
                 return None
 
             filepath = pathnames[0]
-            hash_str = filepath.rsplit('-', 1)[-1].split('.', 1)[0]
+            hash_str = filepath.rsplit("-", 1)[-1].split(".", 1)[0]
 
         module = self.modules.get(hash_str)
         if module is not None:

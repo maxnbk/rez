@@ -1,9 +1,11 @@
+from builtins import range
 from rezgui.qt import QtGui
 
 
 class ConfiguredSplitter(QtGui.QSplitter):
     """A QSplitter that remembers its widget sizes.
     """
+
     def __init__(self, config, config_key, *nargs, **kwargs):
         super(ConfiguredSplitter, self).__init__(*nargs, **kwargs)
         self.config = config

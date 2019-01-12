@@ -1,3 +1,5 @@
+from __future__ import print_function
+from builtins import object
 import sys
 import logging
 from rez.vendor import colorama
@@ -21,7 +23,7 @@ def stream_is_tty(stream):
     Returns:
         bool
     """
-    isatty = getattr(stream, 'isatty', None)
+    isatty = getattr(stream, "isatty", None)
     return isatty and isatty()
 
 
@@ -35,7 +37,7 @@ def critical(str_):
     Returns:
       str: The string styled with the appropriate escape sequences.
     """
-    return _color_level(str_, 'critical')
+    return _color_level(str_, "critical")
 
 
 def error(str_):
@@ -48,7 +50,7 @@ def error(str_):
     Returns:
       str: The string styled with the appropriate escape sequences.
     """
-    return _color_level(str_, 'error')
+    return _color_level(str_, "error")
 
 
 def warning(str_):
@@ -61,7 +63,7 @@ def warning(str_):
     Returns:
       str: The string styled with the appropriate escape sequences.
     """
-    return _color_level(str_, 'warning')
+    return _color_level(str_, "warning")
 
 
 def info(str_):
@@ -74,7 +76,7 @@ def info(str_):
     Returns:
       str: The string styled with the appropriate escape sequences.
     """
-    return _color_level(str_, 'info')
+    return _color_level(str_, "info")
 
 
 def debug(str_):
@@ -87,7 +89,7 @@ def debug(str_):
     Returns:
       str: The string styled with the appropriate escape sequences.
     """
-    return _color_level(str_, 'debug')
+    return _color_level(str_, "debug")
 
 
 def heading(str_):
@@ -100,7 +102,7 @@ def heading(str_):
     Returns:
       str: The string styled with the appropriate escape sequences.
     """
-    return _color_level(str_, 'heading')
+    return _color_level(str_, "heading")
 
 
 def local(str_):
@@ -114,7 +116,7 @@ def local(str_):
     Returns:
       str: The string styled with the appropriate escape sequences.
     """
-    return _color_level(str_, 'local')
+    return _color_level(str_, "local")
 
 
 def implicit(str_):
@@ -128,7 +130,7 @@ def implicit(str_):
     Returns:
       str: The string styled with the appropriate escape sequences.
     """
-    return _color_level(str_, 'implicit')
+    return _color_level(str_, "implicit")
 
 
 def alias(str_):
@@ -141,7 +143,7 @@ def alias(str_):
     Returns:
       str: The string styled with the appropriate escape sequences.
     """
-    return _color_level(str_, 'alias')
+    return _color_level(str_, "alias")
 
 
 def notset(str_):
@@ -210,18 +212,18 @@ def _color(str_, fore_color=None, back_color=None, styles=None):
         styles = []
 
     if fore_color:
-        colored += getattr(colorama.Fore, fore_color.upper(), '')
+        colored += getattr(colorama.Fore, fore_color.upper(), "")
     if back_color:
-        colored += getattr(colorama.Back, back_color.upper(), '')
+        colored += getattr(colorama.Back, back_color.upper(), "")
     for style in styles:
-        colored += getattr(colorama.Style, style.upper(), '')
+        colored += getattr(colorama.Style, style.upper(), "")
 
     return colored + str_ + colorama.Style.RESET_ALL
 
 
 def _get_style_from_config(key):
-    fore_color = config.get("%s_fore" % key, '')
-    back_color = config.get("%s_back" % key, '')
+    fore_color = config.get("%s_fore" % key, "")
+    back_color = config.get("%s_back" % key, "")
     styles = config.get("%s_styles" % key, None)
     return fore_color, back_color, styles
 
@@ -239,14 +241,8 @@ class ColorizedStreamHandler(logging.StreamHandler):
     .. _Colorama:
         https://pypi.python.org/pypi/colorama
     """
-    STYLES = {
-        50: critical,
-        40: error,
-        30: warning,
-        20: info,
-        10: debug,
-        0:  notset,
-    }
+
+    STYLES = {50: critical, 40: error, 30: warning, 20: info, 10: debug, 0: notset}
 
     @property
     def is_tty(self):
@@ -281,7 +277,7 @@ class ColorizedStreamHandler(logging.StreamHandler):
                 style = self._get_style_function_for_level(record.levelno)
                 self.stream.write(style(message))
 
-            self.stream.write(getattr(self, 'terminator', '\n'))
+            self.stream.write(getattr(self, "terminator", "\n"))
             self.flush()
 
         except (KeyboardInterrupt, SystemExit):
@@ -293,11 +289,12 @@ class ColorizedStreamHandler(logging.StreamHandler):
 class Printer(object):
     def __init__(self, buf=sys.stdout):
         self.buf = buf
-        self.colorize = (config.get("color_enabled", False) == "force") \
-                        or stream_is_tty(buf)
+        self.colorize = (
+            config.get("color_enabled", False) == "force"
+        ) or stream_is_tty(buf)
 
-    def __call__(self, msg='', style=None):
-        print >> self.buf, self.get(msg, style)
+    def __call__(self, msg="", style=None):
+        print(self.get(msg, style), file=self.buf)
 
     def get(self, msg, style=None):
         if style and self.colorize:

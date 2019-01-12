@@ -1,20 +1,21 @@
+from builtins import object
 from rez.utils.logging_ import print_warning, print_debug
 from rez.packages_ import get_developer_package
-from rez.vendor.enum import Enum
+from enum import Enum
 
 
 def get_release_hook_types():
     """Returns the available release hook implementations."""
     from rez.plugin_managers import plugin_manager
-    return plugin_manager.get_plugins('release_hook')
+
+    return plugin_manager.get_plugins("release_hook")
 
 
 def create_release_hook(name, source_path):
     """Return a new release hook of the given type."""
     from rez.plugin_managers import plugin_manager
-    return plugin_manager.create_instance('release_hook',
-                                          name,
-                                          source_path=source_path)
+
+    return plugin_manager.create_instance("release_hook", name, source_path=source_path)
 
 
 def create_release_hooks(names, source_path):
@@ -25,6 +26,7 @@ def create_release_hooks(names, source_path):
             hooks.append(hook)
         except Exception:
             import traceback
+
             print_warning("Release hook '%s' is not available." % name)
             print_debug(traceback.format_exc())
     return hooks
@@ -37,6 +39,7 @@ class ReleaseHook(object):
     behaviour during parts of the release process. For example, the builtin
     'email' hook sends a post-release email to a configured address.
     """
+
     @classmethod
     def name(cls):
         """ Return name of source retriever, eg 'git'"""
@@ -53,9 +56,17 @@ class ReleaseHook(object):
         self.type_settings = self.package.config.plugins.release_hook
         self.settings = self.type_settings.get(self.name())
 
-    def pre_build(self, user, install_path, variants=None, release_message=None,
-                  changelog=None, previous_version=None,
-                  previous_revision=None, **kwargs):
+    def pre_build(
+        self,
+        user,
+        install_path,
+        variants=None,
+        release_message=None,
+        changelog=None,
+        previous_version=None,
+        previous_revision=None,
+        **kwargs
+    ):
         """Pre-build hook.
 
         Args:
@@ -77,9 +88,17 @@ class ReleaseHook(object):
         """
         pass
 
-    def pre_release(self, user, install_path, variants=None,
-                    release_message=None, changelog=None, previous_version=None,
-                    previous_revision=None, **kwargs):
+    def pre_release(
+        self,
+        user,
+        install_path,
+        variants=None,
+        release_message=None,
+        changelog=None,
+        previous_version=None,
+        previous_revision=None,
+        **kwargs
+    ):
         """Pre-release hook.
 
         This is called before any package variants are released.
@@ -103,9 +122,17 @@ class ReleaseHook(object):
         """
         pass
 
-    def post_release(self, user, install_path, variants, release_message=None,
-                     changelog=None, previous_version=None,
-                     previous_revision=None, **kwargs):
+    def post_release(
+        self,
+        user,
+        install_path,
+        variants,
+        release_message=None,
+        changelog=None,
+        previous_version=None,
+        previous_revision=None,
+        **kwargs
+    ):
         """Post-release hook.
 
         This is called after all package variants have been released.
@@ -127,6 +154,7 @@ class ReleaseHook(object):
 
 class ReleaseHookEvent(Enum):
     """Enum to help manage release hooks."""
+
     pre_build = ("pre-build", "build", "pre_build")
     pre_release = ("pre-release", "release", "pre_release")
     post_release = ("post-release", "release", "post_release")
@@ -134,7 +162,7 @@ class ReleaseHookEvent(Enum):
     def __init__(self, label, noun, func_name):
         self.label = label
         self.noun = noun
-        self.func_name = func_name
+        self.__name__ = func_name
 
 
 # Copyright 2013-2016 Allan Johns.

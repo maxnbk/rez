@@ -15,7 +15,7 @@ def set_authors(data):
     if p.returncode:
         return
 
-    authors = out.strip().split('\n')
+    authors = out.strip().split("\n")
     authors = [x.strip() for x in authors]
 
     data["authors"] = authors

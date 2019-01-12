@@ -1,59 +1,85 @@
-'''
+"""
 Copy a package from one repository to another.
-'''
+"""
+from __future__ import print_function
 
 
 def setup_parser(parser, completions=False):
     parser.add_argument(
-        "--dest-path", metavar="PATH",
+        "--dest-path",
+        metavar="PATH",
         help="package repository destination path. Defaults to the same "
         "repository as the given package (this is only supported for renaming "
-        "and reversioning).")
+        "and reversioning).",
+    )
     parser.add_argument(
-        "--paths", metavar="PATHS",
-        help="set package search path (ignores --no-local if set)")
+        "--paths",
+        metavar="PATHS",
+        help="set package search path (ignores --no-local if set)",
+    )
     parser.add_argument(
-        "--nl", "--no-local", dest="no_local", action="store_true",
-        help="don't search local packages")
+        "--nl",
+        "--no-local",
+        dest="no_local",
+        action="store_true",
+        help="don't search local packages",
+    )
 
     parser.add_argument(
-        "--reversion", metavar="VERSION",
-        help="copy to a different package version")
+        "--reversion", metavar="VERSION", help="copy to a different package version"
+    )
     parser.add_argument(
-        "--rename", metavar="NAME",
-        help="copy to a different package name")
+        "--rename", metavar="NAME", help="copy to a different package name"
+    )
     parser.add_argument(
-        "-o", "--overwrite", action="store_true",
-        help="overwrite existing package/variants")
+        "-o",
+        "--overwrite",
+        action="store_true",
+        help="overwrite existing package/variants",
+    )
     parser.add_argument(
-        "-s", "--shallow", action="store_true",
-        help="perform a shallow copy (symlinks topmost directories)")
+        "-s",
+        "--shallow",
+        action="store_true",
+        help="perform a shallow copy (symlinks topmost directories)",
+    )
     parser.add_argument(
-        "--follow-symlinks", action="store_true",
+        "--follow-symlinks",
+        action="store_true",
         help="follow symlinks when copying package payload, rather than copying "
-        "the symlinks themselves.")
+        "the symlinks themselves.",
+    )
     parser.add_argument(
-        "-k", "--keep-timestamp", action="store_true",
+        "-k",
+        "--keep-timestamp",
+        action="store_true",
         help="keep timestamp of source package. Note that this is ignored if "
-        "you're copying variant(s) into an existing package.")
+        "you're copying variant(s) into an existing package.",
+    )
     parser.add_argument(
-        "-f", "--force", action="store_true",
-        help="copy package even if it isn't relocatable (use at your own risk)")
+        "-f",
+        "--force",
+        action="store_true",
+        help="copy package even if it isn't relocatable (use at your own risk)",
+    )
     parser.add_argument(
-        "--allow-empty", action="store_true",
-        help="allow package copy into empty target repository")
+        "--allow-empty",
+        action="store_true",
+        help="allow package copy into empty target repository",
+    )
+    parser.add_argument("--dry-run", action="store_true", help="dry run mode")
     parser.add_argument(
-        "--dry-run", action="store_true",
-        help="dry run mode")
-    parser.add_argument(
-        "--variants", nargs='+', type=int, metavar="INDEX",
-        help="select variants to copy (zero-indexed).")
-    pkg_action = parser.add_argument(
-        "PKG",
-        help="package to copy")
+        "--variants",
+        nargs="+",
+        type=int,
+        metavar="INDEX",
+        help="select variants to copy (zero-indexed).",
+    )
+    pkg_action = parser.add_argument("PKG", help="package to copy")
 
     if completions:
         from rez.cli._complete_util import PackageCompleter
+
         pkg_action.completer = PackageCompleter
 
 
@@ -68,8 +94,9 @@ def command(opts, parser, extra_arg_groups=None):
     from rez.packages_ import iter_packages
 
     if (not opts.dest_path) and not (opts.rename or opts.reversion):
-        parser.error("--dest-path must be specified unless --rename or "
-                     "--reversion are used.")
+        parser.error(
+            "--dest-path must be specified unless --rename or " "--reversion are used."
+        )
 
     # Load the source package.
     #
@@ -84,21 +111,17 @@ def command(opts, parser, extra_arg_groups=None):
 
     req = PackageRequest(opts.PKG)
 
-    it = iter_packages(
-        name=req.name,
-        range_=req.range_,
-        paths=paths
-    )
+    it = iter_packages(name=req.name, range_=req.range_, paths=paths)
 
     src_pkgs = list(it)
     if not src_pkgs:
-        print >> sys.stderr, "No matching packages found."
+        print("No matching packages found.", file=sys.stderr)
         sys.exit(1)
 
     if len(src_pkgs) > 1:
-        print >> sys.stderr, "More than one package matches, please choose:"
+        print("More than one package matches, please choose:", file=sys.stderr)
         for pkg in sorted(src_pkgs, key=lambda x: x.version):
-            print >> sys.stderr, pkg.qualified_name
+            print(pkg.qualified_name, file=sys.stderr)
         sys.exit(1)
 
     src_pkg = src_pkgs[0]
@@ -113,14 +136,14 @@ def command(opts, parser, extra_arg_groups=None):
         dest_pkg_repo = package_repository_manager.get_repository(opts.dest_path)
 
         if (not opts.allow_empty) and dest_pkg_repo.is_empty():
-            print >> sys.stderr, (
+            print((
                 "Attempting to copy a package into an EMPTY repository. Are you "
                 "sure that --dest-path is the correct path? This should not "
                 "include package name and/or version."
                 "\n\n"
                 "If this is a valid new package repository, use the "
                 "--allow-empty flag to continue."
-            )
+            ), file=sys.stderr)
             sys.exit(1)
     else:
         dest_pkg_repo = src_pkg.repository
@@ -142,7 +165,7 @@ def command(opts, parser, extra_arg_groups=None):
         keep_timestamp=opts.keep_timestamp,
         force=opts.force,
         verbose=opts.verbose,
-        dry_run=opts.dry_run
+        dry_run=opts.dry_run,
     )
 
     # Print info about the result.
@@ -155,7 +178,7 @@ def command(opts, parser, extra_arg_groups=None):
         # show a good indication of target variant when it doesn't get created
         path = dest_pkg_repo.get_package_payload_path(
             package_name=opts.rename or src_pkg.name,
-            package_version=opts.reversion or src_pkg.version
+            package_version=opts.reversion or src_pkg.version,
         )
 
         dry_run_uri = path + "/?"

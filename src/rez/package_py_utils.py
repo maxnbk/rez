@@ -7,6 +7,9 @@ including:
 """
 
 # these imports just forward the symbols into this module's namespace
+from builtins import next
+from builtins import str
+from past.builtins import basestring
 from rez.utils.system import popen
 from rez.exceptions import InvalidPackageError
 
@@ -45,7 +48,7 @@ def expand_requirement(request, paths=None):
     Returns:
         str: Expanded request string.
     """
-    if '*' not in request:
+    if "*" not in request:
         return request
 
     from rez.vendor.version.version import VersionRange
@@ -66,10 +69,10 @@ def expand_requirement(request, paths=None):
         request_ = request_.replace("**", uid, 1)
         wildcard_map[uid] = "**"
 
-    while '*' in request_:
+    while "*" in request_:
         uid = "_%s_" % uuid4().hex
-        request_ = request_.replace('*', uid, 1)
-        wildcard_map[uid] = '*'
+        request_ = request_.replace("*", uid, 1)
+        wildcard_map[uid] = "*"
 
     # create the requirement, then expand wildcards
     #
@@ -112,9 +115,9 @@ def expand_requirement(request, paths=None):
         # 'foo-1+<1_' - '1_' is the next possible version after '1'. So we have
         # to detect this case and remap the uid-ified wildcard back here too.
         #
-        for v, expanded_v in expanded_versions.iteritems():
-            if version == v.next():
-                return expanded_v.next()
+        for v, expanded_v in expanded_versions.items():
+            if version == next(v):
+                return next(expanded_v)
 
         version_ = expand_version(version)
         if version_ is None:
@@ -129,7 +132,7 @@ def expand_requirement(request, paths=None):
     result = str(req)
 
     # do some cleanup so that long uids aren't left in invalid wildcarded strings
-    for uid, token in wildcard_map.iteritems():
+    for uid, token in wildcard_map.items():
         result = result.replace(uid, token)
 
     # cast back to a Requirement again, then back to a string. This will catch
@@ -170,8 +173,10 @@ def exec_command(attr, cmd):
 
     if p.returncode:
         from rez.exceptions import InvalidPackageError
+
         raise InvalidPackageError(
-            "Error determining package attribute '%s':\n%s" % (attr, err))
+            "Error determining package attribute '%s':\n%s" % (attr, err)
+        )
 
     return out.strip(), err.strip()
 
@@ -192,14 +197,19 @@ def exec_python(attr, src, executable="python"):
     if isinstance(src, basestring):
         src = [src]
 
-    p = popen([executable, "-c", "; ".join(src)],
-              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = popen(
+        [executable, "-c", "; ".join(src)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
     out, err = p.communicate()
 
     if p.returncode:
         from rez.exceptions import InvalidPackageError
+
         raise InvalidPackageError(
-            "Error determining package attribute '%s':\n%s" % (attr, err))
+            "Error determining package attribute '%s':\n%s" % (attr, err)
+        )
 
     return out.strip()
 
@@ -230,16 +240,15 @@ def find_site_python(module_name, paths=None):
     import ast
     import os
 
-    py_cmd = 'import {x}; print {x}.__path__'.format(x=module_name)
+    py_cmd = "import {x}; print {x}.__path__".format(x=module_name)
 
-    p = popen(["python", "-c", py_cmd], stdout=subprocess.PIPE,
-               stderr=subprocess.PIPE)
+    p = popen(["python", "-c", py_cmd], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = p.communicate()
 
     if p.returncode:
         raise InvalidPackageError(
-            "Failed to find installed python module '%s':\n%s"
-            % (module_name, err))
+            "Failed to find installed python module '%s':\n%s" % (module_name, err)
+        )
 
     module_paths = ast.literal_eval(out.strip())
 
@@ -261,4 +270,5 @@ def find_site_python(module_name, paths=None):
 
     raise InvalidPackageError(
         "Failed to find python installation containing the module '%s'. Has "
-        "python been installed as a rez package?" % module_name)
+        "python been installed as a rez package?" % module_name
+    )

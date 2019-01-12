@@ -21,7 +21,8 @@ class TestRezSuites(TestBase, TempdirMixin):
             package_filter=None,
             implicit_packages=[],
             warn_untimestamped=False,
-            resolve_caching=False)
+            resolve_caching=False,
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -117,8 +118,9 @@ class TestRezSuites(TestBase, TempdirMixin):
         self.assertEqual(set(s.get_conflicting_aliases()), expected_conflicts)
 
         s.set_context_prefix("bah", "hey_")
-        expected_tools = set(["fooer", "bahbah", "blacksheep",
-                              "hey_bahbah", "hey_blacksheep"])
+        expected_tools = set(
+            ["fooer", "bahbah", "blacksheep", "hey_bahbah", "hey_blacksheep"]
+        )
         self.assertEqual(set(s.get_tools().keys()), expected_tools)
 
         s.remove_context_prefix("bah")
@@ -136,7 +138,7 @@ class TestRezSuites(TestBase, TempdirMixin):
         self._test_serialization(s)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
 
 

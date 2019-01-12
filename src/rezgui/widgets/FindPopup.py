@@ -6,8 +6,15 @@ class FindPopup(QtGui.QFrame):
 
     find = QtCore.Signal(str)
 
-    def __init__(self, pivot_widget, pivot_position=None, words=None,
-                 initial_word=None, close_on_find=True, parent=None):
+    def __init__(
+        self,
+        pivot_widget,
+        pivot_position=None,
+        words=None,
+        initial_word=None,
+        close_on_find=True,
+        parent=None,
+    ):
         super(FindPopup, self).__init__(parent)
         self.setFrameStyle(QtGui.QFrame.Panel | QtGui.QFrame.Raised)
         self.setWindowFlags(QtCore.Qt.Popup)
@@ -15,8 +22,13 @@ class FindPopup(QtGui.QFrame):
 
         self.edit = QtGui.QLineEdit()
         self.btn = QtGui.QPushButton("Find")
-        create_pane([self.edit, self.btn], True, compact=True,
-                    compact_spacing=0, parent_widget=self)
+        create_pane(
+            [self.edit, self.btn],
+            True,
+            compact=True,
+            compact_spacing=0,
+            parent_widget=self,
+        )
         self.edit.setFocus()
 
         if initial_word:

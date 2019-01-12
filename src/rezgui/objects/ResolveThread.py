@@ -1,3 +1,5 @@
+from __future__ import print_function
+from builtins import str
 from rezgui.qt import QtCore
 from rez.exceptions import RezError
 
@@ -6,8 +8,15 @@ class ResolveThread(QtCore.QObject):
 
     finished = QtCore.Signal()
 
-    def __init__(self, context_model, verbosity=0, max_fails=-1, timestamp=None,
-                 show_package_loads=True, buf=None):
+    def __init__(
+        self,
+        context_model,
+        verbosity=0,
+        max_fails=-1,
+        timestamp=None,
+        show_package_loads=True,
+        buf=None,
+    ):
         super(ResolveThread, self).__init__()
         self.context_model = context_model
         self.context = None
@@ -22,8 +31,9 @@ class ResolveThread(QtCore.QObject):
         self.error_message = None
 
     def run(self):
-        package_load_callback = (self._package_load_callback
-                                 if self.show_package_loads else None)
+        package_load_callback = (
+            self._package_load_callback if self.show_package_loads else None
+        )
         try:
             self.context = self.context_model.resolve_context(
                 verbosity=self.verbosity,
@@ -31,7 +41,8 @@ class ResolveThread(QtCore.QObject):
                 timestamp=self.timestamp,
                 buf=self.buf,
                 callback=self._callback,
-                package_load_callback=package_load_callback)
+                package_load_callback=package_load_callback,
+            )
         except RezError as e:
             self.error_message = str(e)
 
@@ -47,12 +58,12 @@ class ResolveThread(QtCore.QObject):
 
     def _callback(self, solver_state):
         if self.buf and self.verbosity == 0:
-            print >> self.buf, "solve step %d..." % solver_state.num_solves
+            print("solve step %d..." % solver_state.num_solves, file=self.buf)
         return (not self.stopped), self.abort_reason
 
     def _package_load_callback(self, package):
         if self.buf:
-            print >> self.buf, "loading %s..." % str(package)
+            print("loading %s..." % str(package), file=self.buf)
 
 
 # Copyright 2013-2016 Allan Johns.

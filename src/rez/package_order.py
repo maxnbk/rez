@@ -1,9 +1,13 @@
+from builtins import next
+from builtins import str
+from builtins import object
 from inspect import isclass
 from hashlib import sha1
 
 
 class PackageOrder(object):
     """Package reorderer base class."""
+
     name = None
 
     def __init__(self):
@@ -49,6 +53,7 @@ class NullPackageOrder(PackageOrder):
     to a set of packages, but may want to explicitly NOT reorder a particular
     package. You would use a `NullPackageOrder` in a `PerFamilyOrder` to do this.
     """
+
     name = "no_order"
 
     def reorder(self, iterable, key=None):
@@ -73,6 +78,7 @@ class NullPackageOrder(PackageOrder):
 class SortedOrder(PackageOrder):
     """An orderer that sorts wrt version.
     """
+
     name = "sorted"
 
     def __init__(self, descending):
@@ -80,8 +86,7 @@ class SortedOrder(PackageOrder):
 
     def reorder(self, iterable, key=None):
         key = key or (lambda x: x)
-        return sorted(iterable, key=lambda x: key(x).version,
-                      reverse=self.descending)
+        return sorted(iterable, key=lambda x: key(x).version, reverse=self.descending)
 
     def __str__(self):
         return str(self.descending)
@@ -103,6 +108,7 @@ class SortedOrder(PackageOrder):
 class PerFamilyOrder(PackageOrder):
     """An orderer that applies different orderers to different package families.
     """
+
     name = "per_family"
 
     def __init__(self, order_dict, default_order=None):
@@ -119,7 +125,7 @@ class PerFamilyOrder(PackageOrder):
 
     def reorder(self, iterable, key=None):
         try:
-            item = iter(iterable).next()
+            item = next(iter(iterable))
         except:
             return None
 
@@ -135,7 +141,7 @@ class PerFamilyOrder(PackageOrder):
         return orderer.reorder(iterable, key)
 
     def __str__(self):
-        items = sorted((x[0], str(x[1])) for x in self.order_dict.items())
+        items = sorted((x[0], str(x[1])) for x in list(self.order_dict.items()))
         return str((items, str(self.default_order)))
 
     def to_pod(self):
@@ -158,13 +164,13 @@ class PerFamilyOrder(PackageOrder):
         packages = {}
 
         # group package fams by orderer they use
-        for fam, orderer in self.order_dict.iteritems():
+        for fam, orderer in self.order_dict.items():
             k = id(orderer)
             orderers[k] = orderer
             packages.setdefault(k, set()).add(fam)
 
         orderlist = []
-        for k, fams in packages.iteritems():
+        for k, fams in packages.items():
             orderer = orderers[k]
             data = to_pod(orderer)
             data["packages"] = sorted(fams)
@@ -203,6 +209,7 @@ class VersionSplitPackageOrder(PackageOrder):
     For example, given the versions [5, 4, 3, 2, 1], an orderer initialized
     with version=3 would give the order [3, 2, 1, 5, 4].
     """
+
     name = "version_split"
 
     def __init__(self, first_version):
@@ -226,7 +233,7 @@ class VersionSplitPackageOrder(PackageOrder):
         for item in descending:
             if is_above:
                 package = key(item)
-                is_above = (package.version > self.first_version)
+                is_above = package.version > self.first_version
 
             if is_above:
                 above.append(item)
@@ -289,6 +296,7 @@ class TimestampPackageOrder(PackageOrder):
     Newer versions are consumed in ascending order, except within rank (this is
     why 2.1.1 is consumed before 2.1.0).
     """
+
     name = "soft_timestamp"
 
     def __init__(self, timestamp, rank=0):
@@ -322,8 +330,8 @@ class TimestampPackageOrder(PackageOrder):
         if first_after is None:  # all packages are before T
             return None
 
-        before = descending[first_after + 1:]
-        after = list(reversed(descending[:first_after + 1]))
+        before = descending[first_after + 1 :]
+        after = list(reversed(descending[: first_after + 1]))
 
         if not self.rank:  # simple case
             return before + after
@@ -380,13 +388,11 @@ class TimestampPackageOrder(PackageOrder):
             timestamp: 1234567
             rank: 3
         """
-        return dict(timestamp=self.timestamp,
-                    rank=self.rank)
+        return dict(timestamp=self.timestamp, rank=self.rank)
 
     @classmethod
     def from_pod(cls, data):
-        return cls(timestamp=data["timestamp"],
-                   rank=data["rank"])
+        return cls(timestamp=data["timestamp"], rank=data["rank"])
 
 
 def to_pod(orderer):
@@ -411,8 +417,12 @@ def from_pod(data):
 
 
 def register_orderer(cls):
-    if isclass(cls) and issubclass(cls, PackageOrder) and \
-            hasattr(cls, "name") and cls.name:
+    if (
+        isclass(cls)
+        and issubclass(cls, PackageOrder)
+        and hasattr(cls, "name")
+        and cls.name
+    ):
         _orderers[cls.name] = cls
         return True
     else:
@@ -421,7 +431,7 @@ def register_orderer(cls):
 
 # registration of builtin orderers
 _orderers = {}
-for o in globals().values():
+for o in list(globals().values()):
     register_orderer(o)
 
 

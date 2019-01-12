@@ -12,17 +12,18 @@ def bind(path, version_range=None, opts=None, parser=None):
     tools = ["pyuic4"]
 
     version = get_version_in_python(
-        name,
-        ["from PyQt4 import QtCore",
-         "print QtCore.PYQT_VERSION_STR"])
+        name, ["from PyQt4 import QtCore", "print QtCore.PYQT_VERSION_STR"]
+    )
 
-    variants = _pymodule.bind(name,
-                              path=path,
-                              import_name=import_name,
-                              version_range=version_range,
-                              requires=["sip-4"],
-                              version=version,
-                              pure_python=False,
-                              tools=tools)
+    variants = _pymodule.bind(
+        name,
+        path=path,
+        import_name=import_name,
+        version_range=version_range,
+        requires=["sip-4"],
+        version=version,
+        pure_python=False,
+        tools=tools,
+    )
 
     return variants

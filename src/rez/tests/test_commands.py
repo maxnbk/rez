@@ -1,6 +1,7 @@
 """
 test package commands
 """
+from builtins import str
 from rez.vendor.version.requirement import VersionedObject
 from rez.rex import Comment, EnvAction, Shebang, Setenv, Alias, Appendenv
 from rez.resolved_context import ResolvedContext
@@ -29,7 +30,8 @@ class TestCommands(TestBase):
             warn_untimestamped=False,
             warn_old_commands=False,
             implicit_packages=[],
-            rez_1_environment_variables=False)
+            rez_1_environment_variables=False,
+        )
 
     def __init__(self, fn):
         TestBase.__init__(self, fn)
@@ -46,13 +48,17 @@ class TestCommands(TestBase):
         commands_ = []
 
         # ignore some commands that don't matter or change depending on system
-        ignore_keys = set(["REZ_USED",
-                           "REZ_USED_VERSION",
-                           "REZ_USED_TIMESTAMP",
-                           "REZ_USED_REQUESTED_TIMESTAMP",
-                           "REZ_USED_PACKAGES_PATH",
-                           "REZ_USED_IMPLICIT_PACKAGES",
-                           "PATH"])
+        ignore_keys = set(
+            [
+                "REZ_USED",
+                "REZ_USED_VERSION",
+                "REZ_USED_TIMESTAMP",
+                "REZ_USED_REQUESTED_TIMESTAMP",
+                "REZ_USED_PACKAGES_PATH",
+                "REZ_USED_IMPLICIT_PACKAGES",
+                "PATH",
+            ]
+        )
 
         for cmd in commands:
             if isinstance(cmd, (Comment, Shebang)):
@@ -67,29 +73,33 @@ class TestCommands(TestBase):
         verstr = str(pkg.version)
         base = os.path.join(self.packages_path, "rextest", verstr)
 
-        major_version = str(pkg.version[0] if len(pkg.version) >= 1 else '')
-        minor_version = str(pkg.version[1] if len(pkg.version) >= 2 else '')
-        patch_version = str(pkg.version[2] if len(pkg.version) >= 3 else '')
+        major_version = str(pkg.version[0] if len(pkg.version) >= 1 else "")
+        minor_version = str(pkg.version[1] if len(pkg.version) >= 2 else "")
+        patch_version = str(pkg.version[2] if len(pkg.version) >= 3 else "")
 
-        cmds = [Setenv('REZ_REXTEST_VERSION', verstr),
-                Setenv('REZ_REXTEST_MAJOR_VERSION', major_version),
-                Setenv('REZ_REXTEST_MINOR_VERSION', minor_version),
-                Setenv('REZ_REXTEST_PATCH_VERSION', patch_version),
-                Setenv('REZ_REXTEST_BASE', base),
-                Setenv('REZ_REXTEST_ROOT', base),
-                # from package...
-                Setenv('REXTEST_ROOT', base),
-                Setenv('REXTEST_VERSION', verstr),
-                Setenv('REXTEST_MAJOR_VERSION', str(pkg.version[0])),
-                Setenv('REXTEST_DIRS', "/".join([base, "data"])),
-                Alias('rextest', 'foobar')]
+        cmds = [
+            Setenv("REZ_REXTEST_VERSION", verstr),
+            Setenv("REZ_REXTEST_MAJOR_VERSION", major_version),
+            Setenv("REZ_REXTEST_MINOR_VERSION", minor_version),
+            Setenv("REZ_REXTEST_PATCH_VERSION", patch_version),
+            Setenv("REZ_REXTEST_BASE", base),
+            Setenv("REZ_REXTEST_ROOT", base),
+            # from package...
+            Setenv("REXTEST_ROOT", base),
+            Setenv("REXTEST_VERSION", verstr),
+            Setenv("REXTEST_MAJOR_VERSION", str(pkg.version[0])),
+            Setenv("REXTEST_DIRS", "/".join([base, "data"])),
+            Alias("rextest", "foobar"),
+        ]
         return cmds
 
     def _test_rextest_package(self, version):
         pkg = VersionedObject("rextest-%s" % version)
 
-        cmds = [Setenv('REZ_USED_REQUEST', str(pkg)),
-                Setenv('REZ_USED_RESOLVE', str(pkg))]
+        cmds = [
+            Setenv("REZ_USED_REQUEST", str(pkg)),
+            Setenv("REZ_USED_RESOLVE", str(pkg)),
+        ]
         cmds += self._get_rextest_commands(pkg)
 
         self._test_package(pkg, {}, cmds)
@@ -115,40 +125,44 @@ class TestCommands(TestBase):
         base = os.path.join(self.packages_path, "rextest", "1.3")
         base2 = os.path.join(self.packages_path, "rextest2", "2")
 
-        cmds = [Setenv('REZ_USED_REQUEST', "rextest2-2"),
-                Setenv('REZ_USED_RESOLVE', "rextest-1.3 rextest2-2"),
-                # rez's rextest vars
-                Setenv('REZ_REXTEST_VERSION', "1.3"),
-                Setenv('REZ_REXTEST_MAJOR_VERSION', '1'),
-                Setenv('REZ_REXTEST_MINOR_VERSION', '3'),
-                Setenv('REZ_REXTEST_PATCH_VERSION', ''),
-                Setenv('REZ_REXTEST_BASE', base),
-                Setenv('REZ_REXTEST_ROOT', base),
-                # rez's rextest2 vars
-                Setenv('REZ_REXTEST2_VERSION', '2'),
-                Setenv('REZ_REXTEST2_MAJOR_VERSION', '2'),
-                Setenv('REZ_REXTEST2_MINOR_VERSION', ''),
-                Setenv('REZ_REXTEST2_PATCH_VERSION', ''),
-                Setenv('REZ_REXTEST2_BASE', base2),
-                Setenv('REZ_REXTEST2_ROOT', base2),
-                # rextest's commands
-                Setenv('REXTEST_ROOT', base),
-                Setenv('REXTEST_VERSION', "1.3"),
-                Setenv('REXTEST_MAJOR_VERSION', "1"),
-                Setenv('REXTEST_DIRS', "/".join([base, "data"])),
-                Alias('rextest', 'foobar'),
-                # rextext2's commands
-                Appendenv('REXTEST_DIRS', "/".join([base2, "data2"])),
-                Setenv('REXTEST2_REXTEST_VER', '1.3'),
-                Setenv('REXTEST2_REXTEST_BASE',
-                       os.path.join(self.packages_path, "rextest", "1.3"))]
+        cmds = [
+            Setenv("REZ_USED_REQUEST", "rextest2-2"),
+            Setenv("REZ_USED_RESOLVE", "rextest-1.3 rextest2-2"),
+            # rez's rextest vars
+            Setenv("REZ_REXTEST_VERSION", "1.3"),
+            Setenv("REZ_REXTEST_MAJOR_VERSION", "1"),
+            Setenv("REZ_REXTEST_MINOR_VERSION", "3"),
+            Setenv("REZ_REXTEST_PATCH_VERSION", ""),
+            Setenv("REZ_REXTEST_BASE", base),
+            Setenv("REZ_REXTEST_ROOT", base),
+            # rez's rextest2 vars
+            Setenv("REZ_REXTEST2_VERSION", "2"),
+            Setenv("REZ_REXTEST2_MAJOR_VERSION", "2"),
+            Setenv("REZ_REXTEST2_MINOR_VERSION", ""),
+            Setenv("REZ_REXTEST2_PATCH_VERSION", ""),
+            Setenv("REZ_REXTEST2_BASE", base2),
+            Setenv("REZ_REXTEST2_ROOT", base2),
+            # rextest's commands
+            Setenv("REXTEST_ROOT", base),
+            Setenv("REXTEST_VERSION", "1.3"),
+            Setenv("REXTEST_MAJOR_VERSION", "1"),
+            Setenv("REXTEST_DIRS", "/".join([base, "data"])),
+            Alias("rextest", "foobar"),
+            # rextext2's commands
+            Appendenv("REXTEST_DIRS", "/".join([base2, "data2"])),
+            Setenv("REXTEST2_REXTEST_VER", "1.3"),
+            Setenv(
+                "REXTEST2_REXTEST_BASE",
+                os.path.join(self.packages_path, "rextest", "1.3"),
+            ),
+        ]
 
         self._test_package(pkg, {}, cmds)
         # first prepend should still override
         self._test_package(pkg, {"REXTEST_DIRS": "TEST"}, cmds)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
 
 

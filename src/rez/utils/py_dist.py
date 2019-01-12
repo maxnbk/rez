@@ -1,6 +1,8 @@
 """
 Functions for converting python distributions to rez packages.
 """
+from __future__ import print_function
+from builtins import str
 from rez.exceptions import RezSystemError
 import pkg_resources
 import shutil
@@ -19,7 +21,7 @@ def _mkdirs(*dirs):
 
 def convert_name(name):
     """ Convert a python distribution name into a rez-safe package name."""
-    return name.replace('-', '_')
+    return name.replace("-", "_")
 
 
 # TODO: change this when version submod is rewritten
@@ -73,8 +75,7 @@ def convert_requirement(req):
             r = "!%s-%s" % (pkg_name, ver)
             req_strs.append(r)
         else:
-            print >> sys.stderr, \
-                "Warning: Can't understand op '%s', just depending on unversioned package..." % op
+            print("Warning: Can't understand op '%s', just depending on unversioned package..." % op, file=sys.stderr)
             req_strs.append(pkg_name)
 
     return req_strs
@@ -103,8 +104,7 @@ def get_dist_dependencies(name, recurse=True):
 
             for req in dist.requires():
                 reqs_ = convert_requirement(req)
-                deps |= set(x.split('-', 1)[0] for x in reqs_
-                            if not x.startswith('!'))
+                deps |= set(x.split("-", 1)[0] for x in reqs_ if not x.startswith("!"))
 
         working = deps - reqs
         depth += 1
@@ -115,8 +115,13 @@ def get_dist_dependencies(name, recurse=True):
 
 
 # TODO: doesn't deal with executable scripts yet
-def convert_dist(name, dest_path, make_variant=True, ignore_dirs=None,
-                 python_requirement="major_minor"):
+def convert_dist(
+    name,
+    dest_path,
+    make_variant=True,
+    ignore_dirs=None,
+    python_requirement="major_minor",
+):
     """Convert an already installed python distribution into a rez package.
 
     Args:
@@ -142,7 +147,7 @@ def convert_dist(name, dest_path, make_variant=True, ignore_dirs=None,
     if python_requirement == "major":
         pyver = str(sys.version_info[0])
     elif python_requirement == "major_minor":
-        pyver = '.'.join(str(x) for x in sys.version_info[:2])
+        pyver = ".".join(str(x) for x in sys.version_info[:2])
     else:
         pyver = python_requirement
     pypkg = "python-%s" % pyver
@@ -158,7 +163,7 @@ def convert_dist(name, dest_path, make_variant=True, ignore_dirs=None,
     root_path = _mkdirs(pkg_path, pypkg) if make_variant else pkg_path
 
     basename = os.path.basename(dist.location)
-    is_egg = (os.path.splitext(basename)[1] == ".egg")
+    is_egg = os.path.splitext(basename)[1] == ".egg"
 
     if os.path.isdir(dist.location):
         if is_egg:
@@ -168,8 +173,11 @@ def convert_dist(name, dest_path, make_variant=True, ignore_dirs=None,
                 if os.path.isfile(fpath):
                     shutil.copy(fpath, root_path)
                 else:
-                    shutil.copytree(fpath, os.path.join(root_path, file),
-                                    ignore=shutil.ignore_patterns(ignore_dirs))
+                    shutil.copytree(
+                        fpath,
+                        os.path.join(root_path, file),
+                        ignore=shutil.ignore_patterns(ignore_dirs),
+                    )
         else:
             # this is a site dir
             egginfo_dir = "%s.egg-info" % dist.egg_name()
@@ -180,7 +188,8 @@ def convert_dist(name, dest_path, make_variant=True, ignore_dirs=None,
                     "There is not enough information on disk to convert the "
                     "python distribution '%s' into a Rez package. The distribution "
                     "is installed to a common site, but the installed file "
-                    "information is not present." % name)
+                    "information is not present." % name
+                )
 
             with open(file) as f:
                 installed_files = f.read().strip().split()
@@ -216,12 +225,13 @@ def convert_dist(name, dest_path, make_variant=True, ignore_dirs=None,
     else:
         # this is an egg-file
         import zipfile
-        assert(is_egg and os.path.isfile(dist.location))
-        assert(zipfile.is_zipfile(dist.location))
+
+        assert is_egg and os.path.isfile(dist.location)
+        assert zipfile.is_zipfile(dist.location)
         z = zipfile.ZipFile(dist.location)
         z.extractall(root_path)
 
-    variants_str = "[['%s']]" % pypkg if make_variant else ''
+    variants_str = "[['%s']]" % pypkg if make_variant else ""
 
     content = textwrap.dedent(
         """
@@ -232,14 +242,17 @@ def convert_dist(name, dest_path, make_variant=True, ignore_dirs=None,
         requires = %(requires)s
         def commands():
             env.PYTHONPATH.append('{this.root}')
-        """ % dict(
+        """
+        % dict(
             name=pkg_name,
             version=pkg_version,
             variants=variants_str,
-            requires=str(pkg_requires)))
+            requires=str(pkg_requires),
+        )
+    )
 
-    content = content.strip() + '\n'
-    with open(pkg_file, 'w') as f:
+    content = content.strip() + "\n"
+    with open(pkg_file, "w") as f:
         f.write(content)
 
     return pkg_path

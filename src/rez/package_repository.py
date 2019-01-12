@@ -1,3 +1,4 @@
+from builtins import object
 from rez.utils.resources import ResourcePool, ResourceHandle
 from rez.utils.data_utils import cached_property
 from rez.plugin_managers import plugin_manager
@@ -12,7 +13,7 @@ import time
 
 def get_package_repository_types():
     """Returns the available package repository implementations."""
-    return plugin_manager.get_plugins('package_repository')
+    return plugin_manager.get_plugins("package_repository")
 
 
 def create_memory_package_repository(repository_data):
@@ -33,6 +34,7 @@ def create_memory_package_repository(repository_data):
 class PackageRepositoryGlobalStats(threading.local):
     """Gathers stats across package repositories.
     """
+
     def __init__(self):
         # the amount of time that has been spent loading package from ,
         # repositories, since process start
@@ -111,9 +113,9 @@ class PackageRepository(object):
 
     def __eq__(self, other):
         return (
-            isinstance(other, PackageRepository) and
-            other.name() == self.name() and
-            other.uid == self.uid
+            isinstance(other, PackageRepository)
+            and other.name() == self.name()
+            and other.uid == self.uid
         )
 
     def is_empty(self):
@@ -261,16 +263,18 @@ class PackageRepository(object):
         the resource handles, to improve caching / comparison / etc.
         """
         if variables.get("repository_type", self.name()) != self.name():
-            raise ResourceError("repository_type mismatch - requested %r, "
-                                "repository_type is %r"
-                                % (variables["repository_type"], self.name()))
+            raise ResourceError(
+                "repository_type mismatch - requested %r, "
+                "repository_type is %r" % (variables["repository_type"], self.name())
+            )
 
         variables["repository_type"] = self.name()
 
         if variables.get("location", self.location) != self.location:
-            raise ResourceError("location mismatch - requested %r, repository "
-                                "location is %r" % (variables["location"],
-                                                    self.location))
+            raise ResourceError(
+                "location mismatch - requested %r, repository "
+                "location is %r" % (variables["location"], self.location)
+            )
         variables["location"] = self.location
 
         resource_cls = self.pool.get_resource_class(resource_key)
@@ -308,16 +312,18 @@ class PackageRepository(object):
             # at least, error to catch any "incorrect" construction of
             # handles...
             if resource_handle.variables.get("repository_type") != self.name():
-                raise ResourceError("repository_type mismatch - requested %r, "
-                                    "repository_type is %r"
-                                    % (resource_handle.variables["repository_type"],
-                                       self.name()))
+                raise ResourceError(
+                    "repository_type mismatch - requested %r, "
+                    "repository_type is %r"
+                    % (resource_handle.variables["repository_type"], self.name())
+                )
 
             if resource_handle.variables.get("location") != self.location:
-                raise ResourceError("location mismatch - requested %r, "
-                                    "repository location is %r "
-                                    % (resource_handle.variables["location"],
-                                       self.location))
+                raise ResourceError(
+                    "location mismatch - requested %r, "
+                    "repository location is %r "
+                    % (resource_handle.variables["location"], self.location)
+                )
 
         resource = self.pool.get_resource_from_handle(resource_handle)
         resource._repository = self
@@ -357,6 +363,7 @@ class PackageRepositoryManager(object):
     by the 'packages_path' config setting (also commonly set using the
     environment variable REZ_PACKAGES_PATH).
     """
+
     def __init__(self):
         cache_size = config.resource_caching_maxsize
         if cache_size < 0:
@@ -378,7 +385,7 @@ class PackageRepositoryManager(object):
             `PackageRepository` instance.
         """
         # normalise
-        parts = path.split('@', 1)
+        parts = path.split("@", 1)
         if len(parts) == 1:
             parts = ("filesystem", parts[0])
 
@@ -408,10 +415,9 @@ class PackageRepositoryManager(object):
 
         repo_1 = self.get_repository(path_1)
         repo_2 = self.get_repository(path_2)
-        return (repo_1.uid == repo_2.uid)
+        return repo_1.uid == repo_2.uid
 
-    def get_resource(self, resource_key, repository_type, location,
-                     **variables):
+    def get_resource(self, resource_key, repository_type, location, **variables):
         """Get a resource.
 
         Attempts to get and return a cached version of the resource if
@@ -444,9 +450,11 @@ class PackageRepositoryManager(object):
         repo_type = resource_handle.get("repository_type")
         location = resource_handle.get("location")
         if not (repo_type and location):
-            raise ValueError("PackageRepositoryManager requires "
-                             "resource_handle objects to have a "
-                             "repository_type and location defined")
+            raise ValueError(
+                "PackageRepositoryManager requires "
+                "resource_handle objects to have a "
+                "repository_type and location defined"
+            )
         path = "%s@%s" % (repo_type, location)
         repo = self.get_repository(path)
         resource = repo.get_resource_from_handle(resource_handle)
@@ -460,8 +468,8 @@ class PackageRepositoryManager(object):
 
     @lru_cache(maxsize=None)
     def _get_repository(self, path):
-        repo_type, location = path.split('@', 1)
-        cls = plugin_manager.get_plugin_class('package_repository', repo_type)
+        repo_type, location = path.split("@", 1)
+        cls = plugin_manager.get_plugin_class("package_repository", repo_type)
         repo = cls(location, self.pool)
         return repo
 

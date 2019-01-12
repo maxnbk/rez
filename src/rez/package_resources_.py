@@ -1,9 +1,15 @@
+from builtins import str
+from builtins import range
+from past.builtins import basestring
 from rez.utils.resources import Resource
 from rez.utils.schema import Required, schema_keys
 from rez.utils.logging_ import print_warning
 from rez.utils.sourcecode import SourceCode
-from rez.utils.data_utils import cached_property, AttributeForwardMeta, \
-    LazyAttributeMeta
+from rez.utils.data_utils import (
+    cached_property,
+    AttributeForwardMeta,
+    LazyAttributeMeta,
+)
 from rez.utils.formatting import PackageRequest
 from rez.exceptions import PackageMetadataError, ResourceError
 from rez.config import config, Config, create_config
@@ -11,17 +17,19 @@ from rez.vendor.version.version import Version
 from rez.vendor.schema.schema import Schema, SchemaError, Optional, Or, And, Use
 from textwrap import dedent
 import os.path
+from future.utils import with_metaclass
 
 
 # package attributes created at release time
 package_release_keys = (
     "timestamp",
-    'revision',
-    'changelog',
-    'release_message',
-    'previous_version',
-    'previous_revision',
-    'vcs')
+    "revision",
+    "changelog",
+    "release_message",
+    "previous_version",
+    "previous_revision",
+    "vcs",
+)
 
 # package attributes that we don't install
 package_build_only_keys = (
@@ -32,29 +40,28 @@ package_build_only_keys = (
 )
 
 # package attributes that are rex-based functions
-package_rex_keys = (
-    "pre_commands",
-    "commands",
-    "post_commands"
-)
+package_rex_keys = ("pre_commands", "commands", "post_commands")
 
 
 # ------------------------------------------------------------------------------
 # utility schemas
 # ------------------------------------------------------------------------------
 
-help_schema = Or(basestring,  # single help entry
-                 [[basestring]])  # multiple help entries
+help_schema = Or(
+    basestring, [[basestring]]  # single help entry
+)  # multiple help entries
 
 _is_late = And(SourceCode, lambda x: hasattr(x, "_late"))
+
 
 def late_bound(schema):
     return Or(SourceCode, schema)
 
+
 # used when 'requires' is late bound
-late_requires_schema = Schema([
-    Or(PackageRequest, And(basestring, Use(PackageRequest)))
-])
+late_requires_schema = Schema(
+    [Or(PackageRequest, And(basestring, Use(PackageRequest)))]
+)
 
 
 # ------------------------------------------------------------------------------
@@ -64,9 +71,7 @@ late_requires_schema = Schema([
 # requirements of all package-related resources
 #
 
-base_resource_schema_dict = {
-    Required("name"):                   basestring
-}
+base_resource_schema_dict = {Required("name"): basestring}
 
 
 # package family
@@ -78,70 +83,69 @@ package_family_schema_dict = base_resource_schema_dict.copy()
 # schema common to both package and variant
 #
 
-tests_schema = Schema({
-    Optional(basestring): Or(
-        Or(basestring, [basestring]),
-        {
-            "command": Or(basestring, [basestring]),
-            Optional("requires"): [
-                Or(PackageRequest, And(basestring, Use(PackageRequest)))
-            ]
-        }
-    )
-})
+tests_schema = Schema(
+    {
+        Optional(basestring): Or(
+            Or(basestring, [basestring]),
+            {
+                "command": Or(basestring, [basestring]),
+                Optional("requires"): [
+                    Or(PackageRequest, And(basestring, Use(PackageRequest)))
+                ],
+            },
+        )
+    }
+)
 
 package_base_schema_dict = base_resource_schema_dict.copy()
-package_base_schema_dict.update({
-    # basics
-    Optional("base"):                   basestring,
-    Optional("version"):                Version,
-    Optional('description'):            basestring,
-    Optional('authors'):                [basestring],
-
-    # dependencies
-    Optional('requires'):               late_bound([PackageRequest]),
-    Optional('build_requires'):         late_bound([PackageRequest]),
-    Optional('private_build_requires'): late_bound([PackageRequest]),
-
-    # plugins
-    Optional('has_plugins'):            late_bound(bool),
-    Optional('plugin_for'):             late_bound([basestring]),
-
-    # general
-    Optional('uuid'):                   basestring,
-    Optional('config'):                 Config,
-    Optional('tools'):                  late_bound([basestring]),
-    Optional('help'):                   late_bound(help_schema),
-    Optional('relocatable'):            late_bound(Or(None, bool)),
-
-    # testing
-    Optional('tests'):                  late_bound(tests_schema),
-
-    # commands
-    Optional('pre_commands'):           SourceCode,
-    Optional('commands'):               SourceCode,
-    Optional('post_commands'):          SourceCode,
-
-    # release info
-    Optional("timestamp"):              int,
-    Optional('revision'):               object,
-    Optional('changelog'):              basestring,
-    Optional('release_message'):        Or(None, basestring),
-    Optional('previous_version'):       Version,
-    Optional('previous_revision'):      object,
-    Optional('vcs'):                    basestring,
-
-    # arbitrary fields
-    Optional(basestring):               late_bound(object)
-})
+package_base_schema_dict.update(
+    {
+        # basics
+        Optional("base"): basestring,
+        Optional("version"): Version,
+        Optional("description"): basestring,
+        Optional("authors"): [basestring],
+        # dependencies
+        Optional("requires"): late_bound([PackageRequest]),
+        Optional("build_requires"): late_bound([PackageRequest]),
+        Optional("private_build_requires"): late_bound([PackageRequest]),
+        # plugins
+        Optional("has_plugins"): late_bound(bool),
+        Optional("plugin_for"): late_bound([basestring]),
+        # general
+        Optional("uuid"): basestring,
+        Optional("config"): Config,
+        Optional("tools"): late_bound([basestring]),
+        Optional("help"): late_bound(help_schema),
+        Optional("relocatable"): late_bound(Or(None, bool)),
+        # testing
+        Optional("tests"): late_bound(tests_schema),
+        # commands
+        Optional("pre_commands"): SourceCode,
+        Optional("commands"): SourceCode,
+        Optional("post_commands"): SourceCode,
+        # release info
+        Optional("timestamp"): int,
+        Optional("revision"): object,
+        Optional("changelog"): basestring,
+        Optional("release_message"): Or(None, basestring),
+        Optional("previous_version"): Version,
+        Optional("previous_revision"): object,
+        Optional("vcs"): basestring,
+        # arbitrary fields
+        Optional(basestring): late_bound(object),
+    }
+)
 
 
 # package
 package_schema_dict = package_base_schema_dict.copy()
-package_schema_dict.update({
-    # deliberately not possible to late bind
-    Optional("variants"):               [[PackageRequest]]
-})
+package_schema_dict.update(
+    {
+        # deliberately not possible to late bind
+        Optional("variants"): [[PackageRequest]]
+    }
+)
 
 
 # variant
@@ -165,10 +169,12 @@ variant_schema = Schema(variant_schema_dict)
 # schemas for converting from POD datatypes
 # ------------------------------------------------------------------------------
 
-_commands_schema = Or(SourceCode,       # commands as converted function
-                      callable,         # commands as function
-                      basestring,       # commands in text block
-                      [basestring])     # old-style (rez-1) commands
+_commands_schema = Or(
+    SourceCode,  # commands as converted function
+    callable,  # commands as function
+    basestring,  # commands in text block
+    [basestring],
+)  # old-style (rez-1) commands
 
 _function_schema = Or(SourceCode, callable)
 
@@ -179,46 +185,39 @@ package_pod_schema_dict = base_resource_schema_dict.copy()
 large_string_dict = And(basestring, Use(lambda x: dedent(x).strip()))
 
 
-package_pod_schema_dict.update({
-    Optional("base"):                   basestring,
-    Optional("version"):                And(basestring, Use(Version)),
-    Optional('description'):            large_string_dict,
-    Optional('authors'):                [basestring],
-
-    Optional('requires'):               late_bound([_package_request_schema]),
-    Optional('build_requires'):         late_bound([_package_request_schema]),
-    Optional('private_build_requires'): late_bound([_package_request_schema]),
-
-    # deliberately not possible to late bind
-    Optional('variants'):               [[_package_request_schema]],
-
-    Optional('has_plugins'):            late_bound(bool),
-    Optional('plugin_for'):             late_bound([basestring]),
-
-    Optional('uuid'):                   basestring,
-    Optional('config'):                 And(dict,
-                                            Use(lambda x: create_config(overrides=x))),
-    Optional('tools'):                  late_bound([basestring]),
-    Optional('help'):                   late_bound(help_schema),
-    Optional('relocatable'):            late_bound(Or(None, bool)),
-
-    Optional('tests'):                  late_bound(tests_schema),
-
-    Optional('pre_commands'):           _commands_schema,
-    Optional('commands'):               _commands_schema,
-    Optional('post_commands'):          _commands_schema,
-
-    Optional("timestamp"):              int,
-    Optional('revision'):               object,
-    Optional('changelog'):              large_string_dict,
-    Optional('release_message'):        Or(None, basestring),
-    Optional('previous_version'):       And(basestring, Use(Version)),
-    Optional('previous_revision'):      object,
-    Optional('vcs'):                    basestring,
-
-    # arbitrary keys
-    Optional(basestring):               late_bound(object)
-})
+package_pod_schema_dict.update(
+    {
+        Optional("base"): basestring,
+        Optional("version"): And(basestring, Use(Version)),
+        Optional("description"): large_string_dict,
+        Optional("authors"): [basestring],
+        Optional("requires"): late_bound([_package_request_schema]),
+        Optional("build_requires"): late_bound([_package_request_schema]),
+        Optional("private_build_requires"): late_bound([_package_request_schema]),
+        # deliberately not possible to late bind
+        Optional("variants"): [[_package_request_schema]],
+        Optional("has_plugins"): late_bound(bool),
+        Optional("plugin_for"): late_bound([basestring]),
+        Optional("uuid"): basestring,
+        Optional("config"): And(dict, Use(lambda x: create_config(overrides=x))),
+        Optional("tools"): late_bound([basestring]),
+        Optional("help"): late_bound(help_schema),
+        Optional("relocatable"): late_bound(Or(None, bool)),
+        Optional("tests"): late_bound(tests_schema),
+        Optional("pre_commands"): _commands_schema,
+        Optional("commands"): _commands_schema,
+        Optional("post_commands"): _commands_schema,
+        Optional("timestamp"): int,
+        Optional("revision"): object,
+        Optional("changelog"): large_string_dict,
+        Optional("release_message"): Or(None, basestring),
+        Optional("previous_version"): And(basestring, Use(Version)),
+        Optional("previous_revision"): object,
+        Optional("vcs"): basestring,
+        # arbitrary keys
+        Optional(basestring): late_bound(object),
+    }
+)
 
 
 package_pod_schema = Schema(package_pod_schema_dict)
@@ -228,6 +227,7 @@ package_pod_schema = Schema(package_pod_schema_dict)
 # resource classes
 # ------------------------------------------------------------------------------
 
+
 class PackageRepositoryResource(Resource):
     """Base class for all package-related resources.
 
@@ -236,17 +236,17 @@ class PackageRepositoryResource(Resource):
         repository_type (str): Type of package repository associated with this
             resource type.
     """
+
     schema_error = PackageMetadataError
     repository_type = None
 
     @classmethod
     def normalize_variables(cls, variables):
-        if "repository_type" not in variables or "location" not in \
-                variables:
-            raise ResourceError("%s resources require a repository_type and "
-                                "location" % cls.__name__)
-        return super(PackageRepositoryResource, cls).normalize_variables(
-            variables)
+        if "repository_type" not in variables or "location" not in variables:
+            raise ResourceError(
+                "%s resources require a repository_type and " "location" % cls.__name__
+            )
+        return super(PackageRepositoryResource, cls).normalize_variables(variables)
 
     def __init__(self, variables=None):
         super(PackageRepositoryResource, self).__init__(variables)
@@ -278,6 +278,7 @@ class PackageFamilyResource(PackageRepositoryResource):
     A repository implementation's package family resource(s) must derive from
     this class. It must satisfy the schema `package_family_schema`.
     """
+
     pass
 
 
@@ -293,8 +294,8 @@ class PackageResource(PackageRepositoryResource):
         """Make sure version is treated consistently
         """
         # if the version is False, empty string, etc, throw it out
-        if variables.get('version', True) in ('', False, '_NO_VERSION', None):
-            del variables['version']
+        if variables.get("version", True) in ("", False, "_NO_VERSION", None):
+            del variables["version"]
         return super(PackageResource, cls).normalize_variables(variables)
 
     @cached_property
@@ -313,6 +314,7 @@ class VariantResource(PackageResource):
     this case it is the 'None' variant (the value of `index` is None). This
     provides some internal consistency and simplifies the implementation.
     """
+
     @property
     def index(self):
         return self.get("index", None)
@@ -346,9 +348,11 @@ class VariantResource(PackageResource):
 # they may help minimise the amount of code you need to write.
 # ------------------------------------------------------------------------------
 
+
 class PackageResourceHelper(PackageResource):
     """PackageResource with some common functionality included.
     """
+
     variant_key = None
 
     @cached_property
@@ -369,7 +373,7 @@ class PackageResourceHelper(PackageResource):
         if num_variants == 0:
             indexes = [None]
         else:
-            indexes = range(num_variants)
+            indexes = list(range(num_variants))
 
         for index in indexes:
             variant = self._repository.get_resource(
@@ -377,7 +381,8 @@ class PackageResourceHelper(PackageResource):
                 location=self.location,
                 name=self.name,
                 version=self.get("version"),
-                index=index)
+                index=index,
+            )
             yield variant
 
     def _convert_to_rex(self, commands):
@@ -399,7 +404,11 @@ class PackageResourceHelper(PackageResource):
             return commands
 
 
-class VariantResourceHelper(VariantResource):
+class _Metas(AttributeForwardMeta, LazyAttributeMeta):
+    pass
+
+
+class VariantResourceHelper(with_metaclass(_Metas, VariantResource)):
     """Helper class for implementing variants that inherit properties from their
     parent package.
 
@@ -408,11 +417,11 @@ class VariantResourceHelper(VariantResource):
     exceptions - eg 'variants', 'requires'). This is a common enough pattern
     that it's supplied here for other repository plugins to use.
     """
+
     class _Metas(AttributeForwardMeta, LazyAttributeMeta):
         pass
 
-    __metaclass__ = _Metas
-
+    
     # Note: lazy key validation doesn't happen in this class, it just fowards on
     # attributes from the package. But LazyAttributeMeta does still use this
     # schema to create other class attributes, such as `validate_data`.
@@ -423,7 +432,7 @@ class VariantResourceHelper(VariantResource):
 
     def _uri(self):
         index = self.index
-        idxstr = '' if index is None else str(index)
+        idxstr = "" if index is None else str(index)
         return "%s[%s]" % (self.parent.uri, idxstr)
 
     def _subpath(self):
@@ -455,7 +464,8 @@ class VariantResourceHelper(VariantResource):
             except (IndexError, TypeError):
                 raise ResourceError(
                     "Unexpected error - variant %s cannot be found in its "
-                    "parent package %s" % (self.uri, self.parent.uri))
+                    "parent package %s" % (self.uri, self.parent.uri)
+                )
 
     @property
     def wrapped(self):  # forward Package attributes onto ourself

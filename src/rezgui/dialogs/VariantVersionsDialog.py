@@ -12,7 +12,8 @@ class VariantVersionsDialog(QtGui.QDialog, StoreSizeMixin):
 
         self.setWindowTitle("Package Versions")
         self.versions_widget = VariantVersionsWidget(
-            context_model, reference_variant=reference_variant, in_window=True)
+            context_model, reference_variant=reference_variant, in_window=True
+        )
 
         layout = QtGui.QVBoxLayout()
         layout.addWidget(self.versions_widget)

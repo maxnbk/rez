@@ -13,13 +13,15 @@ class BrowsePackagePane(QtGui.QTabWidget, ContextViewMixin):
     because it is intended to allow browsing of packages within an existing
     context.
     """
+
     def __init__(self, context_model=None, parent=None):
         super(BrowsePackagePane, self).__init__(parent)
         ContextViewMixin.__init__(self, context_model)
 
         self.browse = BrowsePackageWidget(self.context_model)
-        self.settings = ContextSettingsWidget(self.context_model,
-                                              attributes=("packages_path",))
+        self.settings = ContextSettingsWidget(
+            self.context_model, attributes=("packages_path",)
+        )
 
         icon = get_icon("package", as_qicon=True)
         self.addTab(self.browse, icon, "packages")

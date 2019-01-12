@@ -1,4 +1,4 @@
-name = 'timestamped'
+name = "timestamped"
 
 version = "1.0.5"
 

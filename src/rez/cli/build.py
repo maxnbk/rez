@@ -1,6 +1,9 @@
-'''
+"""
 Build a package from source.
-'''
+"""
+from __future__ import print_function
+from builtins import zip
+from builtins import str
 import os
 
 
@@ -34,8 +37,12 @@ def setup_parser_common(parser):
 
     process_types = get_build_process_types()
     parser.add_argument(
-        "--process", type=str, choices=process_types, default="local",
-        help="the build process to use (default: %(default)s).")
+        "--process",
+        type=str,
+        choices=process_types,
+        default="local",
+        help="the build process to use (default: %(default)s).",
+    )
 
     # add build system choices valid for this package
     package = get_current_developer_package()
@@ -53,47 +60,80 @@ def setup_parser_common(parser):
         types = None
 
     parser.add_argument(
-        "-b", "--build-system", dest="buildsys", choices=types,
+        "-b",
+        "--build-system",
+        dest="buildsys",
+        choices=types,
         help="the build system to use. If not specified, it is detected. Set "
         "'build_system' or 'build_command' to specify the build system in the "
-        "package itself.")
+        "package itself.",
+    )
 
     parser.add_argument(
-        "--variants", nargs='+', type=int, metavar="INDEX",
-        help="select variants to build (zero-indexed).")
+        "--variants",
+        nargs="+",
+        type=int,
+        metavar="INDEX",
+        help="select variants to build (zero-indexed).",
+    )
     parser.add_argument(
-        "--ba", "--build-args", dest="build_args", metavar="ARGS",
+        "--ba",
+        "--build-args",
+        dest="build_args",
+        metavar="ARGS",
         help="arguments to pass to the build system. Alternatively, list these "
-        "after a '--'.")
+        "after a '--'.",
+    )
     parser.add_argument(
-        "--cba", "--child-build-args", dest="child_build_args", metavar="ARGS",
+        "--cba",
+        "--child-build-args",
+        dest="child_build_args",
+        metavar="ARGS",
         help="arguments to pass to the child build system, if any. "
-        "Alternatively, list these after a second '--'.")
+        "Alternatively, list these after a second '--'.",
+    )
 
 
 def setup_parser(parser, completions=False):
     parser.add_argument(
-        "-c", "--clean", action="store_true",
-        help="clear the current build before rebuilding.")
+        "-c",
+        "--clean",
+        action="store_true",
+        help="clear the current build before rebuilding.",
+    )
     parser.add_argument(
-        "-i", "--install", action="store_true",
+        "-i",
+        "--install",
+        action="store_true",
         help="install the build to the local packages path. Use --prefix to "
-        "choose a custom install path.")
+        "choose a custom install path.",
+    )
     parser.add_argument(
-        "-p", "--prefix", type=str, metavar='PATH',
-        help="install to a custom package repository path.")
+        "-p",
+        "--prefix",
+        type=str,
+        metavar="PATH",
+        help="install to a custom package repository path.",
+    )
     parser.add_argument(
-        "--fail-graph", action="store_true",
+        "--fail-graph",
+        action="store_true",
         help="if the build environment fails to resolve due to a conflict, "
-        "display the resolve graph as an image.")
+        "display the resolve graph as an image.",
+    )
     parser.add_argument(
-        "-s", "--scripts", action="store_true",
+        "-s",
+        "--scripts",
+        action="store_true",
         help="create build scripts rather than performing the full build. "
         "Running these scripts will place you into a build environment, where "
-        "you can invoke the build system directly.")
+        "you can invoke the build system directly.",
+    )
     parser.add_argument(
-        "--view-pre", action="store_true",
-        help="just view the preprocessed package definition, and exit.")
+        "--view-pre",
+        action="store_true",
+        help="just view the preprocessed package definition, and exit.",
+    )
     setup_parser_common(parser)
 
 
@@ -107,8 +147,9 @@ def get_build_args(opts, parser, extra_arg_groups):
         option = getattr(opts, attr, None)
         if option:
             if group:
-                parser.error("argument %s: not allowed with arguments after '--'"
-                             % cli_attr)
+                parser.error(
+                    "argument %s: not allowed with arguments after '--'" % cli_attr
+                )
             group = option.strip().split()
 
         result_groups.append(group)
@@ -133,37 +174,40 @@ def command(opts, parser, extra_arg_groups=None):
     # create build system
     build_args, child_build_args = get_build_args(opts, parser, extra_arg_groups)
 
-    buildsys = create_build_system(working_dir,
-                                   package=package,
-                                   buildsys_type=opts.buildsys,
-                                   opts=opts,
-                                   write_build_scripts=opts.scripts,
-                                   verbose=True,
-                                   build_args=build_args,
-                                   child_build_args=child_build_args)
+    buildsys = create_build_system(
+        working_dir,
+        package=package,
+        buildsys_type=opts.buildsys,
+        opts=opts,
+        write_build_scripts=opts.scripts,
+        verbose=True,
+        build_args=build_args,
+        child_build_args=child_build_args,
+    )
 
     # create and execute build process
-    builder = create_build_process(opts.process,
-                                   working_dir,
-                                   build_system=buildsys,
-                                   verbose=True)
+    builder = create_build_process(
+        opts.process, working_dir, build_system=buildsys, verbose=True
+    )
 
     try:
-        builder.build(install_path=opts.prefix,
-                      clean=opts.clean,
-                      install=opts.install,
-                      variants=opts.variants)
+        builder.build(
+            install_path=opts.prefix,
+            clean=opts.clean,
+            install=opts.install,
+            variants=opts.variants,
+        )
     except BuildContextResolveError as e:
-        print >> sys.stderr, str(e)
+        print(str(e), file=sys.stderr)
 
         if opts.fail_graph:
             if e.context.graph:
                 from rez.utils.graph_utils import view_graph
+
                 g = e.context.graph(as_dot=True)
                 view_graph(g)
             else:
-                print >> sys.stderr, \
-                    "the failed resolve context did not generate a graph."
+                print("the failed resolve context did not generate a graph.", file=sys.stderr)
         sys.exit(1)
 
 

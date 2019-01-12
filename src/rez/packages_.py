@@ -1,7 +1,18 @@
+from builtins import next
+from builtins import str
+from past.builtins import basestring
+from builtins import object
 from rez.package_repository import package_repository_manager
-from rez.package_resources_ import PackageFamilyResource, PackageResource, \
-    VariantResource, package_family_schema, package_schema, variant_schema, \
-    package_release_keys, late_requires_schema
+from rez.package_resources_ import (
+    PackageFamilyResource,
+    PackageResource,
+    VariantResource,
+    package_family_schema,
+    package_schema,
+    variant_schema,
+    package_release_keys,
+    late_requires_schema,
+)
 from rez.package_serialise import dump_package_data
 from rez.utils import reraise
 from rez.utils.sourcecode import SourceCode
@@ -21,12 +32,13 @@ import sys
 # package-related classes
 # ------------------------------------------------------------------------------
 
+
 class PackageRepositoryResourceWrapper(ResourceWrapper, StringFormatMixin):
     format_expand = StringFormatType.unchanged
 
     def validated_data(self):
         data = ResourceWrapper.validated_data(self)
-        data = dict((k, v) for k, v in data.iteritems() if v is not None)
+        data = dict((k, v) for k, v in data.items() if v is not None)
         return data
 
     @property
@@ -46,6 +58,7 @@ class PackageFamily(PackageRepositoryResourceWrapper):
         Do not instantiate this class directly, instead use the function
         `iter_package_families`.
     """
+
     keys = schema_keys(package_family_schema)
 
     def __init__(self, resource):
@@ -65,9 +78,8 @@ class PackageFamily(PackageRepositoryResourceWrapper):
 class PackageBaseResourceWrapper(PackageRepositoryResourceWrapper):
     """Abstract base class for `Package` and `Variant`.
     """
-    late_bind_schemas = {
-        "requires": late_requires_schema
-    }
+
+    late_bind_schemas = {"requires": late_requires_schema}
 
     def __init__(self, resource, context=None):
         super(PackageBaseResourceWrapper, self).__init__(resource)
@@ -99,11 +111,17 @@ class PackageBaseResourceWrapper(PackageRepositoryResourceWrapper):
     def is_local(self):
         """Returns True if the package is in the local package repository"""
         local_repo = package_repository_manager.get_repository(
-            self.config.local_packages_path)
-        return (self.resource._repository.uid == local_repo.uid)
+            self.config.local_packages_path
+        )
+        return self.resource._repository.uid == local_repo.uid
 
-    def print_info(self, buf=None, format_=FileFormat.yaml,
-                   skip_attributes=None, include_release=False):
+    def print_info(
+        self,
+        buf=None,
+        format_=FileFormat.yaml,
+        skip_attributes=None,
+        include_release=False,
+    ):
         """Print the contents of the package.
 
         Args:
@@ -131,8 +149,9 @@ class PackageBaseResourceWrapper(PackageRepositoryResourceWrapper):
             skip_attributes = list(skip_attributes or []) + list(package_release_keys)
 
         buf = buf or sys.stdout
-        dump_package_data(data, buf=buf, format_=format_,
-                          skip_attributes=skip_attributes)
+        dump_package_data(
+            data, buf=buf, format_=format_, skip_attributes=skip_attributes
+        )
 
     def _wrap_forwarded(self, key, value):
         if isinstance(value, SourceCode) and value.late_binding:
@@ -184,6 +203,7 @@ class Package(PackageBaseResourceWrapper):
         Do not instantiate this class directly, instead use the function
         `iter_packages` or `PackageFamily.iter_packages`.
     """
+
     keys = schema_keys(package_schema)
 
     # This is to allow for a simple check like 'this.is_package' in late-bound
@@ -274,6 +294,7 @@ class Variant(PackageBaseResourceWrapper):
         Do not instantiate this class directly, instead use the function
         `Package.iter_variants`.
     """
+
     keys = schema_keys(variant_schema)
     keys.update(["index", "root", "subpath"])
 
@@ -308,7 +329,7 @@ class Variant(PackageBaseResourceWrapper):
         Returns:
             str: Name of the variant with version and index, eg "maya-2016.1[1]".
         """
-        idxstr = '' if self.index is None else str(self.index)
+        idxstr = "" if self.index is None else str(self.index)
         return "%s[%s]" % (self.qualified_package_name, idxstr)
 
     @cached_property
@@ -351,9 +372,7 @@ class Variant(PackageBaseResourceWrapper):
         Returns:
             List of `Requirement` objects.
         """
-        return (
-            (self.parent.requires or []) + self.variant_requires
-        )
+        return (self.parent.requires or []) + self.variant_requires
 
     def get_requires(self, build_requires=False, private_build_requires=False):
         """Get the requirements of the variant.
@@ -396,9 +415,9 @@ class Variant(PackageBaseResourceWrapper):
             specified repository. If `dry_run` is True, None may be returned.
         """
         repo = package_repository_manager.get_repository(path)
-        resource = repo.install_variant(self.resource,
-                                        dry_run=dry_run,
-                                        overrides=overrides)
+        resource = repo.install_variant(
+            self.resource, dry_run=dry_run, overrides=overrides
+        )
         if resource is None:
             return None
         elif resource is self.resource:
@@ -412,6 +431,7 @@ class PackageSearchPath(object):
 
     For example, $REZ_PACKAGES_PATH refers to a list of repositories.
     """
+
     def __init__(self, packages_path):
         """Create a package repository list.
 
@@ -443,7 +463,7 @@ class PackageSearchPath(object):
             bool: True if the resource is in the list of repositories, False
             otherwise.
         """
-        return (package.resource._repository.uid in self._repository_uids)
+        return package.resource._repository.uid in self._repository_uids
 
     @cached_property
     def _repository_uids(self):
@@ -457,6 +477,7 @@ class PackageSearchPath(object):
 # ------------------------------------------------------------------------------
 # resource acquisition functions
 # ------------------------------------------------------------------------------
+
 
 def iter_package_families(paths=None):
     """Iterate over package families, in no particular order.
@@ -472,7 +493,7 @@ def iter_package_families(paths=None):
     Returns:
         `PackageFamily` iterator.
     """
-    for path in (paths or config.packages_path):
+    for path in paths or config.packages_path:
         repo = package_repository_manager.get_repository(path)
         for resource in repo.iter_package_families():
             yield PackageFamily(resource)
@@ -533,7 +554,7 @@ def get_package(name, version, paths=None):
 
     it = iter_packages(name, range_, paths)
     try:
-        return it.next()
+        return next(it)
     except StopIteration:
         return None
 
@@ -551,7 +572,9 @@ def get_package_from_handle(package_handle):
     """
     if isinstance(package_handle, dict):
         package_handle = ResourceHandle.from_dict(package_handle)
-    package_resource = package_repository_manager.get_resource_from_handle(package_handle)
+    package_resource = package_repository_manager.get_resource_from_handle(
+        package_handle
+    )
     package = Package(package_resource)
     return package
 
@@ -582,6 +605,7 @@ def get_developer_package(path, format=None):
         `DeveloperPackage`.
     """
     from rez.developer_package import DeveloperPackage
+
     return DeveloperPackage.from_path(path, format=format)
 
 
@@ -596,6 +620,7 @@ def create_package(name, data, package_cls=None):
         `Package` object.
     """
     from rez.package_maker__ import PackageMaker
+
     maker = PackageMaker(name, data, package_cls=package_cls)
     return maker.get_package()
 
@@ -616,7 +641,9 @@ def get_variant(variant_handle, context=None):
     if isinstance(variant_handle, dict):
         variant_handle = ResourceHandle.from_dict(variant_handle)
 
-    variant_resource = package_repository_manager.get_resource_from_handle(variant_handle)
+    variant_resource = package_repository_manager.get_resource_from_handle(
+        variant_handle
+    )
     variant = Variant(variant_resource, context=context)
     return variant
 
@@ -664,14 +691,14 @@ def get_completions(prefix, paths=None, family_only=False):
     """
     op = None
     if prefix:
-        if prefix[0] in ('!', '~'):
+        if prefix[0] in ("!", "~"):
             if family_only:
                 return set()
             op = prefix[0]
             prefix = prefix[1:]
 
     fam = None
-    for ch in ('-', '@', '#'):
+    for ch in ("-", "@", "#"):
         if ch in prefix:
             if family_only:
                 return set()
@@ -680,18 +707,22 @@ def get_completions(prefix, paths=None, family_only=False):
 
     words = set()
     if not fam:
-        words = set(x.name for x in iter_package_families(paths=paths)
-                    if x.name.startswith(prefix))
+        words = set(
+            x.name
+            for x in iter_package_families(paths=paths)
+            if x.name.startswith(prefix)
+        )
         if len(words) == 1:
-            fam = iter(words).next()
+            fam = next(iter(words))
 
     if family_only:
         return words
 
     if fam:
         it = iter_packages(fam, paths=paths)
-        words.update(x.qualified_name for x in it
-                     if x.qualified_name.startswith(prefix))
+        words.update(
+            x.qualified_name for x in it if x.qualified_name.startswith(prefix)
+        )
 
     if op:
         words = set(op + x for x in words)
@@ -737,15 +768,14 @@ def get_latest_package_from_string(txt, paths=None, error=False):
     from rez.utils.formatting import PackageRequest
 
     req = PackageRequest(txt)
-    return get_latest_package(name=req.name,
-                              range_=req.range_,
-                              paths=paths,
-                              error=error)
+    return get_latest_package(
+        name=req.name, range_=req.range_, paths=paths, error=error
+    )
 
 
 def _get_families(name, paths=None):
     entries = []
-    for path in (paths or config.packages_path):
+    for path in paths or config.packages_path:
         repo = package_repository_manager.get_repository(path)
         family_resource = repo.get_package_family(name)
         if family_resource:
@@ -756,8 +786,9 @@ def _get_families(name, paths=None):
 
 def _check_class(resource, cls):
     if not isinstance(resource, cls):
-        raise ResourceError("Expected %s, got %s"
-                            % (cls.__name__, resource.__class__.__name__))
+        raise ResourceError(
+            "Expected %s, got %s" % (cls.__name__, resource.__class__.__name__)
+        )
 
 
 # Copyright 2013-2016 Allan Johns.

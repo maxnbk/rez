@@ -1,3 +1,5 @@
+from builtins import map
+from builtins import object
 from rez.exceptions import ReleaseVCSError
 from rez.packages_ import get_developer_package
 from rez.util import which
@@ -11,22 +13,24 @@ import subprocess
 def get_release_vcs_types():
     """Returns the available VCS implementations - git, hg etc."""
     from rez.plugin_managers import plugin_manager
-    return plugin_manager.get_plugins('release_vcs')
+
+    return plugin_manager.get_plugins("release_vcs")
 
 
 def create_release_vcs(path, vcs_name=None):
     """Return a new release VCS that can release from this source path."""
     from rez.plugin_managers import plugin_manager
+
     vcs_types = get_release_vcs_types()
     if vcs_name:
         if vcs_name not in vcs_types:
             raise ReleaseVCSError("Unknown version control system: %r" % vcs_name)
-        cls = plugin_manager.get_plugin_class('release_vcs', vcs_name)
+        cls = plugin_manager.get_plugin_class("release_vcs", vcs_name)
         return cls(path)
 
     classes_by_level = {}
     for vcs_name in vcs_types:
-        cls = plugin_manager.get_plugin_class('release_vcs', vcs_name)
+        cls = plugin_manager.get_plugin_class("release_vcs", vcs_name)
         result = cls.find_vcs_root(path)
         if not result:
             continue
@@ -34,8 +38,10 @@ def create_release_vcs(path, vcs_name=None):
         classes_by_level.setdefault(levels_up, []).append((cls, vcs_path))
 
     if not classes_by_level:
-        raise ReleaseVCSError("No version control system for package "
-                      "releasing is associated with the path %s" % path)
+        raise ReleaseVCSError(
+            "No version control system for package "
+            "releasing is associated with the path %s" % path
+        )
 
     # it's ok to have multiple results, as long as there is only one at the
     # "closest" directory up from this dir - ie, if we start at:
@@ -53,9 +59,11 @@ def create_release_vcs(path, vcs_name=None):
     clss = classes_by_level[lowest_level]
     if len(clss) > 1:
         clss_str = ", ".join(x[0].name() for x in clss)
-        raise ReleaseVCSError("Several version control systems are associated "
-                              "with the path %s: %s. Use rez-release --vcs to "
-                              "choose." % (path, clss_str))
+        raise ReleaseVCSError(
+            "Several version control systems are associated "
+            "with the path %s: %s. Use rez-release --vcs to "
+            "choose." % (path, clss_str)
+        )
     else:
         cls, vcs_root = clss[0]
         return cls(pkg_root=path, vcs_root=vcs_root)
@@ -64,15 +72,18 @@ def create_release_vcs(path, vcs_name=None):
 class ReleaseVCS(object):
     """A version control system (VCS) used to release Rez packages.
     """
+
     def __init__(self, pkg_root, vcs_root=None):
         if vcs_root is None:
             result = self.find_vcs_root(pkg_root)
             if not result:
-                raise ReleaseVCSError("Could not find %s repository for the "
-                                      "path %s" % (self.name(), pkg_root))
+                raise ReleaseVCSError(
+                    "Could not find %s repository for the "
+                    "path %s" % (self.name(), pkg_root)
+                )
             vcs_root = result[0]
         else:
-            assert(self.is_valid_root(vcs_root))
+            assert self.is_valid_root(vcs_root)
 
         self.vcs_root = vcs_root
         self.pkg_root = pkg_root
@@ -89,8 +100,9 @@ class ReleaseVCS(object):
     def find_executable(cls, name):
         exe = which(name)
         if not exe:
-            raise ReleaseVCSError("Couldn't find executable '%s' for VCS '%s'"
-                                  % (name, cls.name()))
+            raise ReleaseVCSError(
+                "Couldn't find executable '%s' for VCS '%s'" % (name, cls.name())
+            )
         return exe
 
     @classmethod
@@ -202,13 +214,14 @@ class ReleaseVCS(object):
 
     def _cmd(self, *nargs):
         """Convenience function for executing a program such as 'git' etc."""
-        cmd_str = ' '.join(map(quote, nargs))
+        cmd_str = " ".join(map(quote, nargs))
 
         if self.package.config.debug("package_release"):
             print_debug("Running command: %s" % cmd_str)
 
-        p = popen(nargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                  cwd=self.pkg_root)
+        p = popen(
+            nargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=self.pkg_root
+        )
         out, err = p.communicate()
 
         if p.returncode:
@@ -219,7 +232,7 @@ class ReleaseVCS(object):
             raise ReleaseVCSError("command failed: %s\n%s" % (cmd_str, err))
         out = out.strip()
         if out:
-            return [x.rstrip() for x in out.split('\n')]
+            return [x.rstrip() for x in out.split("\n")]
         else:
             return []
 

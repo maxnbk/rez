@@ -1,3 +1,7 @@
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import object
 import rez.vendor.unittest2 as unittest
 from rez.config import config, _create_locked_config
 from rez.shells import get_shell_types
@@ -13,6 +17,7 @@ from contextlib import contextmanager
 
 class TestBase(unittest.TestCase):
     """Unit test base class."""
+
     def __init__(self, *nargs, **kwargs):
         super(TestBase, self).__init__(*nargs, **kwargs)
         self.setup_once_called = False
@@ -92,6 +97,7 @@ class TestBase(unittest.TestCase):
 
 class TempdirMixin(object):
     """Mixin that adds tmpdir create/delete."""
+
     @classmethod
     def setUpClass(cls):
         cls.root = tempfile.mkdtemp(prefix="rez_selftest_")
@@ -119,9 +125,9 @@ def find_file_in_path(to_find, path_str, pathsep=None, reverse=True):
 
 
 program_tests = {
-    "cmake": ['cmake', '-h'],
-    "make": ['make', '-h'],
-    "g++": ["g++", "--help"]
+    "cmake": ["cmake", "-h"],
+    "make": ["make", "-h"],
+    "g++": ["g++", "--help"],
 }
 
 
@@ -136,7 +142,7 @@ def program_dependent(program_name, *program_names):
     def _test(name):
         command = program_tests[name]
 
-        with open(os.devnull, 'wb') as DEVNULL:
+        with open(os.devnull, "wb") as DEVNULL:
             try:
                 subprocess.check_call(command, stdout=DEVNULL, stderr=DEVNULL)
             except (OSError, IOError, subprocess.CalledProcessError):
@@ -148,10 +154,12 @@ def program_dependent(program_name, *program_names):
     exists = all(_test(x) for x in names)
 
     if exists:
+
         def wrapper(fn):
             return fn
 
     else:
+
         def wrapper(fn):
             return unittest.skip("Program(s) not available: %s" % names)(fn)
 
@@ -160,6 +168,7 @@ def program_dependent(program_name, *program_names):
 
 def shell_dependent(exclude=None):
     """Function decorator that runs the function over all shell types."""
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
@@ -171,23 +180,29 @@ def shell_dependent(exclude=None):
             for shell in shells:
                 if exclude and shell in exclude:
                     self.skipTest("This test does not run on %s shell." % shell)
-                print "\ntesting in shell: %s..." % shell
+                print("\ntesting in shell: %s..." % shell)
                 config.override("default_shell", shell)
                 func(self, *args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
 def install_dependent(fn):
     """Function decorator that skips tests if not run via 'rez-selftest' tool,
     from a production install"""
+
     @functools.wraps(fn)
     def _fn(self, *args, **kwargs):
         if os.getenv("__REZ_SELFTEST_RUNNING") and system.is_production_rez_install:
             fn(self, *args, **kwargs)
         else:
-            print ("\nskipping test, must be run via 'rez-selftest' tool, from "
-                   "a PRODUCTION rez installation.")
+            print (
+                "\nskipping test, must be run via 'rez-selftest' tool, from "
+                "a PRODUCTION rez installation."
+            )
+
     return _fn
 
 
@@ -209,17 +224,17 @@ def get_cli_output(args):
     """
 
     import sys
-    from StringIO import StringIO
+    from io import StringIO
 
     command = args[0]
     other_args = list(args[1:])
-    if command.startswith('rez-'):
+    if command.startswith("rez-"):
         command = command[4:]
     exitcode = None
 
     # first swap sys.argv...
     old_argv = sys.argv
-    new_argv = ['rez-%s' % command] + other_args
+    new_argv = ["rez-%s" % command] + other_args
     sys.argv = new_argv
     try:
 
@@ -230,7 +245,7 @@ def get_cli_output(args):
         # a function has a kwarg default (as in rez.status.Status.print_info)
         # So, instead we swap at a file-descriptor level... potentially less
         # portable, but has been tested to work on linux, osx, and windows...
-        with tempfile.TemporaryFile(bufsize=0, prefix='rez_cliout') as tf:
+        with tempfile.TemporaryFile(bufsize=0, prefix="rez_cliout") as tf:
             new_fileno = tf.fileno()
             old_fileno = sys.stdout.fileno()
             old_fileno_dupe = os.dup(old_fileno)
@@ -243,6 +258,7 @@ def get_cli_output(args):
                 try:
                     # and finally invoke the "command-line" rez-COMMAND
                     from rez.cli._main import run
+
                     run(command)
                 except SystemExit as e:
                     exitcode = e.args[0]

@@ -6,8 +6,15 @@ the current python interpreter - this is rez's, inside its installation
 virtualenv.
 """
 from __future__ import absolute_import
-from rez.bind._utils import check_version, find_exe, make_dirs, \
-    get_version_in_python, run_python_command, log
+from builtins import str
+from rez.bind._utils import (
+    check_version,
+    find_exe,
+    make_dirs,
+    get_version_in_python,
+    run_python_command,
+    log,
+)
 from rez.package_maker__ import make_package
 from rez.exceptions import RezBindError
 from rez.system import system
@@ -19,26 +26,29 @@ import os.path
 
 
 def commands():
-    env.PYTHONPATH.append('{this.root}/python')
+    env.PYTHONPATH.append("{this.root}/python")
 
 
 def commands_with_bin():
-    env.PYTHONPATH.append('{this.root}/python')
-    env.PATH.append('{this.root}/bin')
+    env.PYTHONPATH.append("{this.root}/python")
+    env.PATH.append("{this.root}/bin")
 
 
 def copy_module(name, destpath):
     success, out, err = run_python_command(
-        ["import %s" % name,
-         "print %s.__path__[0] if hasattr(%s, '__path__') else ''" % (name, name)])
+        [
+            "import %s" % name,
+            "print %s.__path__[0] if hasattr(%s, '__path__') else ''" % (name, name),
+        ]
+    )
 
     if out:
         srcpath = out
         shutil.copytree(srcpath, os.path.join(destpath, name))
     else:
         success, out, err = run_python_command(
-            ["import %s" % name,
-             "print %s.__file__" % name])
+            ["import %s" % name, "print %s.__file__" % name]
+        )
         if not success:
             raise RezBindError("Couldn't locate module %s: %s" % (name, err))
 
@@ -54,20 +64,28 @@ def copy_module(name, destpath):
         shutil.copy2(srcfile, destfile)
 
 
-def bind(name, path, import_name=None, version_range=None, version=None,
-         requires=None, pure_python=None, tools=None, extra_module_names=[],
-         extra_attrs={}):
+def bind(
+    name,
+    path,
+    import_name=None,
+    version_range=None,
+    version=None,
+    requires=None,
+    pure_python=None,
+    tools=None,
+    extra_module_names=[],
+    extra_attrs={},
+):
     import_name = import_name or name
 
     if version is None:
         version = get_version_in_python(
-            name,
-            ["import %s" % import_name,
-             "print %s.__version__" % import_name])
+            name, ["import %s" % import_name, "print %s.__version__" % import_name]
+        )
 
     check_version(version, version_range)
 
-    py_major_minor = '.'.join(str(x) for x in sys.version_info[:2])
+    py_major_minor = ".".join(str(x) for x in sys.version_info[:2])
     py_req = "python-%s" % py_major_minor
     found_tools = {}
 
@@ -78,7 +96,7 @@ def bind(name, path, import_name=None, version_range=None, version=None,
     else:
         variant = system.variant + [py_req]
 
-    for tool in (tools or []):
+    for tool in tools or []:
         try:
             src = find_exe(tool)
             found_tools[tool] = src
@@ -112,7 +130,7 @@ def bind(name, path, import_name=None, version_range=None, version=None,
         else:
             pkg.commands = commands
 
-        for key, value in extra_attrs.iteritems():
+        for key, value in extra_attrs.items():
             pkg[key] = value
 
     return pkg.installed_variants

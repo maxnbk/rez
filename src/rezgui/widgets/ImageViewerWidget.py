@@ -1,3 +1,5 @@
+from __future__ import division
+from past.utils import old_div
 from rezgui.qt import QtCore, QtGui
 from rezgui.util import create_pane
 
@@ -37,8 +39,10 @@ class GraphicsView(QtGui.QGraphicsView):
             scale = 1.0 + (event.delta() * 0.001)
             if scale < 1.0:
                 rect = self.mapToScene(self.rect()).boundingRect()
-                if rect.width() > self.scene().width() \
-                        and rect.height() > self.scene().height():
+                if (
+                    rect.width() > self.scene().width()
+                    and rect.height() > self.scene().height()
+                ):
                     # all of image visible in viewport
                     event.ignore()
                     return
@@ -78,8 +82,9 @@ class ImageViewerWidget(QtGui.QWidget):
         self.view = GraphicsView(self.scene, max_scale=max_scale)
 
         create_pane([self.view], False, parent_widget=self)
-        self.view.setRenderHints(QtGui.QPainter.Antialiasing
-                                 | QtGui.QPainter.SmoothPixmapTransform)
+        self.view.setRenderHints(
+            QtGui.QPainter.Antialiasing | QtGui.QPainter.SmoothPixmapTransform
+        )
         self.view.show()
         self._fit_in_view()
 
@@ -98,7 +103,7 @@ class ImageViewerWidget(QtGui.QWidget):
                 self.prev_scale = current_scale
                 self._fit_in_view()
             else:
-                factor = self.prev_scale / current_scale
+                factor = old_div(self.prev_scale, current_scale)
                 self.view.scale(factor, factor)
 
     def _fit_in_view(self):

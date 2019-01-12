@@ -1,9 +1,11 @@
+from builtins import object
 from rezgui.qt import QtCore, QtGui
 
 
 class StoreSizeMixin(object):
     """A mixing for persisting a top-level widget's dimensions.
     """
+
     def __init__(self, config, config_key):
         assert isinstance(self, QtGui.QWidget)
         self.config = config

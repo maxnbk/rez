@@ -1,3 +1,5 @@
+from __future__ import division
+from past.utils import old_div
 from rezgui.qt import QtCore, QtGui
 from rezgui.util import update_font, create_pane
 from rez.utils.formatting import readable_time_duration
@@ -21,7 +23,7 @@ class Canvas(QtGui.QWidget):
         w = rect.width()
         h = rect.height()
         margin = 5
-        j = h / 4
+        j = old_div(h, 4)
 
         p = QtGui.QPainter(self)
         update_font(p, italic=True)
@@ -105,8 +107,7 @@ class TimeSelecterPopup(QtGui.QFrame):
         layout.addWidget(canvas)
         canvas_frame.setLayout(layout)
 
-        create_pane([self.label, canvas_frame], False, compact=True,
-                    parent_widget=self)
+        create_pane([self.label, canvas_frame], False, compact=True, parent_widget=self)
         self.adjustSize()
 
         pt = pivot_widget.rect().topLeft()

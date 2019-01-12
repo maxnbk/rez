@@ -1,3 +1,5 @@
+from __future__ import print_function
+from builtins import str
 from rez.exceptions import RezBindError
 from rez import module_root_path
 from rez.util import get_close_pkgs
@@ -22,15 +24,14 @@ def get_bind_modules(verbose=False):
 
     for path in searchpaths:
         if verbose:
-            print "searching %s..." % path
+            print("searching %s..." % path)
         if not os.path.isdir(path):
             continue
 
         for filename in os.listdir(path):
             fpath = os.path.join(path, filename)
             fname, ext = os.path.splitext(filename)
-            if os.path.isfile(fpath) and ext == ".py" \
-                    and not fname.startswith('_'):
+            if os.path.isfile(fpath) and ext == ".py" and not fname.startswith("_"):
                 bindnames[fname] = fpath
 
     return bindnames
@@ -56,20 +57,21 @@ def find_bind_module(name, verbose=False):
         return None
 
     # suggest close matches
-    fuzzy_matches = get_close_pkgs(name, bindnames.keys())
+    fuzzy_matches = get_close_pkgs(name, list(bindnames.keys()))
 
     if fuzzy_matches:
         rows = [(x[0], bindnames[x[0]]) for x in fuzzy_matches]
-        print "'%s' not found. Close matches:" % name
-        print '\n'.join(columnise(rows))
+        print("'%s' not found. Close matches:" % name)
+        print("\n".join(columnise(rows)))
     else:
-        print "No matches."
+        print("No matches.")
 
     return None
 
 
-def bind_package(name, path=None, version_range=None, no_deps=False,
-                 bind_args=None, quiet=False):
+def bind_package(
+    name, path=None, version_range=None, no_deps=False, bind_args=None, quiet=False
+):
     """Bind software available on the current system, as a rez package.
 
     Note:
@@ -105,14 +107,18 @@ def bind_package(name, path=None, version_range=None, no_deps=False,
             # turn error on binding of dependencies into a warning - we don't
             # want to skip binding some dependencies because others failed
             try:
-                variants_ = _bind_package(name_,
-                                          path=path,
-                                          version_range=version_range,
-                                          bind_args=bind_args,
-                                          quiet=quiet)
+                variants_ = _bind_package(
+                    name_,
+                    path=path,
+                    version_range=version_range,
+                    bind_args=bind_args,
+                    quiet=quiet,
+                )
             except exc_type as e:
-                print_error("Could not bind '%s': %s: %s"
-                            % (name_, e.__class__.__name__, str(e)))
+                print_error(
+                    "Could not bind '%s': %s: %s"
+                    % (name_, e.__class__.__name__, str(e))
+                )
                 continue
 
             installed_variants.extend(variants_)
@@ -134,15 +140,14 @@ def bind_package(name, path=None, version_range=None, no_deps=False,
             exc_type = RezBindError
 
     if installed_variants and not quiet:
-        print "The following packages were installed:"
-        print
+        print("The following packages were installed:")
+        print()
         _print_package_list(installed_variants)
 
     return installed_variants
 
 
-def _bind_package(name, path=None, version_range=None, bind_args=None,
-                  quiet=False):
+def _bind_package(name, path=None, version_range=None, bind_args=None, quiet=False):
     bindfile = find_bind_module(name, verbose=(not quiet))
     if not bindfile:
         raise RezBindError("Bind module not found for '%s'" % name)
@@ -150,11 +155,12 @@ def _bind_package(name, path=None, version_range=None, bind_args=None,
     # load the bind module
     stream = open(bindfile)
     namespace = {}
-    exec stream in namespace
+    exec(stream, namespace)
 
     # parse bind module params
-    bind_parser = argparse.ArgumentParser(prog="rez bind %s" % name,
-                                          description="%s bind module" % name)
+    bind_parser = argparse.ArgumentParser(
+        prog="rez bind %s" % name, description="%s bind module" % name
+    )
     parserfunc = namespace.get("setup_parser")
     if parserfunc:
         parserfunc(bind_parser)
@@ -164,16 +170,18 @@ def _bind_package(name, path=None, version_range=None, bind_args=None,
     install_path = path or config.local_packages_path
 
     if not quiet:
-        print "creating package '%s' in %s..." % (name, install_path)
+        print("creating package '%s' in %s..." % (name, install_path))
 
     bindfunc = namespace.get("bind")
     if not bindfunc:
         raise RezBindError("'bind' function missing in %s" % bindfile)
 
-    variants = bindfunc(path=install_path,
-                        version_range=version_range,
-                        opts=bind_opts,
-                        parser=bind_parser)
+    variants = bindfunc(
+        path=install_path,
+        version_range=version_range,
+        opts=bind_opts,
+        parser=bind_parser,
+    )
 
     return variants
 
@@ -182,7 +190,6 @@ def _print_package_list(variants):
     packages = set([x.parent for x in variants])
     packages = sorted(packages, key=lambda x: x.name)
 
-    rows = [["PACKAGE", "URI"],
-            ["-------", "---"]]
+    rows = [["PACKAGE", "URI"], ["-------", "---"]]
     rows += [(x.name, x.uri) for x in packages]
-    print '\n'.join(columnise(rows))
+    print("\n".join(columnise(rows)))

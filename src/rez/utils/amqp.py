@@ -1,8 +1,11 @@
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
 import atexit
 import socket
 import time
 import threading
-from Queue import Queue
+from queue import Queue
 
 from rez.utils import json
 from rez.utils.data_utils import remove_nones
@@ -16,7 +19,7 @@ _thread = None
 _num_pending = 0
 
 
-def publish_message(host, amqp_settings, routing_key, data, async=False):
+def publish_message(host, amqp_settings, routing_key, data, asynchronous=False):
     """Publish an AMQP message.
 
     Returns:
@@ -29,16 +32,16 @@ def publish_message(host, amqp_settings, routing_key, data, async=False):
         "host": host,
         "amqp_settings": amqp_settings,
         "routing_key": routing_key,
-        "data": data
+        "data": data,
     }
 
-    if not async:
+    if not asynchronous:
         return _publish_message(**kwargs)
 
     if _thread is None:
         with _lock:
             if _thread is None:
-                _thread = threading.Thread(target=_publish_messages_async)
+                _thread = threading.Thread(target=_publish_messages_asynchronous)
                 _thread.daemon = True
                 _thread.start()
 
@@ -60,12 +63,14 @@ def _publish_message(host, amqp_settings, routing_key, data):
         return True
 
     try:
-        conn = Connection(**remove_nones(
-            host=host,
-            userid=amqp_settings.get("userid"),
-            password=amqp_settings.get("password"),
-            connect_timeout=amqp_settings.get("connect_timeout")
-        ))
+        conn = Connection(
+            **remove_nones(
+                host=host,
+                userid=amqp_settings.get("userid"),
+                password=amqp_settings.get("password"),
+                connect_timeout=amqp_settings.get("connect_timeout"),
+            )
+        )
     except socket.error as e:
         print_error("Cannot connect to the message broker: %s" % (e))
         return False
@@ -73,20 +78,18 @@ def _publish_message(host, amqp_settings, routing_key, data):
     channel = conn.channel()
 
     # build the message
-    msg = basic_message.Message(**remove_nones(
-        body=json.dumps(data),
-        delivery_mode=amqp_settings.get("message_delivery_mode"),
-        content_type="application/json",
-        content_encoding="utf-8"
-    ))
+    msg = basic_message.Message(
+        **remove_nones(
+            body=json.dumps(data),
+            delivery_mode=amqp_settings.get("message_delivery_mode"),
+            content_type="application/json",
+            content_encoding="utf-8",
+        )
+    )
 
     # publish the message
     try:
-        channel.basic_publish(
-            msg,
-            amqp_settings["exchange_name"],
-            routing_key
-        )
+        channel.basic_publish(msg, amqp_settings["exchange_name"], routing_key)
     except Exception as e:
         print_error("Failed to publish message: %s" % (e))
         return False
@@ -94,7 +97,7 @@ def _publish_message(host, amqp_settings, routing_key, data):
     return True
 
 
-def _publish_messages_async():
+def _publish_messages_asynchronous():
     global _num_pending
 
     while True:

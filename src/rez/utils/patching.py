@@ -32,26 +32,27 @@ def get_patched_request(requires, patchlist):
 
     # rules from table in docstring above
     rules = {
-        '':  (True,  True,  True ),
-        '!': (False, False, False),
-        '~': (False, False, True ),
-        '^': (True,  True,  True )
+        "": (True, True, True),
+        "!": (False, False, False),
+        "~": (False, False, True),
+        "^": (True, True, True),
     }
 
-    requires = [Requirement(x) if not isinstance(x, Requirement) else x
-                for x in requires]
+    requires = [
+        Requirement(x) if not isinstance(x, Requirement) else x for x in requires
+    ]
     appended = []
 
     for patch in patchlist:
-        if patch and patch[0] in ('!', '~', '^'):
+        if patch and patch[0] in ("!", "~", "^"):
             ch = patch[0]
             name = Requirement(patch[1:]).name
         else:
-            ch = ''
+            ch = ""
             name = Requirement(patch).name
 
         rule = rules[ch]
-        replaced = (ch == '^')
+        replaced = ch == "^"
 
         for i, req in enumerate(requires):
             if req is None or req.name != name:

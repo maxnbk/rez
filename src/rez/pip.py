@@ -1,20 +1,30 @@
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import map
+from past.builtins import basestring
 from rez.packages_ import get_latest_package
 from rez.vendor.version.version import Version
 from rez.vendor.distlib import DistlibException
 from rez.vendor.distlib.database import DistributionPath
 from rez.vendor.distlib.markers import interpret
 from rez.vendor.distlib.util import parse_name_and_version
-from rez.vendor.enum.enum import Enum
+from enum import Enum
 from rez.resolved_context import ResolvedContext
 from rez.utils.system import popen
 from rez.utils.logging_ import print_debug, print_info, print_warning
-from rez.exceptions import BuildError, PackageFamilyNotFoundError, \
-    PackageNotFoundError, convert_errors
+from rez.exceptions import (
+    BuildError,
+    PackageFamilyNotFoundError,
+    PackageNotFoundError,
+    convert_errors,
+)
 from rez.package_maker__ import make_package
 from rez.config import config
 from rez.system import System
 from tempfile import mkdtemp
-from StringIO import StringIO
+from io import StringIO
 from pipes import quote
 import subprocess
 import os.path
@@ -52,8 +62,11 @@ def _get_dependencies(requirement, distributions):
                 return dist.name.replace("-", "_")
 
     result = []
-    requirements = ([requirement] if isinstance(requirement, basestring)
-                    else requirement["requires"])
+    requirements = (
+        [requirement]
+        if isinstance(requirement, basestring)
+        else requirement["requires"]
+    )
 
     for package in requirements:
         if "(" in package:
@@ -62,10 +75,10 @@ def _get_dependencies(requirement, distributions):
                 version = version.replace("==", "")
                 name = get_distrubution_name(name)
             except DistlibException:
-                n, vs = package.split(' (')
+                n, vs = package.split(" (")
                 vs = vs[:-1]
                 versions = []
-                for v in vs.split(','):
+                for v in vs.split(","):
                     package = "%s (%s)" % (n, v)
                     name, version = parse_name_and_version(package)
                     version = version.replace("==", "")
@@ -82,7 +95,7 @@ def _get_dependencies(requirement, distributions):
 
 
 def is_exe(fpath):
-        return os.path.exists(fpath) and os.access(fpath, os.X_OK)
+    return os.path.exists(fpath) and os.access(fpath, os.X_OK)
 
 
 def run_pip_command(command_args, pip_version=None, python_version=None):
@@ -125,7 +138,8 @@ def find_pip(pip_version=None, python_version=None):
         if pip_exe:
             print_warning(
                 "pip rez package could not be found; system 'pip' command (%s) "
-                "will be used instead." % pip_exe)
+                "will be used instead." % pip_exe
+            )
             context = None
         else:
             raise e
@@ -162,16 +176,18 @@ def create_context(pip_version=None, python_version=None):
         else:
             # no python package. We're gonna fail, let's just choose current
             # python version (and fail at context creation time)
-            major_minor_ver = '.'.join(map(str, sys.version_info[:2]))
+            major_minor_ver = ".".join(map(str, sys.version_info[:2]))
 
         py_req = "python-%s" % str(major_minor_ver)
 
     # use pip + latest python to perform pip download operations
     request = [pip_req, py_req]
 
-    with convert_errors(from_=(PackageFamilyNotFoundError, PackageNotFoundError),
-                        to=BuildError, msg="Cannot run - pip or python rez "
-                        "package is not present"):
+    with convert_errors(
+        from_=(PackageFamilyNotFoundError, PackageNotFoundError),
+        to=BuildError,
+        msg="Cannot run - pip or python rez " "package is not present",
+    ):
         context = ResolvedContext(request)
 
     # print pip package used to perform the install
@@ -182,8 +198,13 @@ def create_context(pip_version=None, python_version=None):
     return context
 
 
-def pip_install_package(source_name, pip_version=None, python_version=None,
-                        mode=InstallMode.min_deps, release=False):
+def pip_install_package(
+    source_name,
+    pip_version=None,
+    python_version=None,
+    mode=InstallMode.min_deps,
+    release=False,
+):
     """Install a pip-compatible python package as a rez package.
     Args:
         source_name (str): Name of package or archive/url containing the pip
@@ -210,8 +231,9 @@ def pip_install_package(source_name, pip_version=None, python_version=None,
 
     # TODO: should check if packages_path is writable before continuing with pip
     #
-    packages_path = (config.release_packages_path if release
-                     else config.local_packages_path)
+    packages_path = (
+        config.release_packages_path if release else config.local_packages_path
+    )
 
     tmpdir = mkdtemp(suffix="-rez", prefix="pip-")
     stagingdir = os.path.join(tmpdir, "rez_staging")
@@ -224,16 +246,19 @@ def pip_install_package(source_name, pip_version=None, python_version=None,
 
     if context and config.debug("package_release"):
         buf = StringIO()
-        print >> buf, "\n\npackage download environment:"
+        print("\n\npackage download environment:", file=buf)
         context.print_info(buf)
         _log(buf.getvalue())
 
     # Build pip commandline
-    cmd = [pip_exe, "install",
-           "--install-option=--install-lib=%s" % destpath,
-           "--install-option=--install-scripts=%s" % binpath,
-           "--install-option=--install-headers=%s" % incpath,
-           "--install-option=--install-data=%s" % datapath]
+    cmd = [
+        pip_exe,
+        "install",
+        "--install-option=--install-lib=%s" % destpath,
+        "--install-option=--install-scripts=%s" % binpath,
+        "--install-option=--install-headers=%s" % incpath,
+        "--install-option=--install-data=%s" % datapath,
+    ]
 
     if mode == InstallMode.no_deps:
         cmd.append("--no-deps")
@@ -255,7 +280,9 @@ def pip_install_package(source_name, pip_version=None, python_version=None,
             for requirement in distribution.metadata.run_requires:
                 if "environment" in requirement:
                     if interpret(requirement["environment"]):
-                        requirements.extend(_get_dependencies(requirement, distributions))
+                        requirements.extend(
+                            _get_dependencies(requirement, distributions)
+                        )
                 elif "extra" in requirement:
                     # Currently ignoring optional requirements
                     pass
@@ -272,8 +299,9 @@ def pip_install_package(source_name, pip_version=None, python_version=None,
                 destination_file = installed_file[0].split(stagingsep)[1]
                 exe = False
 
-                if is_exe(source_file) and \
-                        destination_file.startswith("%s%s" % ("bin", os.path.sep)):
+                if is_exe(source_file) and destination_file.startswith(
+                    "%s%s" % ("bin", os.path.sep)
+                ):
                     _, _file = os.path.split(destination_file)
                     tools.append(_file)
                     exe = True
@@ -288,9 +316,11 @@ def pip_install_package(source_name, pip_version=None, python_version=None,
             distribution to copy files to the target directory of the rez package
             variant
             """
-            for source_file, data in src_dst_lut.items():
+            for source_file, data in list(src_dst_lut.items()):
                 destination_file, exe = data
-                destination_file = os.path.normpath(os.path.join(path, destination_file))
+                destination_file = os.path.normpath(
+                    os.path.join(path, destination_file)
+                )
 
                 if not os.path.exists(os.path.dirname(destination_file)):
                     os.makedirs(os.path.dirname(destination_file))
@@ -308,7 +338,7 @@ def pip_install_package(source_name, pip_version=None, python_version=None,
 
         if context is None:
             # since we had to use system pip, we have to assume system python version
-            py_ver = '.'.join(map(str, sys.version_info[:2]))
+            py_ver = ".".join(map(str, sys.version_info[:2]))
         else:
             python_variant = context.get_resolved_package("python")
             py_ver = python_variant.version.trim(2)
@@ -316,7 +346,7 @@ def pip_install_package(source_name, pip_version=None, python_version=None,
         variant_reqs.append("python-%s" % py_ver)
 
         name, _ = parse_name_and_version(distribution.name_and_version)
-        name = distribution.name[0:len(name)].replace("-", "_")
+        name = distribution.name[0 : len(name)].replace("-", "_")
 
         with make_package(name, packages_path, make_root=make_root) as pkg:
             pkg.version = distribution.version
@@ -334,7 +364,7 @@ def pip_install_package(source_name, pip_version=None, python_version=None,
                 pkg.tools = tools
                 commands.append("env.PATH.append('{root}/bin')")
 
-            pkg.commands = '\n'.join(commands)
+            pkg.commands = "\n".join(commands)
 
         installed_variants.extend(pkg.installed_variants or [])
         skipped_variants.extend(pkg.skipped_variants or [])
@@ -346,7 +376,7 @@ def pip_install_package(source_name, pip_version=None, python_version=None,
 
 
 def _cmd(context, command):
-    cmd_str = ' '.join(quote(x) for x in command)
+    cmd_str = " ".join(quote(x) for x in command)
     _log("running: %s" % cmd_str)
 
     if context is None:

@@ -1,3 +1,5 @@
+from future import standard_library
+standard_library.install_aliases()
 from rezgui.qt import QtCore, QtGui
 from rezgui.util import create_pane
 from rezgui.objects.LoadPackagesThread import LoadPackagesThread
@@ -18,8 +20,13 @@ class PackageLoadingWidget(QtGui.QWidget):
         self.bar = QtGui.QProgressBar()
         self.loading_widget = create_pane([label, self.bar, None], False, compact=True)
 
-        create_pane([self.loading_widget], True, compact=True, compact_spacing=0,
-                    parent_widget=self)
+        create_pane(
+            [self.loading_widget],
+            True,
+            compact=True,
+            compact_spacing=0,
+            parent_widget=self,
+        )
 
     def set_packages(self, packages):
         """Implement this function in your subclass. It is called after packages
@@ -47,16 +54,24 @@ class PackageLoadingWidget(QtGui.QWidget):
             self.worker.stop()
             self.worker = None
 
-    def load_packages(self, package_paths, package_name, range_=None,
-                      package_attributes=None, callback=None):
+    def load_packages(
+        self,
+        package_paths,
+        package_name,
+        range_=None,
+        package_attributes=None,
+        callback=None,
+    ):
         self.stop_loading_packages()
         self.bar.setRange(0, 0)
 
-        self.worker = LoadPackagesThread(package_paths=package_paths,
-                                         package_name=package_name,
-                                         range_=range_,
-                                         package_attributes=package_attributes,
-                                         callback=callback)
+        self.worker = LoadPackagesThread(
+            package_paths=package_paths,
+            package_name=package_name,
+            range_=range_,
+            package_attributes=package_attributes,
+            callback=callback,
+        )
         id_ = id(self.worker)
         self.worker.progress.connect(partial(self._progress, id_))
         self.worker.finished.connect(partial(self._packagesLoaded, id_))

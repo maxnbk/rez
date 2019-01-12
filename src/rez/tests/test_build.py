@@ -4,11 +4,20 @@ test the build system
 from rez.build_process_ import create_build_process
 from rez.build_system import create_build_system
 from rez.resolved_context import ResolvedContext
-from rez.exceptions import BuildError, BuildContextResolveError,\
-    PackageFamilyNotFoundError
+from rez.exceptions import (
+    BuildError,
+    BuildContextResolveError,
+    PackageFamilyNotFoundError,
+)
 import rez.vendor.unittest2 as unittest
-from rez.tests.util import TestBase, TempdirMixin, find_file_in_path, \
-    shell_dependent, install_dependent, program_dependent
+from rez.tests.util import (
+    TestBase,
+    TempdirMixin,
+    find_file_in_path,
+    shell_dependent,
+    install_dependent,
+    program_dependent,
+)
 import shutil
 import os.path
 
@@ -34,7 +43,8 @@ class TestBuild(TestBase, TempdirMixin):
             resolve_caching=False,
             warn_untimestamped=False,
             warn_old_commands=False,
-            implicit_packages=[])
+            implicit_packages=[],
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -43,9 +53,9 @@ class TestBuild(TestBase, TempdirMixin):
     @classmethod
     def _create_builder(cls, working_dir):
         buildsys = create_build_system(working_dir)
-        return create_build_process(process_type="local",
-                                    working_dir=working_dir,
-                                    build_system=buildsys)
+        return create_build_process(
+            process_type="local", working_dir=working_dir, build_system=buildsys
+        )
 
     @classmethod
     def _create_context(cls, *pkgs):
@@ -114,17 +124,17 @@ class TestBuild(TestBase, TempdirMixin):
         self._test_build("translate_lib", "2.2.0")
         context = self._create_context("translate_lib==2.2.0")
         environ = context.get_environ()
-        find_file_in_path('translate_lib.cmake', environ['CMAKE_MODULE_PATH'])
+        find_file_in_path("translate_lib.cmake", environ["CMAKE_MODULE_PATH"])
 
     def _test_build_sup_world(self):
         """Build, install, test the sup_world package."""
         from subprocess import PIPE
+
         self._test_build("sup_world", "3.8")
         context = self._create_context("sup_world==3.8")
-        proc = context.execute_command(['test_ghetto'], stdout=PIPE)
+        proc = context.execute_command(["test_ghetto"], stdout=PIPE)
         stdout = proc.communicate()[0]
-        self.assertEqual('sup dogg - how is dis shizzle doin today?',
-                         stdout.strip())
+        self.assertEqual("sup dogg - how is dis shizzle doin today?", stdout.strip())
 
     @shell_dependent()
     @install_dependent
@@ -155,8 +165,9 @@ class TestBuild(TestBase, TempdirMixin):
     @program_dependent("cmake")
     def test_build_cmake(self):
         """Test a cmake-based package."""
-        self.assertRaises(PackageFamilyNotFoundError, self._create_context,
-                          "sup_world==3.8")
+        self.assertRaises(
+            PackageFamilyNotFoundError, self._create_context, "sup_world==3.8"
+        )
         self._test_build_translate_lib()
         self._test_build_sup_world()
 
@@ -168,12 +179,12 @@ class TestBuild(TestBase, TempdirMixin):
         self._test_build("hello", "1.0")
         context = self._create_context("hello==1.0")
 
-        proc = context.execute_command(['hai'], stdout=PIPE)
+        proc = context.execute_command(["hai"], stdout=PIPE)
         stdout = proc.communicate()[0]
-        self.assertEqual('Oh hai!', stdout.strip())
+        self.assertEqual("Oh hai!", stdout.strip())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
 
 

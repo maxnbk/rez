@@ -1,39 +1,54 @@
 """
 Perform a reverse package dependency lookup.
 """
+from __future__ import print_function
 
 
 def setup_parser(parser, completions=False):
+    parser.add_argument("-d", "--depth", type=int, help="dependency tree depth limit")
+    parser.add_argument("--paths", type=str, help="set package search path")
     parser.add_argument(
-        "-d", "--depth", type=int,
-        help="dependency tree depth limit")
+        "-b", "--build-requires", action="store_true", help="Include build requirements"
+    )
     parser.add_argument(
-        "--paths", type=str,
-        help="set package search path")
+        "-p",
+        "--private-build-requires",
+        action="store_true",
+        help="Include private build requirements of PKG, if any",
+    )
     parser.add_argument(
-        "-b", "--build-requires", action="store_true",
-        help="Include build requirements")
+        "-g",
+        "--graph",
+        action="store_true",
+        help="display the dependency tree as an image",
+    )
     parser.add_argument(
-        "-p", "--private-build-requires", action="store_true",
-        help="Include private build requirements of PKG, if any")
+        "--pg",
+        "--print-graph",
+        dest="print_graph",
+        action="store_true",
+        help="print the dependency tree as a string",
+    )
     parser.add_argument(
-        "-g", "--graph", action="store_true",
-        help="display the dependency tree as an image")
+        "--wg",
+        "--write-graph",
+        dest="write_graph",
+        metavar="FILE",
+        help="write the dependency tree to FILE",
+    )
     parser.add_argument(
-        "--pg", "--print-graph", dest="print_graph", action="store_true",
-        help="print the dependency tree as a string")
-    parser.add_argument(
-        "--wg", "--write-graph", dest="write_graph", metavar='FILE',
-        help="write the dependency tree to FILE")
-    parser.add_argument(
-        "-q", "--quiet", action="store_true",
-        help="don't print progress bar or depth indicators")
+        "-q",
+        "--quiet",
+        action="store_true",
+        help="don't print progress bar or depth indicators",
+    )
     PKG_action = parser.add_argument(
-        "PKG",
-        help="package that other packages depend on")
+        "PKG", help="package that other packages depend on"
+    )
 
     if completions:
         from rez.cli._complete_util import PackageFamilyCompleter
+
         PKG_action.completer = PackageFamilyCompleter
 
 
@@ -59,12 +74,13 @@ def command(opts, parser, extra_arg_groups=None):
         depth=opts.depth,
         paths=pkg_paths,
         build_requires=opts.build_requires,
-        private_build_requires=opts.private_build_requires)
+        private_build_requires=opts.private_build_requires,
+    )
 
     if opts.graph or opts.print_graph or opts.write_graph:
         gstr = write_dot(g)
         if opts.print_graph:
-            print gstr
+            print(gstr)
         elif opts.write_graph:
             save_graph(gstr, dest_file=opts.write_graph)
         else:
@@ -76,7 +92,7 @@ def command(opts, parser, extra_arg_groups=None):
             toks = pkgs
         else:
             toks = ["#%d:" % i] + pkgs
-        print ' '.join(toks)
+        print(" ".join(toks))
 
 
 # Copyright 2013-2016 Allan Johns.

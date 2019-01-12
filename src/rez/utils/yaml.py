@@ -1,3 +1,4 @@
+from builtins import str
 from rez.utils.sourcecode import SourceCode
 from rez.vendor import yaml
 from rez.vendor.yaml.dumper import SafeDumper
@@ -13,28 +14,29 @@ class _Dumper(SafeDumper):
     """Dumper which can serialise custom types such as Version, and keeps
     long strings nicely formatted in >/| block-style format.
     """
+
     # modified from yaml.representer.SafeRepresenter.represent_str()
     def represent_str(self, data):
         tag = None
 
-        if '\n' in data:
-            style = '|'
+        if "\n" in data:
+            style = "|"
         elif len(data) > 80:
-            style = '>'
+            style = ">"
         else:
             style = None
 
         try:
-            data = unicode(data, 'ascii')
-            tag = u'tag:yaml.org,2002:str'
+            data = str(data, "ascii")
+            tag = u"tag:yaml.org,2002:str"
         except UnicodeDecodeError:
             try:
-                data = unicode(data, 'utf-8')
-                tag = u'tag:yaml.org,2002:str'
+                data = str(data, "utf-8")
+                tag = u"tag:yaml.org,2002:str"
             except UnicodeDecodeError:
-                data = data.encode('base64')
-                tag = u'tag:yaml.org,2002:binary'
-                style = '|'
+                data = data.encode("base64")
+                tag = u"tag:yaml.org,2002:binary"
+                style = "|"
         return self.represent_scalar(tag, data, style=style)
 
     def represent_as_str(self, data):
@@ -42,7 +44,7 @@ class _Dumper(SafeDumper):
 
     def represent_function(self, data):
         loc = getsourcelines(data)[0][1:]
-        code = dedent(''.join(loc))
+        code = dedent("".join(loc))
         return self.represent_str(code)
 
     def represent_builtin_function(self, data):
@@ -63,9 +65,7 @@ _Dumper.add_representer(SourceCode, _Dumper.represent_sourcecode)
 
 def dump_yaml(data, Dumper=_Dumper, default_flow_style=False):
     """Returns data as yaml-formatted string."""
-    content = yaml.dump(data,
-                        default_flow_style=default_flow_style,
-                        Dumper=Dumper)
+    content = yaml.dump(data, default_flow_style=default_flow_style, Dumper=Dumper)
     return content.strip()
 
 

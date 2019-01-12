@@ -1,3 +1,4 @@
+from builtins import str
 from rezgui.qt import QtCore
 from rez.resolved_context import ResolvedContext, PatchLock, get_lock_request
 from rez.package_filter import PackageFilterList
@@ -16,6 +17,7 @@ class ContextModel(QtCore.QObject):
     This model not only represents a context, but also contains the settings
     needed to create a new context, or re-resolve an existing context.
     """
+
     dataChanged = QtCore.Signal(int)
 
     # dataChanged flags
@@ -91,7 +93,7 @@ class ContextModel(QtCore.QObject):
             self._dependency_lookup = accessibility(self._dependency_graph)
 
         downstream = self._dependency_lookup.get(name_a, [])
-        accessible = (name_b in downstream)
+        accessible = name_b in downstream
         if accessible:
             neighbours = self._dependency_graph.neighbors(name_a)
             return 2 if name_b in neighbours else 1
@@ -140,7 +142,9 @@ class ContextModel(QtCore.QObject):
         self._attr_changed("packages_path", packages_path, self.PACKAGES_PATH_CHANGED)
 
     def set_package_filter(self, package_filter):
-        self._attr_changed("package_filter", package_filter, self.PACKAGE_FILTER_CHANGED)
+        self._attr_changed(
+            "package_filter", package_filter, self.PACKAGE_FILTER_CHANGED
+        )
 
     def set_caching(self, caching):
         self._attr_changed("caching", caching, self.CACHING_CHANGED)
@@ -172,8 +176,15 @@ class ContextModel(QtCore.QObject):
             self.patch_locks = {}
             self._changed(self.LOCKS_CHANGED)
 
-    def resolve_context(self, verbosity=0, max_fails=-1, timestamp=None,
-                        callback=None, buf=None, package_load_callback=None):
+    def resolve_context(
+        self,
+        verbosity=0,
+        max_fails=-1,
+        timestamp=None,
+        callback=None,
+        buf=None,
+        package_load_callback=None,
+    ):
         """Update the current context by performing a re-resolve.
 
         The newly resolved context is only applied if it is a successful solve.
@@ -193,7 +204,8 @@ class ContextModel(QtCore.QObject):
             buf=buf,
             callback=callback,
             package_load_callback=package_load_callback,
-            caching=self.caching)
+            caching=self.caching,
+        )
 
         if context.success:
             if self._context and self._context.load_path:
@@ -214,14 +226,16 @@ class ContextModel(QtCore.QObject):
     def set_context(self, context):
         """Replace the current context with another."""
         self._set_context(context, emit=False)
-        self._modified = (not context.load_path)
-        self.dataChanged.emit(self.CONTEXT_CHANGED |
-                              self.REQUEST_CHANGED |
-                              self.PACKAGES_PATH_CHANGED |
-                              self.LOCKS_CHANGED |
-                              self.LOADPATH_CHANGED |
-                              self.PACKAGE_FILTER_CHANGED |
-                              self.CACHING_CHANGED)
+        self._modified = not context.load_path
+        self.dataChanged.emit(
+            self.CONTEXT_CHANGED
+            | self.REQUEST_CHANGED
+            | self.PACKAGES_PATH_CHANGED
+            | self.LOCKS_CHANGED
+            | self.LOADPATH_CHANGED
+            | self.PACKAGE_FILTER_CHANGED
+            | self.CACHING_CHANGED
+        )
 
     def _set_context(self, context, emit=True):
         self._context = context
@@ -236,10 +250,12 @@ class ContextModel(QtCore.QObject):
         self.default_patch_lock = context.default_patch_lock
         self.patch_locks = copy.deepcopy(context.patch_locks)
         if emit:
-            self.dataChanged.emit(self.CONTEXT_CHANGED |
-                                  self.REQUEST_CHANGED |
-                                  self.PACKAGES_PATH_CHANGED |
-                                  self.LOCKS_CHANGED)
+            self.dataChanged.emit(
+                self.CONTEXT_CHANGED
+                | self.REQUEST_CHANGED
+                | self.PACKAGES_PATH_CHANGED
+                | self.LOCKS_CHANGED
+            )
 
     def _changed(self, flags):
         self._stale = True

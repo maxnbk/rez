@@ -1,3 +1,4 @@
+from __future__ import print_function
 from rezgui.qt import QtCore, QtGui
 from rezgui.util import create_pane
 from rezgui.mixins.StoreSizeMixin import StoreSizeMixin
@@ -12,6 +13,7 @@ class ProcessDialog(QtGui.QDialog, StoreSizeMixin):
     Note that in order to capture the process's output, you need to have piped
     its stdout and stderr to subprocess.PIPE.
     """
+
     def __init__(self, process, command_string, parent=None):
         config_key = "layout/window/process"
         super(ProcessDialog, self).__init__(parent)
@@ -59,13 +61,16 @@ class ProcessDialog(QtGui.QDialog, StoreSizeMixin):
                 break
 
     def _update(self):
-        if not self.output_ended \
-                and not self.stdout_thread.is_alive() \
-                and not self.stderr_thread.is_alive() \
-                and self.proc.poll() is not None:
+        if (
+            not self.output_ended
+            and not self.stdout_thread.is_alive()
+            and not self.stderr_thread.is_alive()
+            and self.proc.poll() is not None
+        ):
             self.output_ended = True
-            self.buffer.append("\nProcess ended with returncode %d\n"
-                               % self.proc.returncode)
+            self.buffer.append(
+                "\nProcess ended with returncode %d\n" % self.proc.returncode
+            )
 
         if self.buffer:
             try:
@@ -75,8 +80,8 @@ class ProcessDialog(QtGui.QDialog, StoreSizeMixin):
             finally:
                 self.lock.release()
 
-            txt = ''.join(buf)
-            print >> self.edit, txt
+            txt = "".join(buf)
+            print(txt, file=self.edit)
 
         if not self.ended and self.proc.poll() is not None:
             self.bar.setMaximum(10)

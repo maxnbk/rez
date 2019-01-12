@@ -12,8 +12,9 @@ class VariantVersionsWidget(PackageLoadingWidget, ContextViewMixin):
 
     closeWindow = QtCore.Signal()
 
-    def __init__(self, context_model=None, reference_variant=None,
-                 in_window=False, parent=None):
+    def __init__(
+        self, context_model=None, reference_variant=None, in_window=False, parent=None
+    ):
         """
         Args:
             reference_variant (`Variant`): Used to show the difference between
@@ -31,8 +32,9 @@ class VariantVersionsWidget(PackageLoadingWidget, ContextViewMixin):
 
         self.label = QtGui.QLabel()
         self.changelog_edit = ChangelogEdit()
-        self.table = VariantVersionsTable(self.context_model,
-                                          reference_variant=reference_variant)
+        self.table = VariantVersionsTable(
+            self.context_model, reference_variant=reference_variant
+        )
 
         self.tab = QtGui.QTabWidget()
         self.tab.addTab(self.table, "list view")
@@ -93,10 +95,12 @@ class VariantVersionsWidget(PackageLoadingWidget, ContextViewMixin):
             versions = sorted([variant.version, self.reference_variant.version])
             range_ = VersionRange.as_span(*versions)
 
-        self.load_packages(package_paths=package_paths,
-                           package_name=variant.name,
-                           range_=range_,
-                           package_attributes=("timestamp",))
+        self.load_packages(
+            package_paths=package_paths,
+            package_name=variant.name,
+            range_=range_,
+            package_attributes=("timestamp",),
+        )
 
     def set_packages(self, packages):
         self.table._set_variant(self.variant, packages)
@@ -149,23 +153,26 @@ class VariantVersionsWidget(PackageLoadingWidget, ContextViewMixin):
         self.refresh()
 
     def _view_or_hide_changelogs(self):
-        enable = (not self.table.view_changelog)
+        enable = not self.table.view_changelog
         self._view_changelogs(enable)
         self.refresh()
 
     def _view_changelogs_window(self):
         from rezgui.dialogs.VariantVersionsDialog import VariantVersionsDialog
-        dlg = VariantVersionsDialog(self.context_model, self.variant,
-                                    parent=self)
+
+        dlg = VariantVersionsDialog(self.context_model, self.variant, parent=self)
         dlg.exec_()
 
     def _browseVersions(self):
         from rezgui.dialogs.BrowsePackageDialog import BrowsePackageDialog
-        dlg = BrowsePackageDialog(context_model=self.context_model,
-                                  package_text=self.variant.qualified_package_name,
-                                  close_only=True,
-                                  lock_package=True,
-                                  parent=self.parentWidget())
+
+        dlg = BrowsePackageDialog(
+            context_model=self.context_model,
+            package_text=self.variant.qualified_package_name,
+            close_only=True,
+            lock_package=True,
+            parent=self.parentWidget(),
+        )
 
         dlg.setWindowTitle("Versions - %s" % self.variant.name)
         dlg.exec_()

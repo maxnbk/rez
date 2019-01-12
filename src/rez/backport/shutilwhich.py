@@ -5,6 +5,7 @@ import sys
 
 # Modified version from Python-3.3. 'env' environ dict override has been added.
 
+
 def which(cmd, mode=os.F_OK | os.X_OK, env=None):
     """Given a command, mode, and a PATH string, return the path which
     conforms to the given mode on the PATH, or None if there is no such
@@ -17,8 +18,7 @@ def which(cmd, mode=os.F_OK | os.X_OK, env=None):
     # Additionally check that `file` is not a directory, as on Windows
     # directories pass the os.access check.
     def _access_check(fn, mode):
-        return (os.path.exists(fn) and os.access(fn, mode)
-                and not os.path.isdir(fn))
+        return os.path.exists(fn) and os.access(fn, mode) and not os.path.isdir(fn)
 
     # Short circuit. If we're given a full path which matches the mode
     # and it exists, we're done here.
@@ -36,8 +36,7 @@ def which(cmd, mode=os.F_OK | os.X_OK, env=None):
             path.insert(0, os.curdir)
 
         # PATHEXT is necessary to check on Windows.
-        default_pathext = \
-            '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC'
+        default_pathext = ".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC"
         pathext = env.get("PATHEXT", default_pathext).split(os.pathsep)
         # See if the given file matches any of the expected path extensions.
         # This will allow us to short circuit when given "python.exe".

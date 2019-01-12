@@ -2,6 +2,8 @@
 This script uses an embedded copy of virtualenv to create a standalone,
 production-ready Rez installation in the specified directory.
 """
+from __future__ import print_function
+from builtins import object
 import os
 import sys
 import shutil
@@ -16,18 +18,21 @@ src_path = os.path.join(source_path, "src")
 sys.path.insert(0, src_path)
 
 from rez.utils._version import _rez_version
-from rez.backport.shutilwhich import which
-from build_utils.virtualenv.virtualenv import Logger, create_environment, \
-    path_locations
+from rez.backport.whichcraft import which
+from build_utils.virtualenv.virtualenv import Logger, create_environment, path_locations
 from build_utils.distlib.scripts import ScriptMaker
 
 
 class fake_entry(object):
-    code_template = textwrap.dedent(
-        """
+    code_template = (
+        textwrap.dedent(
+            """
         from rez.cli.{module} import run
         run({target})
-        """).strip() + '\n'
+        """
+        ).strip()
+        + "\n"
+    )
 
     def __init__(self, name):
         self.name = name
@@ -40,14 +45,14 @@ class fake_entry(object):
         elif self.name == "_rez_fwd":  # TODO rename this binary
             target = "'forward'"
         elif self.name not in ("rez", "rezolve"):
-            target = "'%s'" % self.name.split('-', 1)[-1]
+            target = "'%s'" % self.name.split("-", 1)[-1]
         return self.code_template.format(module=module, target=target)
 
 
 class _ScriptMaker(ScriptMaker):
     def __init__(self, *nargs, **kwargs):
         super(_ScriptMaker, self).__init__(*nargs, **kwargs)
-        self.variants = set(('',))
+        self.variants = set(("",))
 
     def _get_script_text(self, entry):
         return entry.get_script_text()
@@ -56,9 +61,11 @@ class _ScriptMaker(ScriptMaker):
 def patch_rez_binaries(dest_dir):
     bin_names = os.listdir(bin_path)
     _, _, _, venv_bin_path = path_locations(dest_dir)
-    venv_py_executable = which("python", env={"PATH":venv_bin_path,
-                                              "PATHEXT":os.environ.get("PATHEXT", "")})
-
+    print('venv_bin_path: {}'.format(venv_bin_path))
+    venv_py_executable = which(
+        "python", env={"PATH": venv_bin_path, "PATHEXT": os.environ.get("PATHEXT", "")}
+    )
+    print('venv_py_executable: {}'.format(venv_py_executable))
     # delete rez bin files written by setuptools
     for name in bin_names:
         filepath = os.path.join(venv_bin_path, name)
@@ -102,21 +109,34 @@ def copy_completion_scripts(dest_dir):
 
 
 if __name__ == "__main__":
-    usage = ("usage: %prog [options] DEST_DIR ('{version}' in DEST_DIR will "
-             "expand to Rez version)")
+    usage = (
+        "usage: %prog [options] DEST_DIR ('{version}' in DEST_DIR will "
+        "expand to Rez version)"
+    )
     parser = OptionParser(usage=usage)
     parser.add_option(
-        '-v', '--verbose', action='count', dest='verbose', default=0,
-        help="Increase verbosity.")
+        "-v",
+        "--verbose",
+        action="count",
+        dest="verbose",
+        default=0,
+        help="Increase verbosity.",
+    )
     parser.add_option(
-        '-s', '--keep-symlinks', action="store_true", default=False,
+        "-s",
+        "--keep-symlinks",
+        action="store_true",
+        default=False,
         help="Don't run realpath on the passed DEST_DIR to resolve symlinks; "
-             "ie, the baked script locations may still contain symlinks")
+        "ie, the baked script locations may still contain symlinks",
+    )
     opts, args = parser.parse_args()
 
     if " " in os.path.realpath(__file__):
-        err_str = "\nThe absolute path of install.py cannot contain spaces due to setuptools limitation.\n" \
-                  "Please move installation files to another location or rename offending folder(s).\n"
+        err_str = (
+            "\nThe absolute path of install.py cannot contain spaces due to setuptools limitation.\n"
+            "Please move installation files to another location or rename offending folder(s).\n"
+        )
         parser.error(err_str)
 
     # determine install path
@@ -128,7 +148,7 @@ if __name__ == "__main__":
     if not opts.keep_symlinks:
         dest_dir = os.path.realpath(dest_dir)
 
-    print "installing rez to %s..." % dest_dir
+    print("installing rez to %s..." % dest_dir)
 
     # make virtualenv verbose
     log_level = Logger.level_for_integer(2 - opts.verbose)
@@ -139,12 +159,12 @@ if __name__ == "__main__":
 
     # install rez from source
     _, _, _, venv_bin_dir = path_locations(dest_dir)
-    py_executable = which("python", env={"PATH":venv_bin_dir,
-                                         "PATHEXT":os.environ.get("PATHEXT",
-                                                                  "")})
+    py_executable = which(
+        "python", env={"PATH": venv_bin_dir, "PATHEXT": os.environ.get("PATHEXT", "")}
+    )
     args = [py_executable, "setup.py", "install"]
     if opts.verbose:
-        print "running in %s: %s" % (source_path, " ".join(args))
+        print("running in %s: %s" % (source_path, " ".join(args)))
     p = subprocess.Popen(args, cwd=source_path)
     p.wait()
 
@@ -157,26 +177,28 @@ if __name__ == "__main__":
     # mark venv as production rez install. Do not remove - rez uses this!
     dest_bin_dir = os.path.join(venv_bin_dir, "rez")
     validation_file = os.path.join(dest_bin_dir, ".rez_production_install")
-    with open(validation_file, 'w') as f:
+    with open(validation_file, "w") as f:
         f.write(_rez_version)
 
     # done
-    print
-    print "SUCCESS! To activate Rez, add the following path to $PATH:"
-    print dest_bin_dir
+    print()
+    print("SUCCESS! To activate Rez, add the following path to $PATH:")
+    print(dest_bin_dir)
 
     if completion_path:
-        print('')
-        shell = os.getenv('SHELL')
+        print ("")
+        shell = os.getenv("SHELL")
 
         if shell:
             shell = os.path.basename(shell)
             ext = "csh" if "csh" in shell else "sh"  # Basic selection logic
 
-            print("You may also want to source the completion script (for %s):" % shell)
-            print("source {0}/complete.{1}".format(completion_path, ext))
+            print (
+                "You may also want to source the completion script (for %s):" % shell
+            )
+            print ("source {0}/complete.{1}".format(completion_path, ext))
         else:
-            print("You may also want to source the relevant completion script from:")
-            print(completion_path)
+            print ("You may also want to source the relevant completion script from:")
+            print (completion_path)
 
-    print('')
+    print ("")

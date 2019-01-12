@@ -6,6 +6,7 @@ authors = ["axl.rose"]
 
 description = "A simple C++ library with minimal dependencies."
 
+
 def commands():
     import platform
 
@@ -15,6 +16,7 @@ def commands():
         env.DYLD_LIBRARY_PATH.append("{root}/lib")
     else:
         env.LD_LIBRARY_PATH.append("{root}/lib")
+
 
 uuid = "38eda6e8-f162-11e0-9de0-0023ae79d988"
 

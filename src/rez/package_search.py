@@ -6,6 +6,9 @@ repository. The algorithms here serve as backup for those package repositories
 that do not provide an implementation.
 """
 
+from builtins import next
+from builtins import str
+from builtins import object
 import fnmatch
 from collections import defaultdict
 import sys
@@ -22,9 +25,13 @@ from rez.config import config
 from rez.vendor.version.requirement import Requirement
 
 
-def get_reverse_dependency_tree(package_name, depth=None, paths=None,
-                                build_requires=False,
-                                private_build_requires=False):
+def get_reverse_dependency_tree(
+    package_name,
+    depth=None,
+    paths=None,
+    build_requires=False,
+    private_build_requires=False,
+):
     """Find packages that depend on the given package.
 
     This is a reverse dependency lookup. A tree is constructed, showing what
@@ -74,18 +81,17 @@ def get_reverse_dependency_tree(package_name, depth=None, paths=None,
         requires = []
 
         for variant in pkg.iter_variants():
-            pbr = (private_build_requires and pkg.name == package_name)
+            pbr = private_build_requires and pkg.name == package_name
 
             requires += variant.get_requires(
-                build_requires=build_requires,
-                private_build_requires=pbr
+                build_requires=build_requires, private_build_requires=pbr
             )
 
         for req in requires:
             if not req.conflict:
                 lookup[req.name].add(package_name_)
 
-        bar.next()
+        next(bar)
 
     bar.finish()
 
@@ -96,9 +102,11 @@ def get_reverse_dependency_tree(package_name, depth=None, paths=None,
 
     node_color = "#F6F6F6"
     node_fontsize = 10
-    node_attrs = [("fillcolor", node_color),
-                  ("style", "filled"),
-                  ("fontsize", node_fontsize)]
+    node_attrs = [
+        ("fillcolor", node_color),
+        ("style", "filled"),
+        ("fontsize", node_fontsize),
+    ]
 
     while working_set and (depth is None or n < depth):
         working_set_ = set()
@@ -142,7 +150,7 @@ def get_plugins(package_name, paths=None):
 
     plugin_pkgs = []
     for package_name_ in package_names:
-        bar.next()
+        next(bar)
         if package_name_ == package_name:
             continue  # not a plugin of itself
 
@@ -162,6 +170,7 @@ class ResourceSearchResult(object):
 
     Will contain either a package, variant, or name of a package family (str).
     """
+
     def __init__(self, resource, resource_type, validation_error=None):
         self.resource = resource
         self.resource_type = resource_type
@@ -171,8 +180,17 @@ class ResourceSearchResult(object):
 class ResourceSearcher(object):
     """Search for resources (packages, variants or package families).
     """
-    def __init__(self, package_paths=None, resource_type=None, no_local=False,
-                 latest=False, after_time=None, before_time=None, validate=False):
+
+    def __init__(
+        self,
+        package_paths=None,
+        resource_type=None,
+        no_local=False,
+        latest=False,
+        after_time=None,
+        before_time=None,
+        validate=False,
+    ):
         """Create resource search.
 
         Args:
@@ -226,7 +244,8 @@ class ResourceSearcher(object):
         name_pattern, version_range = self._parse_request(resources_request)
 
         family_names = set(
-            x.name for x in iter_package_families(paths=self.package_paths)
+            x.name
+            for x in iter_package_families(paths=self.package_paths)
             if fnmatch.fnmatch(x.name, name_pattern)
         )
 
@@ -291,7 +310,8 @@ class ResourceSearcher(object):
                                 variant.validate_data()
                             except ResourceContentError as e:
                                 result = ResourceSearchResult(
-                                    variant, "variant", str(e))
+                                    variant, "variant", str(e)
+                                )
                                 results.append(result)
                                 continue
 
@@ -306,7 +326,7 @@ class ResourceSearcher(object):
 
     @classmethod
     def _parse_request(cls, resources_request):
-        name_pattern = resources_request or '*'
+        name_pattern = resources_request or "*"
         version_range = None
 
         try:
@@ -323,12 +343,31 @@ class ResourceSearcher(object):
 class ResourceSearchResultFormatter(object):
     """Formats search results.
     """
+
     fields = (
-        'pre_commands', 'tools', 'uuid', 'build_requires', 'version', 'timestamp',
-        'release_message', 'private_build_requires', 'revision', 'description',
-        'base', 'authors', 'variants', 'commands', 'name', 'changelog',
-        'post_commands', 'requires', 'root', 'index', 'uri', 'num_variants',
-        'qualified_name'
+        "pre_commands",
+        "tools",
+        "uuid",
+        "build_requires",
+        "version",
+        "timestamp",
+        "release_message",
+        "private_build_requires",
+        "revision",
+        "description",
+        "base",
+        "authors",
+        "variants",
+        "commands",
+        "name",
+        "changelog",
+        "post_commands",
+        "requires",
+        "root",
+        "index",
+        "uri",
+        "num_variants",
+        "qualified_name",
     )
 
     def __init__(self, output_format=None, suppress_newlines=False):
@@ -401,7 +440,7 @@ class ResourceSearchResultFormatter(object):
                     break
 
                 if self.suppress_newlines:
-                    line_ = line_.replace('\n', "\\n")
+                    line_ = line_.replace("\n", "\\n")
 
                 formatted_lines.append((line_, info))
 

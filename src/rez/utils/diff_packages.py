@@ -1,3 +1,4 @@
+from __future__ import print_function
 from rez.packages_ import iter_packages
 from rez.config import config
 from rez.plugin_managers import plugin_manager
@@ -20,16 +21,19 @@ def diff_packages(pkg1, pkg2=None):
         it = iter_packages(pkg1.name)
         pkgs = [x for x in it if x.version < pkg1.version]
         if not pkgs:
-            raise RezError("No package to diff with - %s is the earliest "
-                           "package version" % pkg1.qualified_name)
+            raise RezError(
+                "No package to diff with - %s is the earliest "
+                "package version" % pkg1.qualified_name
+            )
         pkgs = sorted(pkgs, key=lambda x: x.version)
         pkg2 = pkgs[-1]
 
     def _check_pkg(pkg):
         if not (pkg.vcs and pkg.revision):
-            raise RezError("Cannot diff package %s: it is a legacy format "
-                           "package that does not contain enough information"
-                           % pkg.qualified_name)
+            raise RezError(
+                "Cannot diff package %s: it is a legacy format "
+                "package that does not contain enough information" % pkg.qualified_name
+            )
 
     _check_pkg(pkg1)
     _check_pkg(pkg2)
@@ -37,14 +41,14 @@ def diff_packages(pkg1, pkg2=None):
     paths = []
 
     for pkg in (pkg1, pkg2):
-        print "Exporting %s..." % pkg.qualified_name
+        print("Exporting %s..." % pkg.qualified_name)
         path_ = os.path.join(path, pkg.qualified_name)
         vcs_cls_1 = plugin_manager.get_plugin_class("release_vcs", pkg1.vcs)
         vcs_cls_1.export(revision=pkg.revision, path=path_)
         paths.append(path_)
 
     difftool = config.difftool
-    print "Opening diff viewer %s..." % difftool
+    print("Opening diff viewer %s..." % difftool)
     proc = Popen([difftool] + paths)
     proc.wait()
 

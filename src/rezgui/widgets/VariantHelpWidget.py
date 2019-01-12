@@ -21,8 +21,7 @@ class HelpEntryWidget(QtGui.QWidget):
         label_widget = QtGui.QLabel(label)
         self.setCursor(QtCore.Qt.PointingHandCursor)
 
-        create_pane([icon, label_widget, None], True, compact=True,
-                    parent_widget=self)
+        create_pane([icon, label_widget, None], True, compact=True, parent_widget=self)
 
     def mouseReleaseEvent(self, event):
         super(HelpEntryWidget, self).mouseReleaseEvent(event)
@@ -73,10 +72,12 @@ class VariantHelpWidget(PackageLoadingWidget, ContextViewMixin):
             return
 
         package_paths = self.context_model.packages_path
-        self.load_packages(package_paths=package_paths,
-                           package_name=variant.name,
-                           callback=self._load_packages_callback,
-                           package_attributes=("help",))
+        self.load_packages(
+            package_paths=package_paths,
+            package_name=variant.name,
+            callback=self._load_packages_callback,
+            package_attributes=("help",),
+        )
 
     def set_packages(self, packages):
         package_paths = self.context_model.packages_path
@@ -134,7 +135,7 @@ class VariantHelpWidget(PackageLoadingWidget, ContextViewMixin):
 
     @classmethod
     def _load_packages_callback(cls, package):
-        return (not package.help)
+        return not package.help
 
 
 # Copyright 2013-2016 Allan Johns.

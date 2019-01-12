@@ -1,6 +1,7 @@
 """
 test package copying
 """
+from builtins import next
 from rez.system import system
 from rez.build_process_ import create_build_process
 from rez.build_system import create_build_system
@@ -38,7 +39,8 @@ class TestCopyPackage(TestBase, TempdirMixin):
             resolve_caching=False,
             warn_untimestamped=False,
             warn_old_commands=False,
-            implicit_packages=[])
+            implicit_packages=[],
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -55,9 +57,9 @@ class TestCopyPackage(TestBase, TempdirMixin):
     @classmethod
     def _create_builder(cls, working_dir):
         buildsys = create_build_system(working_dir)
-        return create_build_process(process_type="local",
-                                    working_dir=working_dir,
-                                    build_system=buildsys)
+        return create_build_process(
+            process_type="local", working_dir=working_dir, build_system=buildsys
+        )
 
     @classmethod
     def _build_package(cls, name, version=None):
@@ -81,7 +83,7 @@ class TestCopyPackage(TestBase, TempdirMixin):
             name,
             range_=VersionRange("==" + version),
             paths=[self.install_root],
-            error=True
+            error=True,
         )
 
     def _get_dest_pkg(self, name, version):
@@ -89,7 +91,7 @@ class TestCopyPackage(TestBase, TempdirMixin):
             name,
             range_=VersionRange("==" + version),
             paths=[self.dest_install_root],
-            error=True
+            error=True,
         )
 
     def _assert_copied(self, result, copied, skipped):
@@ -102,27 +104,21 @@ class TestCopyPackage(TestBase, TempdirMixin):
 
         # make a copy of a package
         src_pkg = self._get_src_pkg("floob", "1.2.0")
-        result = copy_package(
-            package=src_pkg,
-            dest_repository=self.dest_install_root
-        )
+        result = copy_package(package=src_pkg, dest_repository=self.dest_install_root)
 
         self._assert_copied(result, 1, 0)
 
         # check the copied package exists and matches
         dest_pkg = self._get_dest_pkg("floob", "1.2.0")
         result_variant = result["copied"][0][1]
-        dest_variant = dest_pkg.iter_variants().next()
+        dest_variant = next(dest_pkg.iter_variants())
         self.assertEqual(dest_variant.handle, result_variant.handle)
 
         pyfile = os.path.join(dest_pkg.base, "python")
         ctime = os.stat(pyfile).st_ctime
 
         # copy again but with overwrite=False; should do nothing
-        result = copy_package(
-            package=src_pkg,
-            dest_repository=self.dest_install_root
-        )
+        result = copy_package(package=src_pkg, dest_repository=self.dest_install_root)
 
         self._assert_copied(result, 0, 1)
 
@@ -135,10 +131,7 @@ class TestCopyPackage(TestBase, TempdirMixin):
 
         # make a copy of a package
         src_pkg = self._get_src_pkg("floob", "1.2.0")
-        copy_package(
-            package=src_pkg,
-            dest_repository=self.dest_install_root
-        )
+        copy_package(package=src_pkg, dest_repository=self.dest_install_root)
 
         dest_pkg = self._get_dest_pkg("floob", "1.2.0")
 
@@ -147,9 +140,7 @@ class TestCopyPackage(TestBase, TempdirMixin):
 
         # overwrite same package copy
         result = copy_package(
-            package=src_pkg,
-            dest_repository=self.dest_install_root,
-            overwrite=True
+            package=src_pkg, dest_repository=self.dest_install_root, overwrite=True
         )
 
         self._assert_copied(result, 1, 0)
@@ -163,10 +154,7 @@ class TestCopyPackage(TestBase, TempdirMixin):
 
         # make a copy of a varianted package
         src_pkg = self._get_src_pkg("bah", "2.1")
-        result = copy_package(
-            package=src_pkg,
-            dest_repository=self.dest_install_root
-        )
+        result = copy_package(package=src_pkg, dest_repository=self.dest_install_root)
 
         self._assert_copied(result, 2, 0)  # 2 variants
 
@@ -185,9 +173,7 @@ class TestCopyPackage(TestBase, TempdirMixin):
 
         # copy variant with no overwrite, should do nothing
         result = copy_package(
-            package=src_pkg,
-            dest_repository=self.dest_install_root,
-            variants=[1]
+            package=src_pkg, dest_repository=self.dest_install_root, variants=[1]
         )
 
         self._assert_copied(result, 0, 1)
@@ -197,7 +183,7 @@ class TestCopyPackage(TestBase, TempdirMixin):
             package=src_pkg,
             dest_repository=self.dest_install_root,
             variants=[1],
-            overwrite=True
+            overwrite=True,
         )
 
         self._assert_copied(result, 1, 0)
@@ -227,7 +213,7 @@ class TestCopyPackage(TestBase, TempdirMixin):
             package=src_pkg,
             dest_repository=self.dest_install_root,
             dest_name="flaab",
-            dest_version="5.4.1"
+            dest_version="5.4.1",
         )
 
         self._assert_copied(result, 1, 0)
@@ -235,7 +221,7 @@ class TestCopyPackage(TestBase, TempdirMixin):
         # check copied variant is the one we expect
         dest_pkg = self._get_dest_pkg("flaab", "5.4.1")
         result_variant = result["copied"][0][1]
-        dest_variant = dest_pkg.iter_variants().next()
+        dest_variant = next(dest_pkg.iter_variants())
         self.assertEqual(dest_variant.handle, result_variant.handle)
 
     def test_5(self):
@@ -243,18 +229,14 @@ class TestCopyPackage(TestBase, TempdirMixin):
         self._reset_dest_repository()
 
         src_pkg = self._get_src_pkg("foo", "1.1.0")
-        copy_package(
-            package=src_pkg,
-            dest_repository=self.dest_install_root,
-        )
+        copy_package(package=src_pkg, dest_repository=self.dest_install_root)
 
         dest_pkg = self._get_dest_pkg("foo", "1.1.0")
-        dest_variant = dest_pkg.iter_variants().next()
+        dest_variant = next(dest_pkg.iter_variants())
 
         # do a resolve
         ctxt = ResolvedContext(
-            ["foo==1.1.0"],
-            package_paths=[self.dest_install_root, self.install_root]
+            ["foo==1.1.0"], package_paths=[self.dest_install_root, self.install_root]
         )
 
         resolved_variant = ctxt.get_resolved_package("foo")

@@ -2,12 +2,9 @@ name = "os"
 
 version = "Ubuntu-12.04"
 
-authors = [
-    "ajohns"
-]
+authors = ["ajohns"]
 
-description = \
-    """
+description = """
     Package representing the operating system.
     """
 

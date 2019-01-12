@@ -1,13 +1,14 @@
-name = 'rextest'
-version = '1.3'
+name = "rextest"
+version = "1.3"
+
 
 def commands():
-    env.REXTEST_ROOT = '{root}'
+    env.REXTEST_ROOT = "{root}"
     env.REXTEST_VERSION = this.version
     env.REXTEST_MAJOR_VERSION = this.version.major
     # prepend to non-existent var
-    env.REXTEST_DIRS.prepend('{root}/data')
-    alias('rextest', 'foobar')
+    env.REXTEST_DIRS.prepend("{root}/data")
+    alias("rextest", "foobar")
 
 
 # Copyright 2013-2016 Allan Johns.

@@ -11,18 +11,23 @@ import os.path
 
 
 def setup_parser(parser):
-    parser.add_argument("--exe", type=str, metavar="PATH",
-                        help="manually specify the cmake executable to bind.")
+    parser.add_argument(
+        "--exe",
+        type=str,
+        metavar="PATH",
+        help="manually specify the cmake executable to bind.",
+    )
 
 
 def commands():
-    env.PATH.append('{this.root}/bin')
+    env.PATH.append("{this.root}/bin")
 
 
 def bind(path, version_range=None, opts=None, parser=None):
     exepath = find_exe("cmake", getattr(opts, "exe", None))
-    version = extract_version(exepath, "--version",
-                              word_index=2 if os.name == 'nt' else -1)
+    version = extract_version(
+        exepath, "--version", word_index=2 if os.name == "nt" else -1
+    )
     check_version(version, version_range)
 
     def make_root(variant, root):

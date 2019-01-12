@@ -2,8 +2,14 @@
 Binds a python executable as a rez package.
 """
 from __future__ import absolute_import
-from rez.bind._utils import check_version, find_exe, extract_version, \
-    make_dirs, log, run_python_command
+from rez.bind._utils import (
+    check_version,
+    find_exe,
+    extract_version,
+    make_dirs,
+    log,
+    run_python_command,
+)
 from rez.package_maker__ import make_package
 from rez.system import system
 from rez.utils.lint_helper import env
@@ -14,13 +20,16 @@ import os.path
 
 
 def setup_parser(parser):
-    parser.add_argument("--exe", type=str, metavar="PATH",
-                        help="bind an interpreter other than the current "
-                        "python interpreter")
+    parser.add_argument(
+        "--exe",
+        type=str,
+        metavar="PATH",
+        help="bind an interpreter other than the current " "python interpreter",
+    )
 
 
 def commands():
-    env.PATH.append('{this.root}/bin')
+    env.PATH.append("{this.root}/bin")
 
 
 def post_commands():
@@ -45,20 +54,19 @@ def bind(path, version_range=None, opts=None, parser=None):
 
     # find builtin modules
     builtin_paths = {}
-    entries = [("lib", "os"),
-               ("extra", "setuptools")]
+    entries = [("lib", "os"), ("extra", "setuptools")]
 
     for dirname, module_name in entries:
-        success, out, err = run_python_command([
-            "import %s" % module_name,
-            "print %s.__file__" % module_name])
+        success, out, err = run_python_command(
+            ["import %s" % module_name, "print %s.__file__" % module_name]
+        )
 
         if success:
             pypath = os.path.dirname(out)
             if os.path.basename(pypath) == module_name:
                 pypath = os.path.dirname(pypath)
 
-            if pypath not in builtin_paths.values():
+            if pypath not in list(builtin_paths.values()):
                 builtin_paths[dirname] = pypath
 
     # make the package
@@ -71,7 +79,7 @@ def bind(path, version_range=None, opts=None, parser=None):
 
         if builtin_paths:
             pypath = make_dirs(root, "python")
-            for dirname, srcpath in builtin_paths.iteritems():
+            for dirname, srcpath in builtin_paths.items():
                 destpath = os.path.join(pypath, dirname)
                 log("Copying builtins from %s to %s..." % (srcpath, destpath))
                 shutil.copytree(srcpath, destpath)

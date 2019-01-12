@@ -1,6 +1,8 @@
+from builtins import str
 from rezgui.qt import QtCore, QtGui
 from rezgui.objects.Config import Config
-#from rezgui.objects.ProcessTrackerThread import ProcessTrackerThread
+
+# from rezgui.objects.ProcessTrackerThread import ProcessTrackerThread
 from rezgui import organisation_name, application_name
 from rez.resolved_context import ResolvedContext
 from rez.exceptions import ResolvedContextError
@@ -29,16 +31,16 @@ class App(QtGui.QApplication):
         with open(filepath) as f:
             settings = yaml.load(f.read())
 
-        return Config(settings,
-                      organization=organisation_name,
-                      application=application_name)
+        return Config(
+            settings, organization=organisation_name, application=application_name
+        )
 
     @cached_property
     def process_tracker(self):
         return None
-        #th = ProcessTrackerThread()
-        #th.start()
-        #return th
+        # th = ProcessTrackerThread()
+        # th.start()
+        # return th
 
     @contextmanager
     def status(self, txt):
@@ -57,15 +59,17 @@ class App(QtGui.QApplication):
             try:
                 context = ResolvedContext.load(filepath)
             except ResolvedContextError as e:
-                QtGui.QMessageBox.critical(self.main_window,
-                                           "Failed to load context", str(e))
+                QtGui.QMessageBox.critical(
+                    self.main_window, "Failed to load context", str(e)
+                )
             finally:
                 QtGui.QApplication.restoreOverrideCursor()
 
         if context:
             path = os.path.realpath(filepath)
-            self.config.prepend_string_list("most_recent_contexts", path,
-                                            "max_most_recent_contexts")
+            self.config.prepend_string_list(
+                "most_recent_contexts", path, "max_most_recent_contexts"
+            )
         return context
 
     def execute_shell(self, context, command=None, terminal=False, **Popen_args):
@@ -79,12 +83,15 @@ class App(QtGui.QApplication):
         if "REZ_ENV_PROMPT" in env:
             del env["REZ_ENV_PROMPT"]
 
-        return context.execute_shell(command=command,
-                                     block=False,
-                                     detached=terminal,
-                                     parent_environ=env,
-                                     start_new_session=True,
-                                     **Popen_args)
+        return context.execute_shell(
+            command=command,
+            block=False,
+            detached=terminal,
+            parent_environ=env,
+            start_new_session=True,
+            **Popen_args
+        )
+
 
 # app singleton
 app = App()

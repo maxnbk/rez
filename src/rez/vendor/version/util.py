@@ -1,3 +1,5 @@
+from builtins import str
+from builtins import object
 from itertools import groupby
 
 
@@ -27,64 +29,30 @@ def total_ordering(cls):
     Code from: http://code.activestate.com/recipes/576685/
     """
     convert = {
-        '__lt__': [
-            (
-                '__gt__',
-                lambda self, other: not (self < other or self == other)
-            ),
-            (
-                '__le__',
-                lambda self, other: self < other or self == other
-            ),
-            (
-                '__ge__',
-                lambda self, other: not self < other
-            )],
-        '__le__': [
-            (
-                '__ge__',
-                lambda self, other: not self <= other or self == other
-            ),
-            (
-                '__lt__',
-                lambda self, other: self <= other and not self == other
-            ),
-            (
-                '__gt__',
-                lambda self, other: not self <= other
-            )],
-        '__gt__': [
-            (
-                '__lt__',
-                lambda self, other: not (self > other or self == other)
-            ),
-            (
-                '__ge__',
-                lambda self, other: self > other or self == other
-            ),
-            (
-                '__le__',
-                lambda self, other: not self > other
-            )],
-        '__ge__': [
-            (
-                '__le__',
-                lambda self, other: (not self >= other) or self == other
-            ),
-            (
-                '__gt__',
-                lambda self, other: self >= other and not self == other
-            ),
-            (
-                '__lt__',
-                lambda self, other: not self >= other
-            )]
+        "__lt__": [
+            ("__gt__", lambda self, other: not (self < other or self == other)),
+            ("__le__", lambda self, other: self < other or self == other),
+            ("__ge__", lambda self, other: not self < other),
+        ],
+        "__le__": [
+            ("__ge__", lambda self, other: not self <= other or self == other),
+            ("__lt__", lambda self, other: self <= other and not self == other),
+            ("__gt__", lambda self, other: not self <= other),
+        ],
+        "__gt__": [
+            ("__lt__", lambda self, other: not (self > other or self == other)),
+            ("__ge__", lambda self, other: self > other or self == other),
+            ("__le__", lambda self, other: not self > other),
+        ],
+        "__ge__": [
+            ("__le__", lambda self, other: (not self >= other) or self == other),
+            ("__gt__", lambda self, other: self >= other and not self == other),
+            ("__lt__", lambda self, other: not self >= other),
+        ],
     }
     roots = set(dir(cls)) & set(convert)
     if not roots:
-        raise ValueError(
-            'must define at least one ordering operation: < > <= >='
-        )
+        raise ValueError("must define at least one ordering operation: < > <= >=")
     root = max(roots)  # prefer __lt__ to __le__ to __gt__ to __ge__
     for opname, opfunc in convert[root]:
         if opname not in roots:

@@ -1,3 +1,7 @@
+from builtins import str
+from builtins import map
+from past.builtins import basestring
+from builtins import object
 from rez.packages_ import iter_packages
 from rez.exceptions import ConfigurationError
 from rez.config import config
@@ -84,6 +88,7 @@ class PackageFilter(PackageFilterBase):
     excluded iff it matches one or more exclusion rules, and does not match any
     inclusion rules.
     """
+
     def __init__(self):
         self._excludes = {}
         self._includes = {}
@@ -136,13 +141,13 @@ class PackageFilter(PackageFilterBase):
     def __and__(self, other):
         """Combine two filters."""
         result = self.copy()
-        for rule in other._excludes.itervalues():
+        for rule in other._excludes.values():
             result.add_exclusion(rule)
-        for rule in other._includes.itervalues():
+        for rule in other._includes.values():
             result.add_inclusion(rule)
         return result
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self._excludes)
 
     @cached_property
@@ -156,7 +161,7 @@ class PackageFilter(PackageFilterBase):
             float: The approximate cost of the filter.
         """
         total = 0.0
-        for family, rules in self._excludes.iteritems():
+        for family, rules in self._excludes.items():
             cost = sum(x.cost() for x in rules)
             if family:
                 cost = cost / float(10)
@@ -166,8 +171,10 @@ class PackageFilter(PackageFilterBase):
     @classmethod
     def from_pod(cls, data):
         f = PackageFilter()
-        for namespace, func in (("excludes", f.add_exclusion),
-                                ("includes", f.add_inclusion)):
+        for namespace, func in (
+            ("excludes", f.add_exclusion),
+            ("includes", f.add_inclusion),
+        ):
             rule_strs = data.get(namespace, [])
             if isinstance(rule_strs, basestring):
                 rule_strs = [rule_strs]
@@ -178,12 +185,14 @@ class PackageFilter(PackageFilterBase):
 
     def to_pod(self):
         data = {}
-        for namespace, dict_ in (("excludes", self._excludes),
-                                 ("includes", self._includes)):
+        for namespace, dict_ in (
+            ("excludes", self._excludes),
+            ("includes", self._includes),
+        ):
             if dict_:
                 rules = []
-                for rules_ in dict_.itervalues():
-                    rules.extend(map(str, rules_))
+                for rules_ in dict_.values():
+                    rules.extend(list(map(str, rules_)))
                 data[namespace] = rules
         return data
 
@@ -194,8 +203,7 @@ class PackageFilter(PackageFilterBase):
         cached_property.uncache(self, "cost")
 
     def __str__(self):
-        return str((sorted(self._excludes.items()),
-                    sorted(self._includes.items())))
+        return str((sorted(self._excludes.items()), sorted(self._includes.items())))
 
 
 class PackageFilterList(PackageFilterBase):
@@ -204,6 +212,7 @@ class PackageFilterList(PackageFilterBase):
     A package is excluded by a filter list iff any filter within the list
     excludes it.
     """
+
     def __init__(self):
         self.filters = []
 
@@ -264,7 +273,7 @@ class PackageFilterList(PackageFilterBase):
             data.append(f.to_pod())
         return data
 
-    def __nonzero__(self):
+    def __bool__(self):
         return any(self.filters)
 
     def __str__(self):
@@ -285,6 +294,7 @@ class Rule(object):
     name = None
 
     """Relative cost of rule - cheaper rules are checked first."""
+
     def match(self, package):
         """Apply the rule to the package.
 
@@ -317,22 +327,23 @@ class Rule(object):
         Returns:
             `Rule` instance.
         """
-        types = {"glob": GlobRule,
-                 "regex": RegexRule,
-                 "range": RangeRule,
-                 "before": TimestampRule,
-                 "after": TimestampRule}
+        types = {
+            "glob": GlobRule,
+            "regex": RegexRule,
+            "range": RangeRule,
+            "before": TimestampRule,
+            "after": TimestampRule,
+        }
 
         # parse form 'x(y)' into x, y
         label, txt = Rule._parse_label(txt)
         if label is None:
-            if '*' in txt:
+            if "*" in txt:
                 label = "glob"
             else:
                 label = "range"
         elif label not in types:
-            raise ConfigurationError(
-                "'%s' is not a valid package filter type" % label)
+            raise ConfigurationError("'%s' is not a valid package filter type" % label)
 
         rule_cls = types[label]
         txt_ = "%s(%s)" % (label, txt)
@@ -340,8 +351,10 @@ class Rule(object):
         try:
             rule = rule_cls._parse(txt_)
         except Exception as e:
-            raise ConfigurationError("Error parsing package filter '%s': %s: %s"
-                                     % (txt_, e.__class__.__name__, str(e)))
+            raise ConfigurationError(
+                "Error parsing package filter '%s': %s: %s"
+                % (txt_, e.__class__.__name__, str(e))
+            )
         return rule
 
     @classmethod
@@ -398,6 +411,7 @@ class RegexRule(RegexRuleBase):
 
     For example, the package 'foo-1.beta' would match the regex rule '.*\\.beta$'.
     """
+
     name = "regex"
 
     def __init__(self, s):
@@ -416,6 +430,7 @@ class GlobRule(RegexRuleBase):
 
     For example, the package 'foo-1.2' would match the glob rule 'foo-*'.
     """
+
     name = "glob"
 
     def __init__(self, s):
@@ -435,6 +450,7 @@ class RangeRule(Rule):
 
     For example, the package 'foo-1.2' would match the requirement rule 'foo<10'.
     """
+
     name = "range"
 
     def __init__(self, requirement):
@@ -479,6 +495,7 @@ class TimestampRule(Rule):
         create a package filter containing a timestamp rule with family=None,
         and other family-specific timestamp rules to override that.
     """
+
     name = "timestamp"
 
     def __init__(self, timestamp, family=None, reverse=False):
@@ -496,9 +513,9 @@ class TimestampRule(Rule):
 
     def match(self, package):
         if self.reverse:
-            return (package.timestamp > self.timestamp)
+            return package.timestamp > self.timestamp
         else:
-            return (package.timestamp <= self.timestamp)
+            return package.timestamp <= self.timestamp
 
     def cost(self):
         # This is expensive because it causes a package load
@@ -515,13 +532,13 @@ class TimestampRule(Rule):
     @classmethod
     def _parse(cls, txt):
         label, txt = Rule._parse_label(txt)
-        if ':' in txt:
-            family, txt = txt.split(':', 1)
+        if ":" in txt:
+            family, txt = txt.split(":", 1)
         else:
             family = None
 
         timestamp = int(txt)
-        reverse = (label == "after")
+        reverse = label == "after"
         return cls(timestamp, family=family, reverse=reverse)
 
     def __str__(self):
@@ -530,7 +547,7 @@ class TimestampRule(Rule):
         if self._family:
             parts.append(self._family)
         parts.append(str(self.timestamp))
-        return "%s(%s)" % (label, ':'.join(parts))
+        return "%s(%s)" % (label, ":".join(parts))
 
 
 # Copyright 2013-2016 Allan Johns.

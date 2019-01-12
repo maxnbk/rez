@@ -1,3 +1,4 @@
+from builtins import str
 from rezgui.qt import QtCore, QtGui
 from rezgui.mixins.ContextViewMixin import ContextViewMixin
 from rez.package_filter import PackageFilterList
@@ -33,8 +34,11 @@ class VariantVersionsTable(QtGui.QTableWidget, ContextViewMixin):
         self.clear()
 
     def selectionCommand(self, index, event=None):
-        return QtGui.QItemSelectionModel.ClearAndSelect if self.allow_selection \
+        return (
+            QtGui.QItemSelectionModel.ClearAndSelect
+            if self.allow_selection
             else QtGui.QItemSelectionModel.NoUpdate
+        )
 
     def clear(self):
         super(VariantVersionsTable, self).clear()
@@ -49,7 +53,7 @@ class VariantVersionsTable(QtGui.QTableWidget, ContextViewMixin):
     def get_reference_difference(self):
         if self.version_index == -1 or self.reference_version_index == -1:
             return None
-        return (self.reference_version_index - self.version_index)
+        return self.reference_version_index - self.version_index
 
     def refresh(self):
         variant = self.variant
@@ -90,14 +94,16 @@ class VariantVersionsTable(QtGui.QTableWidget, ContextViewMixin):
                 else:
                     packages = [x for x in preloaded_packages if x.version in range_]
             else:
-                it = iter_packages(name=variant.name, paths=package_paths, range_=range_)
+                it = iter_packages(
+                    name=variant.name, paths=package_paths, range_=range_
+                )
                 packages = sorted(it, key=lambda x: x.version, reverse=True)
 
             self.setRowCount(len(packages))
             brush = self.palette().brush(QtGui.QPalette.Active, QtGui.QPalette.Base)
 
             for row, package in enumerate(packages):
-                version_str = str(package.version) + ' '
+                version_str = str(package.version) + " "
                 item = QtGui.QTableWidgetItem(version_str)
                 item.setTextAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
                 self.setVerticalHeaderItem(row, item)
@@ -106,8 +112,10 @@ class VariantVersionsTable(QtGui.QTableWidget, ContextViewMixin):
                     self.version_index = row
                     update_font(item, bold=True)
 
-                if reference_version is not None \
-                        and package.version == reference_version:
+                if (
+                    reference_version is not None
+                    and package.version == reference_version
+                ):
                     self.reference_version_index = row
                     update_font(item, bold=True, italic=True)
 
@@ -118,9 +126,9 @@ class VariantVersionsTable(QtGui.QTableWidget, ContextViewMixin):
 
                 if package.timestamp:
                     release_str = get_timestamp_str(package.timestamp)
-                    in_future = (package.timestamp > timestamp)
+                    in_future = package.timestamp > timestamp
                 else:
-                    release_str = '-'
+                    release_str = "-"
                     in_future = False
 
                 item = _item()
@@ -129,13 +137,15 @@ class VariantVersionsTable(QtGui.QTableWidget, ContextViewMixin):
                 icons = []
                 if in_future:
                     icon = get_icon_widget(
-                        "clock_warning", "package did not exist at time of resolve")
+                        "clock_warning", "package did not exist at time of resolve"
+                    )
                     icons.append(icon)
 
                 rule = package_filter.excludes(package)
                 if rule:
                     icon = get_icon_widget(
-                        "excluded", "package was excluded by rule %s" % str(rule))
+                        "excluded", "package was excluded by rule %s" % str(rule)
+                    )
                     icons.append(icon)
 
                 if icons:

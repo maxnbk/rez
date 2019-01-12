@@ -4,16 +4,18 @@ Compare the source code of two packages.
 
 
 def setup_parser(parser, completions=False):
-    PKG1_action = parser.add_argument(
-        "PKG1", type=str,
-        help='package to diff')
+    PKG1_action = parser.add_argument("PKG1", type=str, help="package to diff")
     PKG2_action = parser.add_argument(
-        "PKG2", type=str, nargs='?',
-        help='package to diff against. If not provided, the next highest '
-        'versioned package is used')
+        "PKG2",
+        type=str,
+        nargs="?",
+        help="package to diff against. If not provided, the next highest "
+        "versioned package is used",
+    )
 
     if completions:
         from rez.cli._complete_util import PackageCompleter
+
         PKG1_action.completer = PackageCompleter
         PKG2_action.completer = PackageCompleter
 

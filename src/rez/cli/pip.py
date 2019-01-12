@@ -1,30 +1,40 @@
 """
 Install a pip-compatible python package, and its dependencies, as rez packages.
 """
+from __future__ import print_function
 
 
 def setup_parser(parser, completions=False):
     parser.add_argument(
-        "--pip-version", dest="pip_ver", metavar="VERSION",
-        help="pip version (rez package) to use, default is latest")
+        "--pip-version",
+        dest="pip_ver",
+        metavar="VERSION",
+        help="pip version (rez package) to use, default is latest",
+    )
     parser.add_argument(
-        "--python-version", dest="py_ver", metavar="VERSION",
+        "--python-version",
+        dest="py_ver",
+        metavar="VERSION",
         help="python version (rez package) to use, default is latest. Note "
         "that the pip package(s) will be installed with a dependency on "
-        "python-MAJOR.MINOR.")
+        "python-MAJOR.MINOR.",
+    )
     parser.add_argument(
-        "-i", "--install", action="store_true",
-        help="install the package")
+        "-i", "--install", action="store_true", help="install the package"
+    )
     parser.add_argument(
-        "-s", "--search", action="store_true",
-        help="search for the package on PyPi")
+        "-s", "--search", action="store_true", help="search for the package on PyPi"
+    )
     parser.add_argument(
-        "-r", "--release", action="store_true",
+        "-r",
+        "--release",
+        action="store_true",
         help="install as released package; if not set, package is installed "
-        "locally only")
+        "locally only",
+    )
     parser.add_argument(
-        "PACKAGE",
-        help="package to install or archive/url to install from")
+        "PACKAGE", help="package to install or archive/url to install from"
+    )
 
 
 def command(opts, parser, extra_arg_groups=None):
@@ -43,7 +53,8 @@ def command(opts, parser, extra_arg_groups=None):
         opts.PACKAGE,
         pip_version=opts.pip_ver,
         python_version=opts.py_ver,
-        release=opts.release)
+        release=opts.release,
+    )
 
     # print summary
     #
@@ -53,23 +64,23 @@ def command(opts, parser, extra_arg_groups=None):
         txt = "%s: %s" % (pkg.qualified_name, pkg.uri)
         if v.subpath:
             txt += " (%s)" % v.subpath
-        print "  " + txt
+        print("  " + txt)
 
-    print
+    print()
     if installed_variants:
-        print "%d packages were installed:" % len(installed_variants)
+        print("%d packages were installed:" % len(installed_variants))
         for variant in installed_variants:
             print_variant(variant)
     else:
-        print "NO packages were installed."
+        print("NO packages were installed.")
 
     if skipped_variants:
-        print
-        print "%d packages were already installed:" % len(skipped_variants)
+        print()
+        print("%d packages were already installed:" % len(skipped_variants))
         for variant in skipped_variants:
             print_variant(variant)
 
-    print
+    print()
 
 
 # Copyright 2013-2016 Allan Johns.

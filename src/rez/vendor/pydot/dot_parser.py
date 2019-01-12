@@ -16,19 +16,18 @@ __license__ = 'MIT'
 
 import sys
 import glob
-import pydot
+from . import pydot
 import re
 import codecs
 
 from rez.vendor.pyparsing.pyparsing import __version__ as pyparsing_version
 
-from rez.vendor.pyparsing.pyparsing import ( nestedExpr, Literal, CaselessLiteral, Word, Upcase, OneOrMore, ZeroOrMore,
+from rez.vendor.pyparsing.pyparsing import ( nestedExpr, Literal, CaselessLiteral, Word, OneOrMore, ZeroOrMore,
     Forward, NotAny, delimitedList, oneOf, Group, Optional, Combine, alphas, nums,
     restOfLine, cStyleComment, nums, alphanums, printables, empty, quotedString,
     ParseException, ParseResults, CharsNotIn, dblQuotedString, QuotedString, ParserElement )
 
 _noncomma = "".join( [ c for c in printables if c != "," ] )
-
 
 class P_AttrList:
 
@@ -78,7 +77,7 @@ def push_top_graph_stmt(str, loc, toks):
     for element in toks:
     
         if( isinstance(element, (ParseResults, tuple, list)) and
-            len(element) == 1 and isinstance(element[0], basestring) ):
+            len(element) == 1 and isinstance(element[0], str) ):
             
             element = element[0]
             
@@ -94,7 +93,7 @@ def push_top_graph_stmt(str, loc, toks):
             
             top_graphs.append( g )
             
-        elif isinstance( element, basestring):
+        elif isinstance( element, str):
             g.set_name( element )
             
         elif isinstance(element, pydot.Subgraph):
@@ -113,7 +112,7 @@ def push_top_graph_stmt(str, loc, toks):
             add_elements(g, element)
             
         else:
-            raise ValueError, "Unknown element statement: %r " % element
+            raise ValueError("Unknown element statement: %r " % element)
     
     
     for g in top_graphs:
@@ -138,10 +137,10 @@ def update_parent_graph_hierarchy(g, parent_graph=None, level=0):
         else:
             item_dict = g.obj_dict
             
-        if not item_dict.has_key( key_name ):
+        if key_name not in item_dict:
             continue
 
-        for key, objs in item_dict[key_name].items():
+        for key, objs in list(item_dict[key_name].items()):
             for obj in objs:
                 if 'parent_graph' in obj and obj['parent_graph'].get_parent_graph()==g:
                     if obj['parent_graph'] is g:
@@ -164,7 +163,7 @@ def update_parent_graph_hierarchy(g, parent_graph=None, level=0):
 def add_defaults(element, defaults):
 
     d = element.__dict__
-    for key, value in defaults.items():
+    for key, value in list(defaults.items()):
         if not d.get(key):
             d[key] = value
 
@@ -220,14 +219,14 @@ def add_elements(g, toks, defaults_graph=None, defaults_node=None, defaults_edge
                 defaults_edge.update(element.attrs)
 
             else:
-                raise ValueError, "Unknown DefaultStatement: %s " % element.default_type
+                raise ValueError("Unknown DefaultStatement: %s " % element.default_type)
                 
         elif isinstance(element, P_AttrList):
         
             g.obj_dict['attributes'].update(element.attrs)
 
         else:
-            raise ValueError, "Unknown element statement: %r" % element
+            raise ValueError("Unknown element statement: %r" % element)
 
 
 def push_graph_stmt(str, loc, toks):            
@@ -269,7 +268,7 @@ def push_default_stmt(str, loc, toks):
     if default_type in ['graph', 'node', 'edge']:
         return DefaultStatement(default_type, attrs)
     else:
-        raise ValueError, "Unknown default statement: %r " % toks
+        raise ValueError("Unknown default statement: %r " % toks)
 
 
 def push_attr_list(str, loc, toks):
@@ -469,13 +468,13 @@ def graph_definition():
         
         subgraph = Group(subgraph_ + Optional(ID) + graph_stmt).setName("subgraph")
         
-        edge_point <<= Group( subgraph | graph_stmt | node_id ).setName('edge_point')
+        edge_point << Group( subgraph | graph_stmt | node_id ).setName('edge_point')
         
         node_stmt = (node_id + Optional(attr_list) + Optional(semi.suppress())).setName("node_stmt")
         
         assignment = (ID + equals + righthand_id).setName("assignment")
         stmt =  (assignment | edge_stmt | attr_stmt | subgraph | graph_stmt | node_stmt).setName("stmt")
-        stmt_list <<= OneOrMore(stmt + Optional(semi.suppress()))
+        stmt_list << OneOrMore(stmt + Optional(semi.suppress()))
         
         graphparser = OneOrMore( (Optional(strict_) + Group((graph_ | digraph_)) +
             Optional(ID) + graph_stmt).setResultsName("graph") )
@@ -525,9 +524,9 @@ def parse_dot_data(data):
         else:
             return [g for g in tokens]
         
-    except ParseException, err:
+    except ParseException as err:
     
-        print err.line
-        print " "*(err.column-1) + "^"
-        print err
+        print(err.line)
+        print(" "*(err.column-1) + "^")
+        print(err)
         return None

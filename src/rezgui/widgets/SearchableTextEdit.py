@@ -1,3 +1,4 @@
+from builtins import str
 from rezgui.qt import QtGui
 from rezgui.widgets.FindPopup import FindPopup
 
@@ -5,6 +6,7 @@ from rezgui.widgets.FindPopup import FindPopup
 class SearchableTextEdit(QtGui.QTextEdit):
     """A TextEdit that can be searched.
     """
+
     def __init__(self, parent=None):
         super(SearchableTextEdit, self).__init__(parent)
         self.searchable = True
@@ -23,8 +25,13 @@ class SearchableTextEdit(QtGui.QTextEdit):
         else:
             initial_word = None
 
-        self.popup = FindPopup(self, "bottomLeft", initial_word=initial_word,
-                               close_on_find=False, parent=self)
+        self.popup = FindPopup(
+            self,
+            "bottomLeft",
+            initial_word=initial_word,
+            close_on_find=False,
+            parent=self,
+        )
         self.popup.find.connect(self._find_text)
         self.popup.show()
 

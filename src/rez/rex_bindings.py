@@ -8,14 +8,19 @@ unnecessary data from Rex, and provide APIs that will not change.
 """
 
 
+from builtins import map
+from builtins import str
+from builtins import object
 class Binding(object):
     """Abstract base class."""
+
     def __init__(self, data=None):
         self.__data = data or {}
 
     def _attr_error(self, attr):
-        raise AttributeError("%s has no attribute '%s'"
-                             % (self.__class__.__name__, attr))
+        raise AttributeError(
+            "%s has no attribute '%s'" % (self.__class__.__name__, attr)
+        )
 
     def __getattr__(self, attr):
         try:
@@ -45,6 +50,7 @@ class VersionBinding(Binding):
         >>> v.as_tuple():
         (1, 2, '3alpha')
     """
+
     def __init__(self, version):
         super(VersionBinding, self).__init__()
         self.__version = version
@@ -62,11 +68,10 @@ class VersionBinding(Binding):
         return self[2]
 
     def as_tuple(self):
-        return self[:len(self)]
+        return self[: len(self)]
 
     def _attr_error(self, attr):
-        raise AttributeError("version %s has no attribute '%s'"
-                             % (str(self), attr))
+        raise AttributeError("version %s has no attribute '%s'" % (str(self), attr))
 
     def __getitem__(self, i):
         try:
@@ -77,7 +82,7 @@ class VersionBinding(Binding):
     def __getitem(self, i):
         def _convert(t):
             s = str(t)
-            if s.isdigit() and (s[0] != '0' or s == '0'):
+            if s.isdigit() and (s[0] != "0" or s == "0"):
                 return int(s)
             else:
                 return s
@@ -102,6 +107,7 @@ class VersionBinding(Binding):
 
 class VariantBinding(Binding):
     """Binds a packages.Variant object."""
+
     def __init__(self, variant):
         doc = dict(version=VersionBinding(variant.version))
         super(VariantBinding, self).__init__(doc)
@@ -120,8 +126,7 @@ class VariantBinding(Binding):
             return value
 
     def _attr_error(self, attr):
-        raise AttributeError("package %s has no attribute '%s'"
-                             % (str(self), attr))
+        raise AttributeError("package %s has no attribute '%s'" % (str(self), attr))
 
     def __str__(self):
         return self.__variant.qualified_package_name
@@ -130,6 +135,7 @@ class VariantBinding(Binding):
 class VariantsBinding(Binding):
     """Binds a list of packages.Variant objects, under the package name of
     each variant."""
+
     def __init__(self, variants):
         self.__variants = dict((x.name, VariantBinding(x)) for x in variants)
         super(VariantsBinding, self).__init__(self.__variants)
@@ -138,11 +144,12 @@ class VariantsBinding(Binding):
         raise AttributeError("package does not exist: '%s'" % attr)
 
     def __contains__(self, name):
-        return (name in self.__variants)
+        return name in self.__variants
 
 
 class RequirementsBinding(Binding):
     """Binds a list of version.Requirement objects."""
+
     def __init__(self, requirements):
         self.__requirements = dict((x.name, str(x)) for x in requirements)
         super(RequirementsBinding, self).__init__(self.__requirements)
@@ -157,7 +164,7 @@ class RequirementsBinding(Binding):
             self._attr_error(name)
 
     def __contains__(self, name):
-        return (name in self.__requirements)
+        return name in self.__requirements
 
 
 # Copyright 2013-2016 Allan Johns.

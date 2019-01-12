@@ -2,22 +2,15 @@ name = "hdf5"
 
 version = "1.8.9"
 
-authors = [
-    "The HDF Group"
-]
+authors = ["The HDF Group"]
 
-description = \
-    """
+description = """
     Data model, library, and file format for storing and managing data.
     """
 
-build_requires = [
-    "gcc-4.8.2"
-]
+build_requires = ["gcc-4.8.2"]
 
-variants = [
-    ["platform-linux", "arch-x86_64", "os-Ubuntu-12.04"]
-]
+variants = [["platform-linux", "arch-x86_64", "os-Ubuntu-12.04"]]
 
 tools = [
     "gif2h5"
@@ -40,6 +33,7 @@ tools = [
 ]
 
 uuid = "repository.hdf5"
+
 
 def commands():
     env.PATH.append("{root}/bin")

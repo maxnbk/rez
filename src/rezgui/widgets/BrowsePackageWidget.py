@@ -1,3 +1,4 @@
+from builtins import str
 from rezgui.qt import QtCore, QtGui
 from rezgui.widgets.ConfiguredSplitter import ConfiguredSplitter
 from rezgui.widgets.PackageLineEdit import PackageLineEdit
@@ -11,10 +12,16 @@ from rez.vendor.version.requirement import Requirement
 class BrowsePackageWidget(QtGui.QWidget, ContextViewMixin):
     """A widget for browsing rez packages.
     """
+
     packageSelected = QtCore.Signal()
 
-    def __init__(self, context_model=None, parent=None, lock_package=False,
-                 package_selectable_callback=None):
+    def __init__(
+        self,
+        context_model=None,
+        parent=None,
+        lock_package=False,
+        package_selectable_callback=None,
+    ):
         super(BrowsePackageWidget, self).__init__(parent)
         ContextViewMixin.__init__(self, context_model)
 
@@ -22,8 +29,9 @@ class BrowsePackageWidget(QtGui.QWidget, ContextViewMixin):
         if lock_package:
             self.edit.hide()
 
-        self.versions_table = PackageVersionsTable(context_model,
-                                                   callback=package_selectable_callback)
+        self.versions_table = PackageVersionsTable(
+            context_model, callback=package_selectable_callback
+        )
         self.package_tab = PackageTabWidget(versions_tab=False)
 
         splitter = ConfiguredSplitter(app.config, "layout/splitter/browse_package")

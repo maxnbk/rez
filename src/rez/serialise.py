@@ -1,9 +1,13 @@
 """
 Read and write data from file. File caching via a memcached server is supported.
 """
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import object
 from contextlib import contextmanager
 from inspect import isfunction, ismodule, getargspec
-from StringIO import StringIO
+from io import StringIO
 import sys
 import os
 import os.path
@@ -19,7 +23,7 @@ from rez.utils.memcached import memcached
 from rez.utils.system import add_sys_paths
 from rez.config import config
 from rez.vendor.atomicwrites import atomic_write
-from rez.vendor.enum import Enum
+from enum import Enum
 from rez.vendor import yaml
 
 
@@ -60,14 +64,15 @@ def open_file_for_write(filepath):
     with atomic_write(filepath, overwrite=True) as f:
         f.write(content)
 
-    with open(cache_filepath, 'w') as f:
+    with open(cache_filepath, "w") as f:
         f.write(content)
 
     file_cache[filepath] = cache_filepath
 
 
-def load_from_file(filepath, format_=FileFormat.py, update_data_callback=None,
-                   disable_memcache=False):
+def load_from_file(
+    filepath, format_=FileFormat.py, update_data_callback=None, disable_memcache=False
+):
     """Load data from a file.
 
     Note:
@@ -89,35 +94,44 @@ def load_from_file(filepath, format_=FileFormat.py, update_data_callback=None,
     if cache_filepath:
         # file has been written by this process, read it from /tmp to avoid
         # potential write-then-read issues over NFS
-        return _load_file(filepath=cache_filepath,
-                          format_=format_,
-                          update_data_callback=update_data_callback,
-                          original_filepath=filepath)
+        return _load_file(
+            filepath=cache_filepath,
+            format_=format_,
+            update_data_callback=update_data_callback,
+            original_filepath=filepath,
+        )
     elif disable_memcache:
-        return _load_file(filepath=filepath,
-                          format_=format_,
-                          update_data_callback=update_data_callback)
+        return _load_file(
+            filepath=filepath,
+            format_=format_,
+            update_data_callback=update_data_callback,
+        )
     else:
-        return _load_from_file(filepath=filepath,
-                               format_=format_,
-                               update_data_callback=update_data_callback)
+        return _load_from_file(
+            filepath=filepath,
+            format_=format_,
+            update_data_callback=update_data_callback,
+        )
 
 
 def _load_from_file__key(filepath, format_, update_data_callback):
     st = os.stat(filepath)
     if update_data_callback is None:
-        callback_key = 'None'
+        callback_key = "None"
     else:
         callback_key = getattr(update_data_callback, "__name__", "None")
 
-    return str(("package_file", filepath, str(format_), callback_key,
-                st.st_ino, st.st_mtime))
+    return str(
+        ("package_file", filepath, str(format_), callback_key, st.st_ino, st.st_mtime)
+    )
 
 
-@memcached(servers=config.memcached_uri if config.cache_package_files else None,
-           min_compress_len=config.memcached_package_file_min_compress_len,
-           key=_load_from_file__key,
-           debug=config.debug_memcache)
+@memcached(
+    servers=config.memcached_uri if config.cache_package_files else None,
+    min_compress_len=config.memcached_package_file_min_compress_len,
+    key=_load_from_file__key,
+    debug=config.debug_memcache,
+)
 def _load_from_file(filepath, format_, update_data_callback):
     return _load_file(filepath, format_, update_data_callback)
 
@@ -127,8 +141,9 @@ def _load_file(filepath, format_, update_data_callback, original_filepath=None):
 
     if debug_print:
         if original_filepath:
-            debug_print("Loading file: %s (local cache of %s)",
-                        filepath, original_filepath)
+            debug_print(
+                "Loading file: %s (local cache of %s)", filepath, original_filepath
+            )
         else:
             debug_print("Loading file: %s", filepath)
 
@@ -147,7 +162,7 @@ _set_objects = threading.local()
 default_objects = {
     "building": False,
     "build_variant_index": 0,
-    "build_variant_requires": []
+    "build_variant_requires": [],
 }
 
 
@@ -196,34 +211,45 @@ def load_py(stream, filepath=None):
 def _load_py(stream, filepath=None):
     scopes = ScopeContext()
 
-    g = dict(scope=scopes,
-             early=early,
-             late=late,
-             include=include,
-             ModifyList=ModifyList,
-             InvalidPackageError=InvalidPackageError)
+    g = dict(
+        scope=scopes,
+        early=early,
+        late=late,
+        include=include,
+        ModifyList=ModifyList,
+        InvalidPackageError=InvalidPackageError,
+    )
 
     try:
-        exec stream in g
+        exec(stream, g)
     except Exception as e:
         import traceback
+
         frames = traceback.extract_tb(sys.exc_info()[2])
         while filepath and frames and frames[0][0] != filepath:
             frames = frames[1:]
 
         msg = "Problem loading %s: %s" % (filepath, str(e))
-        stack = ''.join(traceback.format_list(frames)).strip()
+        stack = "".join(traceback.format_list(frames)).strip()
         if stack:
             msg += ":\n" + stack
         raise ResourceError(msg)
 
     result = {}
-    excludes = set(('scope', 'InvalidPackageError', '__builtins__',
-                    'early', 'late', 'include', 'ModifyList'))
+    excludes = set(
+        (
+            "scope",
+            "InvalidPackageError",
+            "__builtins__",
+            "early",
+            "late",
+            "include",
+            "ModifyList",
+        )
+    )
 
-    for k, v in g.iteritems():
-        if k not in excludes and \
-                (k not in __builtins__ or __builtins__[k] != v):
+    for k, v in g.items():
+        if k not in excludes and (k not in __builtins__ or __builtins__[k] != v):
             result[k] = v
 
     result.update(scopes.to_dict())
@@ -236,6 +262,7 @@ class EarlyThis(object):
 
     Just exposes raw package data as object attributes.
     """
+
     def __init__(self, data):
         self._data = data
 
@@ -248,7 +275,8 @@ class EarlyThis(object):
         if isfunction(value) and (hasattr(value, "_early") or hasattr(value, "_late")):
             raise ValueError(
                 "An early binding function cannot refer to another early or "
-                "late binding function: '%s'" % attr)
+                "late binding function: '%s'" % attr
+            )
 
         return value
 
@@ -266,9 +294,10 @@ def process_python_objects(data, filepath=None):
     Returns:
         dict: Updated dict.
     """
+
     def _process(value):
         if isinstance(value, dict):
-            for k, v in value.items():
+            for k, v in list(value.items()):
                 value[k] = _process(v)
 
             return value
@@ -281,22 +310,26 @@ def process_python_objects(data, filepath=None):
 
                 # make a copy of the func with its own globals, and add 'this'
                 import types
-                fn = types.FunctionType(func.func_code,
-                                        func.func_globals.copy(),
-                                        name=func.func_name,
-                                        argdefs=func.func_defaults,
-                                        closure=func.func_closure)
+
+                fn = types.FunctionType(
+                    func.__code__,
+                    func.__globals__.copy(),
+                    name=func.__name__,
+                    argdefs=func.__defaults__,
+                    closure=func.__closure__,
+                )
 
                 # apply globals
-                fn.func_globals["this"] = EarlyThis(data)
-                fn.func_globals.update(get_objects())
+                fn.__globals__["this"] = EarlyThis(data)
+                fn.__globals__.update(get_objects())
 
                 # execute the function
                 spec = getargspec(func)
                 args = spec.args or []
                 if len(args) not in (0, 1):
-                    raise ResourceError("@early decorated function must "
-                                        "take zero or one args only")
+                    raise ResourceError(
+                        "@early decorated function must " "take zero or one args only"
+                    )
                 if args:
                     # this 'data' arg support isn't needed anymore, but I'm
                     # supporting it til I know nobody is using it...
@@ -309,8 +342,7 @@ def process_python_objects(data, filepath=None):
                 return _process(value_)
 
             elif hasattr(func, "_late"):
-                return SourceCode(func=func, filepath=filepath,
-                                  eval_as_function=True)
+                return SourceCode(func=func, filepath=filepath, eval_as_function=True)
 
             elif func.__name__ in package_rex_keys:
                 # if a rex function, the code has to be eval'd NOT as a function,
@@ -323,8 +355,7 @@ def process_python_objects(data, filepath=None):
                 # ..won't work. It was never intentional that the above work, but
                 # it does, so now we have to keep it so.
                 #
-                return SourceCode(func=func, filepath=filepath,
-                                  eval_as_function=False)
+                return SourceCode(func=func, filepath=filepath, eval_as_function=False)
 
             else:
                 # a normal function. Leave unchanged, it will be stripped after
@@ -334,7 +365,7 @@ def process_python_objects(data, filepath=None):
 
     def _trim(value):
         if isinstance(value, dict):
-            for k, v in value.items():
+            for k, v in list(value.items()):
                 if isfunction(v):
                     if v.__name__ == "preprocess":
                         # preprocess is a special case. It has to stay intact
@@ -374,13 +405,13 @@ def load_yaml(stream, **kwargs):
     content = stream.read()
     try:
         return yaml.load(content) or {}
-    except Exception, e:
-        if stream.name and stream.name != '<string>':
-            for mark_name in 'context_mark', 'problem_mark':
+    except Exception as e:
+        if stream.name and stream.name != "<string>":
+            for mark_name in "context_mark", "problem_mark":
                 mark = getattr(e, mark_name, None)
                 if mark is None:
                     continue
-                if getattr(mark, 'name') == '<string>':
+                if getattr(mark, "name") == "<string>":
                     mark.name = stream.name
         raise e
 
@@ -403,9 +434,11 @@ def clear_file_caches():
     _load_from_file.forget()
 
 
-load_functions = {FileFormat.py:      load_py,
-                  FileFormat.yaml:    load_yaml,
-                  FileFormat.txt:     load_txt}
+load_functions = {
+    FileFormat.py: load_py,
+    FileFormat.yaml: load_yaml,
+    FileFormat.txt: load_txt,
+}
 
 
 # Copyright 2013-2016 Allan Johns.

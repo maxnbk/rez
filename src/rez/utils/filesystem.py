@@ -1,6 +1,10 @@
 """
 Filesystem-related utilities.
 """
+from __future__ import print_function
+from builtins import str
+from builtins import range
+from builtins import object
 from threading import Lock
 from tempfile import mkdtemp
 from contextlib import contextmanager
@@ -21,6 +25,7 @@ class TempDirs(object):
 
     Makes tmpdirs and ensures they're cleaned up on program exit.
     """
+
     instances_lock = Lock()
     instances = []
 
@@ -214,15 +219,15 @@ def is_subdirectory(path_a, path_b):
     path_a = os.path.realpath(path_a)
     path_b = os.path.realpath(path_b)
     relative = os.path.relpath(path_a, path_b)
-    return (not relative.startswith(os.pardir + os.sep))
+    return not relative.startswith(os.pardir + os.sep)
 
 
 def copy_or_replace(src, dst):
-    '''try to copy with mode, and if it fails, try replacing
-    '''
+    """try to copy with mode, and if it fails, try replacing
+    """
     try:
         shutil.copy(src, dst)
-    except (OSError, IOError), e:
+    except (OSError, IOError) as e:
         # It's possible that the file existed, but was owned by someone
         # else - in that situation, shutil.copy might then fail when it
         # tries to copy perms.
@@ -232,6 +237,7 @@ def copy_or_replace(src, dst):
 
         if e.errno == errno.EPERM:
             import tempfile
+
             # try copying into a temporary location beside the old
             # file - if we have perms to do that, we should have perms
             # to then delete the old file, and move the new one into
@@ -240,19 +246,20 @@ def copy_or_replace(src, dst):
                 dst = os.path.join(dst, os.path.basename(src))
 
             dst_dir, dst_name = os.path.split(dst)
-            dst_temp = tempfile.mktemp(prefix=dst_name + '.', dir=dst_dir)
+            dst_temp = tempfile.mktemp(prefix=dst_name + ".", dir=dst_dir)
             shutil.copy(src, dst_temp)
             if not os.path.isfile(dst_temp):
                 raise RuntimeError(
                     "shutil.copy completed successfully, but path"
-                    " '%s' still did not exist" % dst_temp)
+                    " '%s' still did not exist" % dst_temp
+                )
             os.remove(dst)
             shutil.move(dst_temp, dst)
 
 
 def copytree(src, dst, symlinks=False, ignore=None, hardlinks=False):
-    '''copytree that supports hard-linking
-    '''
+    """copytree that supports hard-linking
+    """
     names = os.listdir(src)
     if ignore is not None:
         ignored_names = ignore(src, names)
@@ -260,12 +267,14 @@ def copytree(src, dst, symlinks=False, ignore=None, hardlinks=False):
         ignored_names = set()
 
     if hardlinks:
+
         def copy(srcname, dstname):
             try:
                 # try hard-linking first
                 os.link(srcname, dstname)
             except OSError:
                 shutil.copy2(srcname, dstname)
+
     else:
         copy = shutil.copy2
 
@@ -287,18 +296,18 @@ def copytree(src, dst, symlinks=False, ignore=None, hardlinks=False):
             else:
                 copy(srcname, dstname)
         # XXX What about devices, sockets etc.?
-        except (IOError, os.error), why:
+        except (IOError, os.error) as why:
             errors.append((srcname, dstname, str(why)))
         # catch the Error from the recursive copytree so that we can
         # continue with other files
-        except shutil.Error, err:
+        except shutil.Error as err:
             errors.extend(err.args[0])
     try:
         shutil.copystat(src, dst)
     except shutil.WindowsError:
         # can't copy file access times on Windows
         pass
-    except OSError, why:
+    except OSError as why:
         errors.extend((src, dst, str(why)))
     if errors:
         raise shutil.Error(errors)
@@ -322,7 +331,7 @@ def safe_chmod(path, mode):
 
 
 def to_nativepath(path):
-    return os.path.join(path.split('/'))
+    return os.path.join(path.split("/"))
 
 
 def to_ntpath(path):
@@ -378,32 +387,34 @@ def encode_filesystem_name(input_str):
         _foo___bar_020_028fun_029.txt
     """
     if isinstance(input_str, str):
-        input_str = unicode(input_str)
-    elif not isinstance(input_str, unicode):
+        input_str = str(input_str)
+    elif not isinstance(input_str, str):
         raise TypeError("input_str must be a basestring")
 
-    as_is = u'abcdefghijklmnopqrstuvwxyz0123456789.-'
-    uppercase = u'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    as_is = u"abcdefghijklmnopqrstuvwxyz0123456789.-"
+    uppercase = u"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     result = []
     for char in input_str:
         if char in as_is:
             result.append(char)
-        elif char == u'_':
-            result.append('__')
+        elif char == u"_":
+            result.append("__")
         elif char in uppercase:
-            result.append('_%s' % char.lower())
+            result.append("_%s" % char.lower())
         else:
-            utf8 = char.encode('utf8')
+            utf8 = char.encode("utf8")
             N = len(utf8)
             if N == 1:
                 N = 0
-            HH = ''.join('%x' % ord(c) for c in utf8)
-            result.append('_%d%s' % (N, HH))
-    return ''.join(result)
+            HH = "".join("%x" % ord(c) for c in utf8)
+            result.append("_%d%s" % (N, HH))
+    return "".join(result)
 
 
-_FILESYSTEM_TOKEN_RE = re.compile(r'(?P<as_is>[a-z0-9.-])|(?P<underscore>__)|_(?P<uppercase>[a-z])|_(?P<N>[0-9])')
-_HEX_RE = re.compile('[0-9a-f]+$')
+_FILESYSTEM_TOKEN_RE = re.compile(
+    r"(?P<as_is>[a-z0-9.-])|(?P<underscore>__)|_(?P<uppercase>[a-z])|_(?P<N>[0-9])"
+)
+_HEX_RE = re.compile("[0-9a-f]+$")
 
 
 def decode_filesystem_name(filename):
@@ -417,22 +428,23 @@ def decode_filesystem_name(filename):
         # use match, to ensure it matches from the start of the string...
         match = _FILESYSTEM_TOKEN_RE.match(remain)
         if not match:
-            raise ValueError("incorrectly encoded filesystem name %r"
-                             " (bad index: %d - %r)" % (filename, i,
-                                                        remain[:2]))
+            raise ValueError(
+                "incorrectly encoded filesystem name %r"
+                " (bad index: %d - %r)" % (filename, i, remain[:2])
+            )
         match_str = match.group(0)
         match_len = len(match_str)
         i += match_len
         remain = remain[match_len:]
         match_dict = match.groupdict()
-        if match_dict['as_is']:
-            result.append(unicode(match_str))
-        elif match_dict['underscore']:
-            result.append(u'_')
-        elif match_dict['uppercase']:
-            result.append(unicode(match_dict['uppercase'].upper()))
-        elif match_dict['N']:
-            N = int(match_dict['N'])
+        if match_dict["as_is"]:
+            result.append(str(match_str))
+        elif match_dict["underscore"]:
+            result.append(u"_")
+        elif match_dict["uppercase"]:
+            result.append(str(match_dict["uppercase"].upper()))
+        elif match_dict["N"]:
+            N = int(match_dict["N"])
             if N == 0:
                 N = 1
             # hex-encoded, so need to grab 2*N chars
@@ -444,35 +456,40 @@ def decode_filesystem_name(filename):
             # need this check to ensure that we don't end up eval'ing
             # something nasty...
             if not _HEX_RE.match(bytes):
-                raise ValueError("Bad utf8 encoding in name %r"
-                                 " (bad index: %d - %r)" % (filename, i, bytes))
+                raise ValueError(
+                    "Bad utf8 encoding in name %r"
+                    " (bad index: %d - %r)" % (filename, i, bytes)
+                )
 
-            bytes_repr = ''.join('\\x%s' % bytes[i:i + 2]
-                                 for i in xrange(0, bytes_len, 2))
+            bytes_repr = "".join(
+                "\\x%s" % bytes[i : i + 2] for i in range(0, bytes_len, 2)
+            )
             bytes_repr = "'%s'" % bytes_repr
-            result.append(eval(bytes_repr).decode('utf8'))
+            result.append(eval(bytes_repr).decode("utf8"))
         else:
-            raise ValueError("Unrecognized match type in filesystem name %r"
-                             " (bad index: %d - %r)" % (filename, i, remain[:2]))
+            raise ValueError(
+                "Unrecognized match type in filesystem name %r"
+                " (bad index: %d - %r)" % (filename, i, remain[:2])
+            )
 
-    return u''.join(result)
+    return u"".join(result)
 
 
 def test_encode_decode():
     def do_test(orig, expected_encoded):
-        print '=' * 80
-        print orig
+        print("=" * 80)
+        print(orig)
         encoded = encode_filesystem_name(orig)
-        print encoded
+        print(encoded)
         assert encoded == expected_encoded
         decoded = decode_filesystem_name(encoded)
-        print decoded
+        print(decoded)
         assert decoded == orig
 
-    do_test("Foo_Bar (fun).txt", '_foo___bar_020_028fun_029.txt')
+    do_test("Foo_Bar (fun).txt", "_foo___bar_020_028fun_029.txt")
 
     # u'\u20ac' == Euro symbol
-    do_test(u"\u20ac3 ~= $4.06", '_3e282ac3_020_07e_03d_020_0244.06')
+    do_test(u"\u20ac3 ~= $4.06", "_3e282ac3_020_07e_03d_020_0244.06")
 
 
 def walk_up_dirs(path):

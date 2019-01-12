@@ -1,3 +1,4 @@
+from builtins import str
 from rez.vendor.version.version import Version, VersionRange
 from rez.vendor.version.util import _Common
 import re
@@ -12,13 +13,14 @@ class VersionedObject(_Common):
     Note that '-', '@' or '#' can be used as the seperator between object name
     and version, however this is purely cosmetic - "foo-1" is the same as "foo@1".
     """
-    sep_regex_str = r'[-@#]'
+
+    sep_regex_str = r"[-@#]"
     sep_regex = re.compile(sep_regex_str)
 
     def __init__(self, s):
         self.name_ = None
         self.version_ = None
-        self.sep_ = '-'
+        self.sep_ = "-"
         if s is None:
             return
 
@@ -27,7 +29,7 @@ class VersionedObject(_Common):
             i = m.start()
             self.name_ = s[:i]
             self.sep_ = s[i]
-            ver_str = s[i + 1:]
+            ver_str = s[i + 1 :]
             self.version_ = Version(ver_str)
         else:
             self.name_ = s
@@ -57,16 +59,18 @@ class VersionedObject(_Common):
         return self.version_
 
     def __eq__(self, other):
-        return (isinstance(other, VersionedObject)
-                and (self.name_ == other.name_)
-                and (self.version_ == other.version_))
+        return (
+            isinstance(other, VersionedObject)
+            and (self.name_ == other.name_)
+            and (self.version_ == other.version_)
+        )
 
     def __hash__(self):
         return hash((self.name_, self.version_))
 
     def __str__(self):
-        sep_str = ''
-        ver_str = ''
+        sep_str = ""
+        ver_str = ""
         if self.version_:
             sep_str = self.sep_
             ver_str = str(self.version_)
@@ -107,7 +111,8 @@ class Requirement(_Common):
     be any version." This statement is still valid, but will produce a
     Requirement object with a None range.
     """
-    sep_regex = re.compile(r'[-@#=<>]')
+
+    sep_regex = re.compile(r"[-@#=<>]")
 
     def __init__(self, s, invalid_bound_error=True):
         self.name_ = None
@@ -115,14 +120,14 @@ class Requirement(_Common):
         self.negate_ = False
         self.conflict_ = False
         self._str = None
-        self.sep_ = '-'
+        self.sep_ = "-"
         if s is None:
             return
 
-        self.conflict_ = s.startswith('!')
+        self.conflict_ = s.startswith("!")
         if self.conflict_:
             s = s[1:]
-        elif s.startswith('~'):
+        elif s.startswith("~"):
             s = s[1:]
             self.negate_ = True
             self.conflict_ = True
@@ -132,12 +137,11 @@ class Requirement(_Common):
             i = m.start()
             self.name_ = s[:i]
             req_str = s[i:]
-            if req_str[0] in ('-', '@', '#'):
+            if req_str[0] in ("-", "@", "#"):
                 self.sep_ = req_str[0]
                 req_str = req_str[1:]
 
-            self.range_ = VersionRange(
-                req_str, invalid_bound_error=invalid_bound_error)
+            self.range_ = VersionRange(req_str, invalid_bound_error=invalid_bound_error)
             if self.negate_:
                 self.range_ = ~self.range_
         elif self.negate_:
@@ -197,12 +201,14 @@ class Requirement(_Common):
         """Returns True if this requirement conflicts with another `Requirement`
         or `VersionedObject`."""
         if isinstance(other, Requirement):
-            if (self.name_ != other.name_) or (self.range is None) \
-                    or (other.range is None):
+            if (
+                (self.name_ != other.name_)
+                or (self.range is None)
+                or (other.range is None)
+            ):
                 return False
             elif self.conflict:
-                return False if other.conflict \
-                    else self.range_.issuperset(other.range_)
+                return False if other.conflict else self.range_.issuperset(other.range_)
             elif other.conflict:
                 return other.range_.issuperset(self.range_)
             else:
@@ -211,9 +217,9 @@ class Requirement(_Common):
             if (self.name_ != other.name_) or (self.range is None):
                 return False
             if self.conflict:
-                return (other.version_ in self.range_)
+                return other.version_ in self.range_
             else:
-                return (other.version_ not in self.range_)
+                return other.version_ not in self.range_
 
     def merged(self, other):
         """Returns the merged result of two requirements.
@@ -246,8 +252,7 @@ class Requirement(_Common):
             if other.conflict:
                 r = _r(self)
                 r.range_ = self.range_ | other.range_
-                r.negate_ = (self.negate_ and other.negate_
-                             and not r.range_.is_any())
+                r.negate_ = self.negate_ and other.negate_ and not r.range_.is_any()
                 return r
             else:
                 range_ = other.range - self.range
@@ -275,19 +280,21 @@ class Requirement(_Common):
                 return r
 
     def __eq__(self, other):
-        return (isinstance(other, Requirement)
-                and (self.name_ == other.name_)
-                and (self.range_ == other.range_)
-                and (self.conflict_ == other.conflict_))
+        return (
+            isinstance(other, Requirement)
+            and (self.name_ == other.name_)
+            and (self.range_ == other.range_)
+            and (self.conflict_ == other.conflict_)
+        )
 
     def __hash__(self):
         return hash(str(self))
 
     def __str__(self):
         if self._str is None:
-            pre_str = '~' if self.negate_ else ('!' if self.conflict_ else '')
-            range_str = ''
-            sep_str = ''
+            pre_str = "~" if self.negate_ else ("!" if self.conflict_ else "")
+            range_str = ""
+            sep_str = ""
 
             range_ = self.range_
             if self.negate_:
@@ -295,7 +302,7 @@ class Requirement(_Common):
 
             if not range_.is_any():
                 range_str = str(range_)
-                if range_str[0] not in ('=', '<', '>'):
+                if range_str[0] not in ("=", "<", ">"):
                     sep_str = self.sep_
 
             self._str = pre_str + self.name_ + sep_str + range_str
@@ -309,6 +316,7 @@ class RequirementList(_Common):
     optimal form, merging any requirements for common objects. Order of objects
     is retained.
     """
+
     def __init__(self, requirements):
         """Create a RequirementList.
 
@@ -378,7 +386,7 @@ class RequirementList(_Common):
         return self.conflict_names_
 
     def __iter__(self):
-        for requirement in (self.requirements_ or []):
+        for requirement in self.requirements_ or []:
             yield requirement
 
     def get(self, name):
@@ -387,9 +395,11 @@ class RequirementList(_Common):
         return self.requirements_dict.get(name)
 
     def __eq__(self, other):
-        return (isinstance(other, RequirementList)
-                and (self.requirements_ == other.requirements_)
-                and (self.conflict_ == other.conflict_))
+        return (
+            isinstance(other, RequirementList)
+            and (self.requirements_ == other.requirements_)
+            and (self.conflict_ == other.conflict_)
+        )
 
     def __str__(self):
         if self.conflict_:
@@ -397,4 +407,4 @@ class RequirementList(_Common):
             s2 = str(self.conflict_[1])
             return "%s <--!--> %s" % (s1, s2)
         else:
-            return ' '.join(str(x) for x in self.requirements_)
+            return " ".join(str(x) for x in self.requirements_)

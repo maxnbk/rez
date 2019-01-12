@@ -20,7 +20,7 @@ from threading import RLock
 
 
 def _make_key(args, kwds):
-    return (args, frozenset(kwds.items()))
+    return (args, frozenset(list(kwds.items())))
 
 
 def lru_cache(maxsize=100):
@@ -48,13 +48,13 @@ def lru_cache(maxsize=100):
 
         cache = dict()
         make_key = _make_key
-        cache_get = cache.get           # bound method to lookup key or return None
-        _len = len                      # localize the global len() function
-        lock = RLock()                  # because linkedlist updates aren't threadsafe
-        root = []                       # root of the circular doubly linked list
-        root[:] = [root, root, None, None]      # initialize by pointing to self
-        nonlocal_root = [root]                  # make updateable non-locally
-        PREV, NEXT, KEY, RESULT = 0, 1, 2, 3    # names for the link fields
+        cache_get = cache.get  # bound method to lookup key or return None
+        _len = len  # localize the global len() function
+        lock = RLock()  # because linkedlist updates aren't threadsafe
+        root = []  # root of the circular doubly linked list
+        root[:] = [root, root, None, None]  # initialize by pointing to self
+        nonlocal_root = [root]  # make updateable non-locally
+        PREV, NEXT, KEY, RESULT = 0, 1, 2, 3  # names for the link fields
 
         if maxsize == 0:
 
@@ -68,7 +68,9 @@ def lru_cache(maxsize=100):
             def wrapper(*args, **kwds):
                 # simple caching without ordering or size limit
                 key = make_key(args, kwds)
-                result = cache_get(key, root)   # root used here as a unique not-found sentinel
+                result = cache_get(
+                    key, root
+                )  # root used here as a unique not-found sentinel
                 if result is not root:
                     return result
                 result = user_function(*args, **kwds)

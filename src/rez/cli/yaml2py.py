@@ -1,13 +1,17 @@
 """
 Print a package.yaml file in package.py format.
 """
+from __future__ import print_function
 
 
 def setup_parser(parser, completions=False):
     PKG_action = parser.add_argument(
-        "PATH", type=str, nargs='?',
+        "PATH",
+        type=str,
+        nargs="?",
         help="path to yaml to convert, or directory to search for package.yaml;"
-            " cwd if not provided")
+        " cwd if not provided",
+    )
 
 
 def command(opts, parser, extra_arg_groups=None):
@@ -29,7 +33,7 @@ def command(opts, parser, extra_arg_groups=None):
         package = None
 
     if package is None:
-        print >> sys.stderr, "Couldn't load the package at %r" % path
+        print("Couldn't load the package at %r" % path, file=sys.stderr)
         sys.exit(1)
 
     package.print_info(format_=FileFormat.py)

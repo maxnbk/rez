@@ -14,10 +14,12 @@ class ViewGraphButton(QtGui.QToolButton, ContextViewMixin):
         self.package_name = None
 
         menu = QtGui.QMenu()
-        self.action_1 = add_menu_action(menu, "View Resolve Graph...",
-                                        self._view_resolve_graph, "graph")
-        self.action_2 = add_menu_action(menu, "View Dependency Graph...",
-                                        self._view_dependency_graph)
+        self.action_1 = add_menu_action(
+            menu, "View Resolve Graph...", self._view_resolve_graph, "graph"
+        )
+        self.action_2 = add_menu_action(
+            menu, "View Dependency Graph...", self._view_dependency_graph
+        )
 
         self.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
         self.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
@@ -53,6 +55,7 @@ class ViewGraphButton(QtGui.QToolButton, ContextViewMixin):
 
     def _view_dependency_graph(self):
         from rez.vendor.pygraph.readwrite.dot import write as write_dot
+
         graph = self.context().get_dependency_graph()
         graph_str = write_dot(graph)
         view_graph(graph_str, self.window(), prune_to=self.package_name)

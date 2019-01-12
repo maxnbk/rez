@@ -49,7 +49,7 @@ import os
 # The package search path. Rez uses this to find packages. A package with the
 # same name and version in an earlier path takes precedence.
 packages_path = [
-    "~/packages",           # locally installed pkgs, not yet deployed
+    "~/packages",  # locally installed pkgs, not yet deployed
     "~/.rez/packages/int",  # internally developed pkgs, deployed
     "~/.rez/packages/ext",  # external (3rd party) pkgs, such as houdini, boost
 ]
@@ -340,10 +340,7 @@ new_session_popen_args = None
 # variables that represent a list of items. By default, the value of os.pathsep
 # will be used, unless the environment variable is list here, in which case the
 # configured separator will be used.
-env_var_separators = {
-    "CMAKE_MODULE_PATH": ";",
-    "DOXYGEN_TAGFILES": " ",
-}
+env_var_separators = {"CMAKE_MODULE_PATH": ";", "DOXYGEN_TAGFILES": " "}
 
 # Defines what suites on $PATH stay visible when a new rez environment is resolved.
 # Possible values are:
@@ -442,15 +439,15 @@ package_preprocess_function = None
 # the message payload.
 #
 
-context_tracking_host = ''
+context_tracking_host = ""
 
 context_tracking_amqp = {
-    "userid": '',
-    "password": '',
+    "userid": "",
+    "password": "",
     "connect_timeout": 10,
-    "exchange_name": '',
-    "exchange_routing_key": 'REZ.CONTEXT',
-    "message_delivery_mode": 1
+    "exchange_name": "",
+    "exchange_routing_key": "REZ.CONTEXT",
+    "message_delivery_mode": 1,
 }
 
 context_tracking_context_fields = [
@@ -461,7 +458,7 @@ context_tracking_context_fields = [
     "from_cache",
     "package_requests",
     "implicit_packages",
-    "resolved_packages"
+    "resolved_packages",
 ]
 
 context_tracking_extra_fields = {}
@@ -730,12 +727,12 @@ documentation_url = " http://nerdvegas.github.io/rez/"
 # When force is used, will generally be set through an environment variable, eg:
 #
 #     echo $(REZ_COLOR_ENABLED=force python -c "from rez.utils.colorize import Printer, local; Printer()('foo', local)")
-color_enabled = (os.name == "posix")
+color_enabled = os.name == "posix"
 
 ### Do not move or delete this comment (__DOC_END__)
 
 # Logging colors
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 critical_fore = "red"
 critical_back = None
 critical_styles = ["bright"]
@@ -757,7 +754,7 @@ debug_back = None
 debug_styles = None
 
 # Context-sensitive colors
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Heading
 heading_fore = None
 heading_back = None
@@ -797,14 +794,12 @@ plugins = {
         # cause problems if you ever store multiple packages within a single
         # repository - versions will clash and this will cause several problems.
         "tag_name": "{qualified_name}",
-
         # A list of branches that a user is allowed to rez-release from. This
         # can be used to block releases from development or feature branches,
         # and support a workflow such as "gitflow".  Each branch name should be
         # a regular expression that can be used with re.match(), for example
         # "^master$".
         "releasable_branches": [],
-
         # If True, a release will be cancelled if the repository has already been
         # tagged at the current package's version. Generally this is not needed,
         # because Rez won't re-release over the top of an already-released
@@ -826,10 +821,9 @@ plugins = {
         # at A, but that's ok because the package hasn't changed and we just want
         # to release it at B also. For this reason, you can set tag checking to
         # False both in the API and via an option on the rez-release tool.
-        "check_tag": False
+        "check_tag": False,
     }
 }
-
 
 
 ###############################################################################

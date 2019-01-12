@@ -1,6 +1,9 @@
 """
 Utilities related to managing data types.
 """
+from builtins import str
+from past.builtins import basestring
+from builtins import object
 from rez.vendor.schema.schema import Schema, Optional
 from rez.exceptions import RexError
 from collections import MutableMapping
@@ -13,6 +16,7 @@ class ModifyList(object):
     This can be used in configs to add to list-based settings, rather than
     overwriting them.
     """
+
     def __init__(self, append=None, prepend=None):
         for v in (prepend, append):
             if v is not None and not isinstance(v, list):
@@ -33,7 +37,7 @@ class ModifyList(object):
 def remove_nones(**kwargs):
     """Return diict copy with nones removed.
     """
-    return dict((k, v) for k, v in kwargs.iteritems() if v is not None)
+    return dict((k, v) for k, v in kwargs.items() if v is not None)
 
 
 def deep_update(dict1, dict2):
@@ -43,11 +47,12 @@ def deep_update(dict1, dict2):
 
     Supports `ModifyList` instances.
     """
+
     def flatten(v):
         if isinstance(v, ModifyList):
             return v.apply([])
         elif isinstance(v, dict):
-            return dict((k, flatten(v_)) for k, v_ in v.iteritems())
+            return dict((k, flatten(v_)) for k, v_ in v.items())
         else:
             return v
 
@@ -61,11 +66,11 @@ def deep_update(dict1, dict2):
         else:
             return flatten(v2)
 
-    for k1, v1 in dict1.iteritems():
+    for k1, v1 in dict1.items():
         if k1 not in dict2:
             dict1[k1] = flatten(v1)
 
-    for k2, v2 in dict2.iteritems():
+    for k2, v2 in dict2.items():
         v1 = dict1.get(k2)
 
         if v1 is KeyError:
@@ -84,7 +89,7 @@ def deep_del(data, fn):
     """
     result = {}
 
-    for k, v in data.iteritems():
+    for k, v in data.items():
         if not fn(v):
             if isinstance(v, dict):
                 result[k] = deep_del(v, fn)
@@ -106,12 +111,13 @@ def get_dict_diff(d1, d2):
         - list of removed key;
         - list of changed keys.
     """
+
     def _diff(d1_, d2_, namespace):
         added = []
         removed = []
         changed = []
 
-        for k1, v1 in d1_.iteritems():
+        for k1, v1 in d1_.items():
             if k1 not in d2_:
                 removed.append(namespace + [k1])
             else:
@@ -126,7 +132,7 @@ def get_dict_diff(d1, d2):
                     else:
                         changed.append(namespace + [k1])
 
-        for k2 in d2_.iterkeys():
+        for k2 in d2_.keys():
             if k2 not in d1_:
                 added.append(namespace + [k2])
 
@@ -142,16 +148,13 @@ def get_dict_diff_str(d1, d2, title):
     lines = [title]
 
     if added:
-        lines.append("Added attributes: %s"
-                     % ['.'.join(x) for x in added])
+        lines.append("Added attributes: %s" % [".".join(x) for x in added])
     if removed:
-        lines.append("Removed attributes: %s"
-                     % ['.'.join(x) for x in removed])
+        lines.append("Removed attributes: %s" % [".".join(x) for x in removed])
     if changed:
-        lines.append("Changed attributes: %s"
-                     % ['.'.join(x) for x in changed])
+        lines.append("Changed attributes: %s" % [".".join(x) for x in changed])
 
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 class cached_property(object):
@@ -172,6 +175,7 @@ class cached_property(object):
         >>> f.bah
         1
     """
+
     def __init__(self, func, name=None):
         self.func = func
         self.name = name or func.__name__
@@ -184,8 +188,7 @@ class cached_property(object):
         try:
             setattr(instance, self.name, result)
         except AttributeError:
-            raise AttributeError("can't set attribute %r on %r"
-                                 % (self.name, instance))
+            raise AttributeError("can't set attribute %r on %r" % (self.name, instance))
         return result
 
     @classmethod
@@ -211,6 +214,7 @@ class cached_class_property(object):
         >>> Foo.bah
         1
     """
+
     def __init__(self, func, name=None):
         self.func = func
 
@@ -227,6 +231,7 @@ class cached_class_property(object):
 
 class LazySingleton(object):
     """A threadsafe singleton that initialises when first referenced."""
+
     def __init__(self, instance_class, *nargs, **kwargs):
         self.instance_class = instance_class
         self.nargs = nargs
@@ -259,27 +264,29 @@ class AttrDictWrapper(MutableMapping):
         >>> assert dd.one == 1
         >>> assert d['one'] == 1
     """
+
     def __init__(self, data=None):
-        self.__dict__['_data'] = {} if data is None else data
+        self.__dict__["_data"] = {} if data is None else data
 
     @property
     def _data(self):
-        return self.__dict__['_data']
+        return self.__dict__["_data"]
 
     def __getattr__(self, attr):
-        if attr.startswith('__') and attr.endswith('__'):
+        if attr.startswith("__") and attr.endswith("__"):
             d = self.__dict__
         else:
             d = self._data
         try:
             return d[attr]
         except KeyError:
-            raise AttributeError("'%s' object has no attribute '%s'"
-                                 % (self.__class__.__name__, attr))
+            raise AttributeError(
+                "'%s' object has no attribute '%s'" % (self.__class__.__name__, attr)
+            )
 
     def __setattr__(self, attr, value):
         # For things like '__class__', for instance
-        if attr.startswith('__') and attr.endswith('__'):
+        if attr.startswith("__") and attr.endswith("__"):
             super(AttrDictWrapper, self).__setattr__(attr, value)
         self._data[attr] = value
 
@@ -310,10 +317,12 @@ class AttrDictWrapper(MutableMapping):
 
 class RO_AttrDictWrapper(AttrDictWrapper):
     """Read-only version of AttrDictWrapper."""
+
     def __setattr__(self, attr, value):
         self[attr]  # may raise 'no attribute' error
-        raise AttributeError("'%s' object attribute '%s' is read-only"
-                             % (self.__class__.__name__, attr))
+        raise AttributeError(
+            "'%s' object attribute '%s' is read-only" % (self.__class__.__name__, attr)
+        )
 
 
 def convert_dicts(d, to_class=AttrDictWrapper, from_class=dict):
@@ -331,10 +340,9 @@ def convert_dicts(d, to_class=AttrDictWrapper, from_class=dict):
         Converted data as `to_class` instance.
     """
     d_ = to_class()
-    for key, value in d.iteritems():
+    for key, value in d.items():
         if isinstance(value, from_class):
-            d_[key] = convert_dicts(value, to_class=to_class,
-                                    from_class=from_class)
+            d_[key] = convert_dicts(value, to_class=to_class, from_class=from_class)
         else:
             d_[key] = value
     return d_
@@ -358,7 +366,7 @@ def get_object_completions(instance, prefix, types=None, instance_types=None):
         List of strings.
     """
     word_toks = []
-    toks = prefix.split('.')
+    toks = prefix.split(".")
     while len(toks) > 1:
         attr = toks[0]
         toks = toks[1:]
@@ -382,20 +390,26 @@ def get_object_completions(instance, prefix, types=None, instance_types=None):
         pass
 
     for attr in attrs:
-        if attr.startswith(prefix) and not attr.startswith('_') \
-                and not hasattr(instance.__class__, attr):
+        if (
+            attr.startswith(prefix)
+            and not attr.startswith("_")
+            and not hasattr(instance.__class__, attr)
+        ):
             value = getattr(instance, attr)
             if types and not isinstance(value, types):
                 continue
             if not callable(value):
                 words.append(attr)
 
-    qual_words = ['.'.join(word_toks + [x]) for x in words]
+    qual_words = [".".join(word_toks + [x]) for x in words]
 
-    if len(words) == 1 and value is not None and \
-            (instance_types is None or isinstance(value, instance_types)):
+    if (
+        len(words) == 1
+        and value is not None
+        and (instance_types is None or isinstance(value, instance_types))
+    ):
         qual_word = qual_words[0]
-        words = get_object_completions(value, '', types)
+        words = get_object_completions(value, "", types)
         for word in words:
             qual_words.append("%s.%s" % (qual_word, word))
 
@@ -444,11 +458,12 @@ class AttributeForwardMeta(type):
         >>> print y.c
         None
     """
+
     def __new__(cls, name, parents, members):
         def _defined(x):
             return x in members or any(hasattr(p, x) for p in parents)
 
-        keys = members.get('keys')
+        keys = members.get("keys")
         if keys:
             for key in keys:
                 if not _defined(key):
@@ -494,16 +509,17 @@ class LazyAttributeMeta(type):
           your own '_validate_key' function;
         - '_schema_keys' (frozenset): Keys in the schema.
     """
+
     def __new__(cls, name, parents, members):
         def _defined(x):
             return x in members or any(hasattr(p, x) for p in parents)
 
-        schema = members.get('schema')
+        schema = members.get("schema")
         keys = set()
 
         if schema:
             schema_dict = schema._schema
-            for key, key_schema in schema_dict.iteritems():
+            for key, key_schema in schema_dict.items():
                 optional = isinstance(key, Optional)
                 while isinstance(key, Schema):
                     key = key._schema
@@ -513,8 +529,10 @@ class LazyAttributeMeta(type):
                     if _defined(key):
                         attr = "_%s" % key
                         if _defined(attr):
-                            raise Exception("Couldn't make fallback attribute "
-                                            "%r, already defined" % attr)
+                            raise Exception(
+                                "Couldn't make fallback attribute "
+                                "%r, already defined" % attr
+                            )
                     else:
                         attr = key
 
@@ -532,6 +550,7 @@ class LazyAttributeMeta(type):
     def _make_validate_data(cls):
         def func(self):
             self.validated_data()
+
         return func
 
     @classmethod
@@ -561,8 +580,10 @@ class LazyAttributeMeta(type):
             try:
                 return schema_.validate(attr)
             except Exception as e:
-                raise self.schema_error("Validation of key %r failed: "
-                                        "%s" % (key, str(e)))
+                raise self.schema_error(
+                    "Validation of key %r failed: " "%s" % (key, str(e))
+                )
+
         return func
 
     @classmethod

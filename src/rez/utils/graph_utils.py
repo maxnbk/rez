@@ -1,6 +1,9 @@
 """
 Functions for manipulating dot-based resolve graphs.
 """
+from __future__ import print_function
+from builtins import str
+from past.builtins import basestring
 import re
 import os.path
 import subprocess
@@ -24,7 +27,7 @@ def read_graph_from_string(txt):
     Returns:
         `pygraph.digraph`: Graph object.
     """
-    if not txt.startswith('{'):
+    if not txt.startswith("{"):
         return read_dot(txt)  # standard dot format
 
     def conv(value):
@@ -59,7 +62,7 @@ def read_graph_from_string(txt):
                 label = value[-1]
             else:
                 edge = value
-                label = ''
+                label = ""
 
             g.add_edge(edge, label=label, attrs=attrs_)
 
@@ -101,7 +104,7 @@ def write_compacted(g):
         value = tuple(list(edge) + [label]) if label else edge
         d_edges.setdefault(tuple(attrs), []).append(tuple(value))
 
-    doc = dict(nodes=d_nodes.items(), edges=d_edges.items())
+    doc = dict(nodes=list(d_nodes.items()), edges=list(d_edges.items()))
     contents = str(doc)
     return contents
 
@@ -123,11 +126,10 @@ def write_dot(g):
 
     def attrs_txt(items):
         if items:
-            txt = ", ".join(('%s="%s"' % (k, str(v).strip('"')))
-                            for k, v in items)
-            return '[' + txt + ']'
+            txt = ", ".join(('%s="%s"' % (k, str(v).strip('"'))) for k, v in items)
+            return "[" + txt + "]"
         else:
-            return ''
+            return ""
 
     for node in g.nodes():
         atxt = attrs_txt(g.node_attributes(node))
@@ -147,7 +149,7 @@ def write_dot(g):
         lines.append(txt)
 
     lines.append("}")
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 def prune_graph(graph_str, package_name):
@@ -165,7 +167,7 @@ def prune_graph(graph_str, package_name):
     g = read_dot(graph_str)
     nodes = set()
 
-    for node, attrs in g.node_attr.iteritems():
+    for node, attrs in g.node_attr.items():
         attr = [x for x in attrs if x[0] == "label"]
         if attr:
             label = attr[0][1]
@@ -179,8 +181,7 @@ def prune_graph(graph_str, package_name):
                 nodes.add(node)
 
     if not nodes:
-        raise ValueError("The package %r does not appear in the graph."
-                         % package_name)
+        raise ValueError("The package %r does not appear in the graph." % package_name)
 
     # find nodes upstream from these nodes
     g_rev = g.reverse()
@@ -214,7 +215,7 @@ def save_graph(graph_str, dest_file, fmt=None, image_ratio=None):
 
     # determine the dest format
     if fmt is None:
-        fmt = os.path.splitext(dest_file)[1].lower().strip('.') or "png"
+        fmt = os.path.splitext(dest_file)[1].lower().strip(".") or "png"
     if hasattr(g, "write_" + fmt):
         write_fn = getattr(g, "write_" + fmt)
     else:
@@ -232,15 +233,15 @@ def view_graph(graph_str, dest_file=None):
     from rez.config import config
 
     if (system.platform == "linux") and (not os.getenv("DISPLAY")):
-        print >> sys.stderr, "Unable to open display."
+        print("Unable to open display.", file=sys.stderr)
         sys.exit(1)
 
     dest_file = _write_graph(graph_str, dest_file=dest_file)
 
     # view graph
     viewed = False
-    prog = config.image_viewer or 'browser'
-    print "loading image viewer (%s)..." % prog
+    prog = config.image_viewer or "browser"
+    print("loading image viewer (%s)..." % prog)
 
     if config.image_viewer:
         proc = popen([config.image_viewer, dest_file])
@@ -249,24 +250,26 @@ def view_graph(graph_str, dest_file=None):
 
     if not viewed:
         import webbrowser
+
         webbrowser.open_new("file://" + dest_file)
 
 
 def _write_graph(graph_str, dest_file=None):
     if not dest_file:
-        tmpf = tempfile.mkstemp(prefix='resolve-dot-',
-                                suffix='.' + config.dot_image_format)
+        tmpf = tempfile.mkstemp(
+            prefix="resolve-dot-", suffix="." + config.dot_image_format
+        )
         os.close(tmpf[0])
         dest_file = tmpf[1]
 
-    print "rendering image to " + dest_file + "..."
+    print("rendering image to " + dest_file + "...")
     save_graph(graph_str, dest_file)
     return dest_file
 
 
 # converts string like '"PyQt-4.8.0[1]"' to 'PyQt-4.8.0'
 def _request_from_label(label):
-    return label.strip('"').strip("'").rsplit('[', 1)[0]
+    return label.strip('"').strip("'").rsplit("[", 1)[0]
 
 
 # Copyright 2013-2016 Allan Johns.

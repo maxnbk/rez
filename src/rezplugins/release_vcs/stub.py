@@ -1,6 +1,7 @@
 """
 Stub version control system, for testing purposes
 """
+from __future__ import print_function
 from rez.release_vcs import ReleaseVCS
 from rez.utils.logging_ import print_warning
 from rez.utils.yaml import dump_yaml
@@ -15,6 +16,7 @@ class StubReleaseVCS(ReleaseVCS):
     A writable '.stub' file must be present in the project root. Any created
     tags are written to this yaml file.
     """
+
     def __init__(self, pkg_root, vcs_root=None):
         super(StubReleaseVCS, self).__init__(pkg_root, vcs_root=vcs_root)
         self.time = int(time.time())
@@ -25,7 +27,7 @@ class StubReleaseVCS(ReleaseVCS):
 
     @classmethod
     def is_valid_root(cls, path):
-        return os.path.exists(os.path.join(path, '.stub'))
+        return os.path.exists(os.path.join(path, ".stub"))
 
     @classmethod
     def search_parents_for_root(cls):
@@ -59,16 +61,16 @@ class StubReleaseVCS(ReleaseVCS):
             print_warning("Skipped tag creation, tag '%s' already exists" % tag_name)
             return
 
-        print "Creating tag '%s'..." % tag_name
+        print("Creating tag '%s'..." % tag_name)
         data["tags"][tag_name] = message
         self._write_stub(data)
 
     def _read_stub(self):
-        with open(os.path.join(self.vcs_root, '.stub')) as f:
+        with open(os.path.join(self.vcs_root, ".stub")) as f:
             return yaml.load(f.read()) or {}
 
     def _write_stub(self, data):
-        with open(os.path.join(self.vcs_root, '.stub'), 'w') as f:
+        with open(os.path.join(self.vcs_root, ".stub"), "w") as f:
             f.write(dump_yaml(data))
 
 

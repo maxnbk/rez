@@ -1,3 +1,4 @@
+from builtins import str
 from rezgui.qt import QtCore, QtGui
 from rezgui.util import create_pane, get_icon
 from rez import __version__
@@ -14,8 +15,8 @@ class AboutDialog(QtGui.QDialog):
 
         label = QtGui.QLabel(
             "<font size='+2'><b>Rez version %s</b></font><br><br>"
-            "Build version %s."
-            % (str(public_version), str(version)))
+            "Build version %s." % (str(public_version), str(version))
+        )
 
         close_btn = QtGui.QPushButton("Close")
         github_btn = QtGui.QPushButton("Github")
@@ -34,6 +35,7 @@ class AboutDialog(QtGui.QDialog):
 
     def _goto_github(self):
         import webbrowser
+
         webbrowser.open_new("https://github.com/nerdvegas/rez")
 
 

@@ -1,6 +1,9 @@
 """
 Sends a post-release email
 """
+from __future__ import print_function
+from builtins import str
+from past.builtins import basestring
 from rez.release_hook import ReleaseHook
 from rez.system import system
 from email.mime.text import MIMEText
@@ -16,12 +19,13 @@ import sys
 class EmailReleaseHook(ReleaseHook):
 
     schema_dict = {
-        "subject":          basestring,
-        "body":             basestring,
-        "smtp_host":        basestring,
-        "smtp_port":        int,
-        "sender":           basestring,
-        "recipients":       Or(basestring, [basestring])}
+        "subject": basestring,
+        "body": basestring,
+        "smtp_host": basestring,
+        "smtp_port": int,
+        "sender": basestring,
+        "recipients": Or(basestring, [basestring]),
+    }
 
     @classmethod
     def name(cls):
@@ -30,25 +34,36 @@ class EmailReleaseHook(ReleaseHook):
     def __init__(self, source_path):
         super(EmailReleaseHook, self).__init__(source_path)
 
-    def post_release(self, user, install_path, variants, release_message=None,
-                     changelog=None, previous_version=None, **kwargs):
+    def post_release(
+        self,
+        user,
+        install_path,
+        variants,
+        release_message=None,
+        changelog=None,
+        previous_version=None,
+        **kwargs
+    ):
         if not variants:
             return  # nothing was released
 
         # construct email body
-        release_dict = dict(path=install_path,
-                            previous_version=previous_version or "None.",
-                            message=release_message or "No release message.",
-                            changelog=changelog or "No changelog.")
+        release_dict = dict(
+            path=install_path,
+            previous_version=previous_version or "None.",
+            message=release_message or "No release message.",
+            changelog=changelog or "No changelog.",
+        )
 
-        paths_str = '\n'.join(x.root for x in variants)
-        variants_dict = dict(count=len(variants),
-                             paths=paths_str)
+        paths_str = "\n".join(x.root for x in variants)
+        variants_dict = dict(count=len(variants), paths=paths_str)
 
-        formatter = scoped_formatter(release=release_dict,
-                                     variants=variants_dict,
-                                     system=system,
-                                     package=self.package)
+        formatter = scoped_formatter(
+            release=release_dict,
+            variants=variants_dict,
+            system=system,
+            package=self.package,
+        )
 
         body = formatter.format(self.settings.body)
         body = body.strip()
@@ -63,29 +78,28 @@ class EmailReleaseHook(ReleaseHook):
             return  # nothing to do, sending email to nobody
 
         if not self.settings.smtp_host:
-            print_warning("did not send release email: "
-                          "SMTP host is not specified")
+            print_warning("did not send release email: " "SMTP host is not specified")
             return
 
         recipients = self.get_recipients()
         if not recipients:
             return
 
-        print "Sending release email to:"
-        print '\n'.join("- %s" % x for x in recipients)
+        print("Sending release email to:")
+        print("\n".join("- %s" % x for x in recipients))
 
         msg = MIMEText(body)
         msg["Subject"] = subject
         msg["From"] = self.settings.sender
-        msg["To"] = str(',').join(recipients)
+        msg["To"] = str(",").join(recipients)
 
         try:
             s = smtplib.SMTP(self.settings.smtp_host, self.settings.smtp_port)
-            s.sendmail(from_addr=self.settings.sender,
-                       to_addrs=recipients,
-                       msg=msg.as_string())
-            print 'Email(s) sent.'
-        except Exception, e:
+            s.sendmail(
+                from_addr=self.settings.sender, to_addrs=recipients, msg=msg.as_string()
+            )
+            print("Email(s) sent.")
+        except Exception as e:
             print_error("release email delivery failed: %s" % str(e))
 
     def get_recipients(self):
@@ -100,13 +114,15 @@ class EmailReleaseHook(ReleaseHook):
             try:
                 return self.load_recipients(filepath)
             except Exception as e:
-                print_error("failed to load recipients config: %s. Emails "
-                            "not sent" % str(e))
-        elif '@' in value:
+                print_error(
+                    "failed to load recipients config: %s. Emails " "not sent" % str(e)
+                )
+        elif "@" in value:
             return [value]  # assume it's an email address
         else:
-            print_error("email recipient file does not exist: %s. Emails not "
-                        "sent" % value)
+            print_error(
+                "email recipient file does not exist: %s. Emails not " "sent" % value
+            )
 
         return []
 
@@ -124,7 +140,7 @@ class EmailReleaseHook(ReleaseHook):
             match = True
 
             if filters:
-                for attr, test_value in test(filters, dict).iteritems():
+                for attr, test_value in test(filters, dict).items():
 
                     missing = object()
                     value = getattr(self.package, attr, missing)
@@ -134,9 +150,9 @@ class EmailReleaseHook(ReleaseHook):
                     elif test_value is None:
                         match = True
                     elif isinstance(test_value, list):
-                        match = (value in test_value)
+                        match = value in test_value
                     else:
-                        match = (value == test_value)
+                        match = value == test_value
 
                     if not match:
                         break

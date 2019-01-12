@@ -1,6 +1,7 @@
-'''
+"""
 Search for packages.
-'''
+"""
+from __future__ import print_function
 import os
 import sys
 
@@ -12,54 +13,89 @@ def setup_parser(parser, completions=False):
     format_choices = ", ".join(sorted(ResourceSearchResultFormatter.fields))
 
     parser.add_argument(
-        "-t", "--type", default="auto", choices=type_choices,
+        "-t",
+        "--type",
+        default="auto",
+        choices=type_choices,
         help="type of resource to search for. If 'auto', either packages or "
-        "package families are searched, depending on the value of PKG")
+        "package families are searched, depending on the value of PKG",
+    )
     parser.add_argument(
-        "--nl", "--no-local", dest="no_local", action="store_true",
-        help="don't search local packages")
+        "--nl",
+        "--no-local",
+        dest="no_local",
+        action="store_true",
+        help="don't search local packages",
+    )
     parser.add_argument(
-        "--validate", action="store_true",
-        help="validate each resource that is found")
+        "--validate", action="store_true", help="validate each resource that is found"
+    )
     parser.add_argument(
-        "--paths", type=str,
-        help="set package search path (ignores --no-local if set)")
+        "--paths", type=str, help="set package search path (ignores --no-local if set)"
+    )
     parser.add_argument(
-        "-f", "--format", type=str,
+        "-f",
+        "--format",
+        type=str,
         help="format package output, eg --format='{qualified_name} | "
-        "{description}'. Valid fields include: %s" % format_choices)
+        "{description}'. Valid fields include: %s" % format_choices,
+    )
     parser.add_argument(
-        "--no-newlines", action="store_true",
-        help="print newlines as '\\n' rather than actual newlines")
+        "--no-newlines",
+        action="store_true",
+        help="print newlines as '\\n' rather than actual newlines",
+    )
     parser.add_argument(
-        "-l", "--latest", action="store_true",
-        help="when searching packages, only show the latest version of each "
-        "package")
+        "-l",
+        "--latest",
+        action="store_true",
+        help="when searching packages, only show the latest version of each " "package",
+    )
     parser.add_argument(
-        "-e", "--errors", action="store_true",
-        help="only print packages containing errors (implies --validate)")
+        "-e",
+        "--errors",
+        action="store_true",
+        help="only print packages containing errors (implies --validate)",
+    )
     parser.add_argument(
-        "--nw", "--no-warnings", dest="no_warnings", action="store_true",
-        help="suppress warnings")
+        "--nw",
+        "--no-warnings",
+        dest="no_warnings",
+        action="store_true",
+        help="suppress warnings",
+    )
     parser.add_argument(
-        "--before", type=str, default='0',
+        "--before",
+        type=str,
+        default="0",
         help="only show packages released before the given time. Supported "
         "formats are: epoch time (eg 1393014494), or relative time (eg -10s, "
-        "-5m, -0.5h, -10d)")
+        "-5m, -0.5h, -10d)",
+    )
     parser.add_argument(
-        "--after", type=str, default='0',
+        "--after",
+        type=str,
+        default="0",
         help="only show packages released after the given time. Supported "
         "formats are: epoch time (eg 1393014494), or relative time (eg -10s, "
-        "-5m, -0.5h, -10d)")
+        "-5m, -0.5h, -10d)",
+    )
     parser.add_argument(
-        "-s", "--sort", action="store_true",
-        help="print results in sorted order (deprecated)")
+        "-s",
+        "--sort",
+        action="store_true",
+        help="print results in sorted order (deprecated)",
+    )
     PKG_action = parser.add_argument(
-        "PKG", type=str, nargs='?',
-        help="packages to search, glob-style patterns are supported")
+        "PKG",
+        type=str,
+        nargs="?",
+        help="packages to search, glob-style patterns are supported",
+    )
 
     if completions:
         from rez.cli._complete_util import PackageCompleter
+
         PKG_action.completer = PackageCompleter
 
 
@@ -95,7 +131,7 @@ def command(opts, parser, extra_arg_groups=None):
         latest=opts.latest,
         after_time=after_time,
         before_time=before_time,
-        validate=(opts.validate or opts.errors)
+        validate=(opts.validate or opts.errors),
     )
 
     resource_type, search_results = searcher.search(opts.PKG)
@@ -104,16 +140,15 @@ def command(opts, parser, extra_arg_groups=None):
         search_results = [x for x in search_results if x.validation_error]
 
         if not search_results:
-            print >> sys.stderr, "No matching erroneous %s found." % resource_type
+            print("No matching erroneous %s found." % resource_type, file=sys.stderr)
             sys.exit(1)
 
     elif not search_results:
-        print >> sys.stderr, "No matching %s found." % resource_type
+        print("No matching %s found." % resource_type, file=sys.stderr)
         sys.exit(1)
 
     formatter = ResourceSearchResultFormatter(
-        output_format=opts.format,
-        suppress_newlines=opts.no_newlines
+        output_format=opts.format, suppress_newlines=opts.no_newlines
     )
 
     formatter.print_search_results(search_results)

@@ -1,21 +1,29 @@
-'''
+"""
 Print current rez settings.
-'''
+"""
+from __future__ import print_function
 
 
 def setup_parser(parser, completions=False):
     parser.add_argument(
-        "--search-list", dest="search_list", action="store_true",
-        help="list the config files searched")
+        "--search-list",
+        dest="search_list",
+        action="store_true",
+        help="list the config files searched",
+    )
     parser.add_argument(
-        "--source-list", dest="source_list", action="store_true",
-        help="list the config files sourced")
+        "--source-list",
+        dest="source_list",
+        action="store_true",
+        help="list the config files sourced",
+    )
     FIELD_action = parser.add_argument(
-        "FIELD", type=str, nargs='?',
-        help="print the value of a specific setting")
+        "FIELD", type=str, nargs="?", help="print the value of a specific setting"
+    )
 
     if completions:
         from rez.cli._complete_util import ConfigCompleter
+
         FIELD_action.completer = ConfigCompleter
 
 
@@ -25,17 +33,17 @@ def command(opts, parser, extra_arg_groups=None):
 
     if opts.search_list:
         for filepath in config.filepaths:
-            print filepath
+            print(filepath)
         return
 
     if opts.source_list:
         for filepath in config.sourced_filepaths:
-            print filepath
+            print(filepath)
         return
 
     data = config.data
     if opts.FIELD:
-        keys = opts.FIELD.split('.')
+        keys = opts.FIELD.split(".")
         while keys:
             key = keys[0]
             keys = keys[1:]
@@ -46,9 +54,9 @@ def command(opts, parser, extra_arg_groups=None):
 
     if isinstance(data, (dict, list)):
         txt = dump_yaml(data).strip()
-        print txt
+        print(txt)
     else:
-        print data
+        print(data)
 
 
 # Copyright 2013-2016 Allan Johns.

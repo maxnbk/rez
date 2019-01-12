@@ -1,6 +1,2 @@
-
 def get_authors():
-    return [
-        "tweedle-dee",
-        "tweedle-dum"
-    ]
+    return ["tweedle-dee", "tweedle-dum"]

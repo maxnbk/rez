@@ -1,3 +1,9 @@
+from __future__ import print_function
+from builtins import zip
+from builtins import next
+from builtins import str
+from past.builtins import basestring
+from builtins import object
 from rez.util import create_forwarding_script
 from rez.exceptions import SuiteError, ResolvedContextError
 from rez.resolved_context import ResolvedContext
@@ -35,6 +41,7 @@ class Suite(object):
     - Explicitly alias a tool using the `alias_tool` method. This takes
       precedence over context prefix/suffixing.
     """
+
     def __init__(self):
         """Create a suite."""
         self.load_path = None
@@ -52,7 +59,7 @@ class Suite(object):
         Reurns:
             List of strings.
         """
-        return self.contexts.keys()
+        return list(self.contexts.keys())
 
     @cached_property
     def tools_path(self):
@@ -70,9 +77,9 @@ class Suite(object):
         from rez.shells import create_shell
         from rez.rex import RexExecutor
 
-        executor = RexExecutor(interpreter=create_shell(shell),
-                               parent_variables=["PATH"],
-                               shebang=False)
+        executor = RexExecutor(
+            interpreter=create_shell(shell), parent_variables=["PATH"], shebang=False
+        )
         executor.env.PATH.append(self.tools_path)
         return executor.get_output().strip()
 
@@ -112,12 +119,14 @@ class Suite(object):
         if not context.success:
             raise SuiteError("Context is not resolved: %r" % name)
 
-        self.contexts[name] = dict(name=name,
-                                   context=context.copy(),
-                                   tool_aliases={},
-                                   hidden_tools=set(),
-                                   priority=self._next_priority,
-                                   prefix_char=prefix_char)
+        self.contexts[name] = dict(
+            name=name,
+            context=context.copy(),
+            tool_aliases={},
+            hidden_tools=set(),
+            priority=self._next_priority,
+            prefix_char=prefix_char,
+        )
         self._flush_tools()
 
     def find_contexts(self, in_request=None, in_resolve=None):
@@ -136,10 +145,11 @@ class Suite(object):
         """
         names = self.context_names
         if in_request:
+
             def _in_request(name):
                 context = self.context(name)
                 packages = set(x.name for x in context.requested_packages(True))
-                return (in_request in packages)
+                return in_request in packages
 
             names = [x for x in names if _in_request(x)]
 
@@ -151,9 +161,10 @@ class Suite(object):
                 context = self.context(name)
                 variant = context.get_resolved_package(in_resolve.name)
                 if variant:
-                    overlap = (variant.version in in_resolve.range)
-                    return ((in_resolve.conflict and not overlap)
-                            or (overlap and not in_resolve.conflict))
+                    overlap = variant.version in in_resolve.range
+                    return (in_resolve.conflict and not overlap) or (
+                        overlap and not in_resolve.conflict
+                    )
                 else:
                     return in_resolve.conflict
 
@@ -265,8 +276,10 @@ class Suite(object):
         data = self._context(context_name)
         aliases = data["tool_aliases"]
         if tool_name in aliases:
-            raise SuiteError("Tool %r in context %r is already aliased to %r"
-                             % (tool_name, context_name, aliases[tool_name]))
+            raise SuiteError(
+                "Tool %r in context %r is already aliased to %r"
+                % (tool_name, context_name, aliases[tool_name])
+            )
         self._validate_tool(context_name, tool_name)
         aliases[tool_name] = tool_alias
         self._flush_tools()
@@ -358,7 +371,7 @@ class Suite(object):
             List of strings.
         """
         self._update_tools()
-        return self.tool_conflicts.keys()
+        return list(self.tool_conflicts.keys())
 
     def get_alias_conflicts(self, tool_alias):
         """Get a list of conflicts on the given tool alias.
@@ -383,12 +396,11 @@ class Suite(object):
             try:
                 context.validate()
             except ResolvedContextError as e:
-                raise SuiteError("Error in context %r: %s"
-                                 % (context_name, str(e)))
+                raise SuiteError("Error in context %r: %s" % (context_name, str(e)))
 
     def to_dict(self):
         contexts_ = {}
-        for k, data in self.contexts.iteritems():
+        for k, data in self.contexts.items():
             data_ = data.copy()
             if "context" in data_:
                 del data_["context"]
@@ -406,8 +418,7 @@ class Suite(object):
         s.tool_conflicts = None
         s.contexts = d["contexts"]
         if s.contexts:
-            s.next_priority = max(x["priority"]
-                                  for x in s.contexts.itervalues()) + 1
+            s.next_priority = max(x["priority"] for x in s.contexts.values()) + 1
         else:
             s.next_priority = 1
         return s
@@ -424,7 +435,7 @@ class Suite(object):
         if os.path.exists(path):
             if self.load_path and self.load_path == path:
                 if verbose:
-                    print "saving over previous suite..."
+                    print("saving over previous suite...")
                 for context_name in self.context_names:
                     self.context(context_name)  # load before dir deleted
                 shutil.rmtree(path)
@@ -446,17 +457,17 @@ class Suite(object):
             context._set_parent_suite(path, context_name)
             filepath = self._context_path(context_name, path)
             if verbose:
-                print "writing %r..." % filepath
+                print("writing %r..." % filepath)
             context.save(filepath)
 
         # create alias wrappers
         tools_path = os.path.join(path, "bin")
         os.makedirs(tools_path)
         if verbose:
-            print "creating alias wrappers in %r..." % tools_path
+            print("creating alias wrappers in %r..." % tools_path)
 
         tools = self.get_tools()
-        for tool_alias, d in tools.iteritems():
+        for tool_alias, d in tools.items():
             tool_name = d["tool_name"]
             context_name = d["context_name"]
 
@@ -464,16 +475,20 @@ class Suite(object):
             prefix_char = data.get("prefix_char")
 
             if verbose:
-                print ("creating %r -> %r (%s context)..."
-                       % (tool_alias, tool_name, context_name))
+                print (
+                    "creating %r -> %r (%s context)..."
+                    % (tool_alias, tool_name, context_name)
+                )
             filepath = os.path.join(tools_path, tool_alias)
 
-            create_forwarding_script(filepath,
-                                     module="suite",
-                                     func_name="_FWD__invoke_suite_tool_alias",
-                                     context_name=context_name,
-                                     tool_name=tool_name,
-                                     prefix_char=prefix_char)
+            create_forwarding_script(
+                filepath,
+                module="suite",
+                func_name="_FWD__invoke_suite_tool_alias",
+                context_name=context_name,
+                tool_name=tool_name,
+                prefix_char=prefix_char,
+            )
 
     @classmethod
     def load(cls, path):
@@ -530,14 +545,14 @@ class Suite(object):
             _pr("Suite is empty.")
             return
 
-        context_names = sorted(self.contexts.iterkeys())
+        context_names = sorted(self.contexts.keys())
         _pr("Suite contains %d contexts:" % len(context_names))
 
         if not verbose:
-            _pr(' '.join(context_names))
+            _pr(" ".join(context_names))
             return
 
-        tools = self.get_tools().values()
+        tools = list(self.get_tools().values())
         context_tools = defaultdict(set)
         context_variants = defaultdict(set)
         for entry in tools:
@@ -546,11 +561,10 @@ class Suite(object):
             context_variants[context_name].add(str(entry["variant"]))
 
         _pr()
-        rows = [["NAME", "VISIBLE TOOLS", "PATH"],
-                ["----", "-------------", "----"]]
+        rows = [["NAME", "VISIBLE TOOLS", "PATH"], ["----", "-------------", "----"]]
 
         for context_name in context_names:
-            context_path = self._context_path(context_name) or '-'
+            context_path = self._context_path(context_name) or "-"
             ntools = len(context_tools.get(context_name, []))
             if ntools:
                 nvariants = len(context_variants[context_name])
@@ -568,6 +582,7 @@ class Suite(object):
             context_name (str): If provided, only print the tools from this
                 context.
         """
+
         def _get_row(entry):
             context_name_ = entry["context_name"]
             tool_alias = entry["tool_alias"]
@@ -582,9 +597,11 @@ class Suite(object):
                 if verbose:
                     package = ", ".join(x.qualified_package_name for x in variant)
                 else:
-                    v = iter(variant).next()
-                    package = "%s (+%d more)" % (v.qualified_package_name,
-                                                 len(variant) - 1)
+                    v = next(iter(variant))
+                    package = "%s (+%d more)" % (
+                        v.qualified_package_name,
+                        len(variant) - 1,
+                    )
             else:
                 package = variant.qualified_package_name
 
@@ -603,14 +620,16 @@ class Suite(object):
             self._context(context_name)  # check context exists
             context_names = [context_name]
         else:
-            context_names = sorted(self.contexts.iterkeys())
+            context_names = sorted(self.contexts.keys())
 
-        rows = [["TOOL", "ALIASING", "PACKAGE", "CONTEXT", ""],
-                ["----", "--------", "-------", "-------", ""]]
+        rows = [
+            ["TOOL", "ALIASING", "PACKAGE", "CONTEXT", ""],
+            ["----", "--------", "-------", "-------", ""],
+        ]
         colors = [None, None]
 
         entries_dict = defaultdict(list)
-        for d in self.get_tools().itervalues():
+        for d in self.get_tools().values():
             entries_dict[d["context_name"]].append(d)
 
         if verbose:
@@ -621,7 +640,7 @@ class Suite(object):
                 entries_dict[d["context_name"]].append(d_)
 
             # add conflicting tools
-            for docs in self.tool_conflicts.itervalues():
+            for docs in self.tool_conflicts.values():
                 for d in docs:
                     d_ = d.copy()
                     d_["conflicting"] = True
@@ -631,7 +650,7 @@ class Suite(object):
             entries = entries_dict.get(context_name, [])
             if entries:
                 if i:
-                    rows.append(('', '', '', '', ''))
+                    rows.append(("", "", "", "", ""))
                     colors.append(None)
 
                 entries = sorted(entries, key=lambda x: x["tool_alias"].lower())
@@ -670,7 +689,7 @@ class Suite(object):
         return filepath
 
     def _sorted_contexts(self):
-        return sorted(self.contexts.values(), key=lambda x: x["priority"])
+        return sorted(list(self.contexts.values()), key=lambda x: x["priority"])
 
     @property
     def _next_priority(self):
@@ -686,11 +705,10 @@ class Suite(object):
     def _validate_tool(self, context_name, tool_name):
         context = self.context(context_name)
         context_tools = context.get_tools(request_only=True)
-        for _, tool_names in context_tools.itervalues():
+        for _, tool_names in context_tools.values():
             if tool_name in tool_names:
                 return
-        raise SuiteError("No such tool %r in context %r"
-                         % (tool_name, context_name))
+        raise SuiteError("No such tool %r in context %r" % (tool_name, context_name))
 
     def _update_tools(self):
         if self.tools is not None:
@@ -709,16 +727,18 @@ class Suite(object):
             context = self.context(context_name)
             context_tools = context.get_tools(request_only=True)
 
-            for variant, tool_names in context_tools.itervalues():
+            for variant, tool_names in context_tools.values():
                 for tool_name in tool_names:
                     alias = tool_aliases.get(tool_name)
                     if alias is None:
                         alias = "%s%s%s" % (prefix, tool_name, suffix)
 
-                    entry = dict(tool_name=tool_name,
-                                 tool_alias=alias,
-                                 context_name=context_name,
-                                 variant=variant)
+                    entry = dict(
+                        tool_name=tool_name,
+                        tool_alias=alias,
+                        context_name=context_name,
+                        variant=variant,
+                    )
 
                     if tool_name in hidden_tools:
                         self.hidden_tools.append(entry)
@@ -733,21 +753,24 @@ class Suite(object):
                             if isinstance(existing_variant, set):
                                 existing_variant.add(variant)
                             else:
-                                existing_entry["variant"] = set([existing_variant,
-                                                                 variant])
+                                existing_entry["variant"] = set(
+                                    [existing_variant, variant]
+                                )
                         else:
                             self.tool_conflicts[alias].append(entry)
                     else:
                         self.tools[alias] = entry
 
 
-def _FWD__invoke_suite_tool_alias(context_name, tool_name, prefix_char=None,
-                                  _script=None, _cli_args=None):
+def _FWD__invoke_suite_tool_alias(
+    context_name, tool_name, prefix_char=None, _script=None, _cli_args=None
+):
     suite_path = os.path.dirname(os.path.dirname(_script))
     path = os.path.join(suite_path, "contexts", "%s.rxt" % context_name)
     context = ResolvedContext.load(path)
 
     from rez.wrapper import Wrapper
+
     w = Wrapper.__new__(Wrapper)
     w._init(suite_path, context_name, context, tool_name, prefix_char)
     retcode = w.run(*(_cli_args or []))

@@ -9,15 +9,10 @@ from rez.bind._utils import get_version_in_python
 def bind(path, version_range=None, opts=None, parser=None):
     name = "sip"
 
-    version = get_version_in_python(
-        name,
-        ["import sip",
-         "print sip.SIP_VERSION_STR"])
+    version = get_version_in_python(name, ["import sip", "print sip.SIP_VERSION_STR"])
 
-    variants = _pymodule.bind(name,
-                              path=path,
-                              version_range=version_range,
-                              version=version,
-                              pure_python=False)
+    variants = _pymodule.bind(
+        name, path=path, version_range=version_range, version=version, pure_python=False
+    )
 
     return variants

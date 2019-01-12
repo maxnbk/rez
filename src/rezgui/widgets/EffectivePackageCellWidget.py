@@ -1,3 +1,4 @@
+from builtins import str
 from rezgui.qt import QtGui
 from rezgui.util import create_pane, get_icon_widget, update_font
 from rez.resolved_context import PatchLock
@@ -18,8 +19,7 @@ class EffectivePackageCellWidget(QtGui.QWidget):
         label = QtGui.QLabel(str(request))
         update_font(label, italic=True)
 
-        create_pane([icon_widget, (label, 1)], True, parent_widget=self,
-                    compact=True)
+        create_pane([icon_widget, (label, 1)], True, parent_widget=self, compact=True)
         self.setEnabled(False)  # this widget always disabled by design
 
 

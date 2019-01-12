@@ -1,11 +1,13 @@
+from builtins import zip
 from rezgui.qt import QtGui
 from rez.utils.formatting import readable_time_duration
 import os.path
 import time
 
 
-def create_pane(widgets, horizontal, parent_widget=None, compact=False,
-                compact_spacing=2):
+def create_pane(
+    widgets, horizontal, parent_widget=None, compact=False, compact_spacing=2
+):
     """Create a widget containing an aligned set of widgets.
 
     Args:
@@ -25,8 +27,9 @@ def create_pane(widgets, horizontal, parent_widget=None, compact=False,
     layout = type_()
     if compact:
         layout.setSpacing(compact_spacing)
-        layout.setContentsMargins(compact_spacing, compact_spacing,
-                                  compact_spacing, compact_spacing)
+        layout.setContentsMargins(
+            compact_spacing, compact_spacing, compact_spacing, compact_spacing
+        )
 
     for widget in widgets:
         stretch = 0
@@ -77,13 +80,12 @@ def get_icon_widget(filename, tooltip=None):
 def get_timestamp_str(timestamp):
     now = int(time.time())
     release_time = time.localtime(timestamp)
-    release_time_str = time.strftime('%d %b %Y %H:%M:%S', release_time)
+    release_time_str = time.strftime("%d %b %Y %H:%M:%S", release_time)
     ago = readable_time_duration(now - timestamp)
     return "%s (%s ago)" % (release_time_str, ago)
 
 
-def add_menu_action(menu, label, slot=None, icon_name=None, group=None,
-                    parent=None):
+def add_menu_action(menu, label, slot=None, icon_name=None, group=None, parent=None):
     nargs = []
     if icon_name:
         icon = get_icon(icon_name, as_qicon=True)

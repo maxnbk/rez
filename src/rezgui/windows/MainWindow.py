@@ -1,3 +1,4 @@
+from builtins import str
 from rezgui.qt import QtGui
 from rezgui.objects.App import app
 from rezgui.util import add_menu_action
@@ -20,10 +21,11 @@ class MainWindow(QtGui.QMainWindow):
         self.statusBar().showMessage("")
 
         # -- file menu
-        file_menu = self.menuBar().addMenu('File')
+        file_menu = self.menuBar().addMenu("File")
 
-        add_menu_action(file_menu, "Open Package Browser...",
-                        self._open_package_browser)
+        add_menu_action(
+            file_menu, "Open Package Browser...", self._open_package_browser
+        )
         file_menu.addSeparator()
 
         add_menu_action(file_menu, "New Context", self.new_context)
@@ -36,13 +38,13 @@ class MainWindow(QtGui.QMainWindow):
         self.quit_action = add_menu_action(file_menu, "Quit", self.close)
 
         # -- edit menu
-        edit_menu = self.menuBar().addMenu('Edit')
+        edit_menu = self.menuBar().addMenu("Edit")
         menu = edit_menu.addMenu("Copy To Clipboard")
         self.copy_request_action = add_menu_action(menu, "Request")
         self.copy_resolve_action = add_menu_action(menu, "Resolve")
 
         # -- help menu
-        help_menu = self.menuBar().addMenu('Help')
+        help_menu = self.menuBar().addMenu("Help")
         add_menu_action(help_menu, "About", self.about)
 
         file_menu.aboutToShow.connect(self._update_file_menu)
@@ -108,7 +110,8 @@ class MainWindow(QtGui.QMainWindow):
 
     def _open_context(self):
         filepath = QtGui.QFileDialog.getOpenFileName(
-            self, "Open Context", filter="Context files (*.rxt)")
+            self, "Open Context", filter="Context files (*.rxt)"
+        )
         if filepath:
             self.open_context(str(filepath))
 

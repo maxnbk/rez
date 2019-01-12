@@ -1,3 +1,4 @@
+from builtins import str
 from rezgui.qt import QtCore, QtGui
 from rezgui.models.ContextModel import ContextModel
 from rezgui.mixins.ContextViewMixin import ContextViewMixin
@@ -11,8 +12,9 @@ class PackageLineEdit(QtGui.QLineEdit, ContextViewMixin):
     focusOut = QtCore.Signal(str)
     focusIn = QtCore.Signal()
 
-    def __init__(self, context_model=None, parent=None, family_only=False,
-                 read_only=False):
+    def __init__(
+        self, context_model=None, parent=None, family_only=False, read_only=False
+    ):
         super(PackageLineEdit, self).__init__(parent)
         ContextViewMixin.__init__(self, context_model)
         self.read_only = read_only
@@ -24,8 +26,9 @@ class PackageLineEdit(QtGui.QLineEdit, ContextViewMixin):
         self.placeholder_font = self.font()
         self.placeholder_font.setItalic(True)
         self.normal_text_color = pal.color(QtGui.QPalette.Text)
-        self.placeholder_text_color = pal.color(QtGui.QPalette.Disabled,
-                                                QtGui.QPalette.Text)
+        self.placeholder_text_color = pal.color(
+            QtGui.QPalette.Disabled, QtGui.QPalette.Text
+        )
         if not self.read_only:
             self.setPlaceholderText("enter package")
             self._update_font()
@@ -45,10 +48,11 @@ class PackageLineEdit(QtGui.QLineEdit, ContextViewMixin):
 
     def event(self, event):
         # keyPressEvent does not capture tab
-        if event.type() == QtCore.QEvent.KeyPress \
-                and event.key() in (QtCore.Qt.Key_Tab,
-                                    QtCore.Qt.Key_Enter,
-                                    QtCore.Qt.Key_Return):
+        if event.type() == QtCore.QEvent.KeyPress and event.key() in (
+            QtCore.Qt.Key_Tab,
+            QtCore.Qt.Key_Enter,
+            QtCore.Qt.Key_Return,
+        ):
             self._update_status()
             self.focusOutViaKeyPress.emit(self.text())
             return True
@@ -102,9 +106,9 @@ class PackageLineEdit(QtGui.QLineEdit, ContextViewMixin):
         return self.context_model.packages_path
 
     def _textEdited(self, txt):
-        words = get_completions(str(txt),
-                                paths=self._paths,
-                                family_only=self.family_only)
+        words = get_completions(
+            str(txt), paths=self._paths, family_only=self.family_only
+        )
         self.completions.setStringList(list(reversed(list(words))))
 
     def _set_style(self, style=None):
@@ -139,9 +143,7 @@ class PackageLineEdit(QtGui.QLineEdit, ContextViewMixin):
         _ok()
         if not req.conflict:
             try:
-                it = iter_packages(name=req.name,
-                                   range_=req.range,
-                                   paths=self._paths)
+                it = iter_packages(name=req.name, range_=req.range, paths=self._paths)
                 pkg = sorted(it, key=lambda x: x.version)[-1]
             except Exception:
                 _err("cannot find package: %r" % txt, "orange")

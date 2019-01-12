@@ -7,11 +7,13 @@ def build(source_path, build_path, install_path, targets):
     if "install" not in (targets or []):
         install_path = None
 
-    build_directory_recurse(src_dir="floob",
-                            dest_dir=os.path.join("python", "floob"),
-                            source_path=source_path,
-                            build_path=build_path,
-                            install_path=install_path)
+    build_directory_recurse(
+        src_dir="floob",
+        dest_dir=os.path.join("python", "floob"),
+        source_path=source_path,
+        build_path=build_path,
+        install_path=install_path,
+    )
 
 
 # Copyright 2013-2016 Allan Johns.

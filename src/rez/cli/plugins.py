@@ -1,18 +1,20 @@
 """
 Get a list of a package's plugins.
 """
+from __future__ import print_function
 
 
 def setup_parser(parser, completions=False):
     parser.add_argument(
-        "--paths", type=str, default=None,
-        help="set package search path")
+        "--paths", type=str, default=None, help="set package search path"
+    )
     PKG_action = parser.add_argument(
-        "PKG", type=str,
-        help="package to list plugins for")
+        "PKG", type=str, help="package to list plugins for"
+    )
 
     if completions:
         from rez.cli._complete_util import PackageFamilyCompleter
+
         PKG_action.completer = PackageFamilyCompleter
 
 
@@ -33,9 +35,9 @@ def command(opts, parser, extra_arg_groups=None):
 
     pkgs_list = get_plugins(package_name=opts.PKG, paths=pkg_paths)
     if pkgs_list:
-        print '\n'.join(pkgs_list)
+        print("\n".join(pkgs_list))
     else:
-        print >> sys.stderr, "package '%s' has no plugins." % opts.PKG
+        print("package '%s' has no plugins." % opts.PKG, file=sys.stderr)
 
 
 # Copyright 2013-2016 Allan Johns.

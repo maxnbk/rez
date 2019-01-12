@@ -1,6 +1,7 @@
 """
 Prints package completion strings.
 """
+from __future__ import print_function
 from rez.vendor import argparse
 
 
@@ -36,8 +37,8 @@ def command(opts, parser, extra_arg_groups=None):
         if words:
             arg = words[0]
             l_ = l.lstrip()
-            p -= (len(l) - len(l_) + len(arg))
-            l = l_[len(arg):]
+            p -= len(l) - len(l_) + len(arg)
+            l = l_[len(arg) :]
             return l, p, arg
         return l, p, arg
 
@@ -53,11 +54,11 @@ def command(opts, parser, extra_arg_groups=None):
         subcommand = cmd.split("-", 1)[-1]
 
     if subcommand is None:
-        cmds = [k for k, v in subcommands.iteritems() if not v.get("hidden")]
+        cmds = [k for k, v in subcommands.items() if not v.get("hidden")]
 
         if prefix:
             cmds = (x for x in cmds if x.startswith(prefix))
-        print " ".join(cmds)
+        print(" ".join(cmds))
 
     if subcommand not in subcommands:
         return
@@ -78,6 +79,7 @@ def command(opts, parser, extra_arg_groups=None):
 
     # create parser for subcommand
     from rez.backport.importlib import import_module
+
     module_name = "rez.cli.%s" % subcommand
     mod = import_module(module_name)
     parser = argparse.ArgumentParser()
@@ -90,11 +92,12 @@ def command(opts, parser, extra_arg_groups=None):
 
     # generate the completions
     from rez.cli._complete_util import RezCompletionFinder
-    completer = RezCompletionFinder(parser=parser,
-                                    comp_line=comp_line,
-                                    comp_point=comp_point)
+
+    completer = RezCompletionFinder(
+        parser=parser, comp_line=comp_line, comp_point=comp_point
+    )
     words = completer.completions
-    print ' '.join(words)
+    print(" ".join(words))
 
 
 # Copyright 2013-2016 Allan Johns.

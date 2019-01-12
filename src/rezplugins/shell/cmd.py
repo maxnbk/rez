@@ -1,6 +1,7 @@
 """
 Windows Command Prompt (DOS) shell.
 """
+from past.builtins import basestring
 from rez.config import config
 from rez.rex import RexExecutor, literal, OutputStyle, EscapedString
 from rez.shells import Shell
@@ -24,38 +25,38 @@ class CMD(Shell):
 
     # Regex to aid with escaping of Windows-specific special chars:
     # http://ss64.com/nt/syntax-esc.html
-    _escape_re = re.compile(r'(?<!\^)[&<>]|(?<!\^)\^(?![&<>\^])')
-    _escaper = partial(_escape_re.sub, lambda m: '^' + m.group(0))
+    _escape_re = re.compile(r"(?<!\^)[&<>]|(?<!\^)\^(?![&<>\^])")
+    _escaper = partial(_escape_re.sub, lambda m: "^" + m.group(0))
 
     @property
     def executable(cls):
         if cls._executable is None:
-            cls._executable = Shell.find_executable('cmd')
+            cls._executable = Shell.find_executable("cmd")
         return cls._executable
 
     @classmethod
     def name(cls):
-        return 'cmd'
+        return "cmd"
 
     @classmethod
     def file_extension(cls):
-        return 'bat'
+        return "bat"
 
     @classmethod
-    def startup_capabilities(cls, rcfile=False, norc=False, stdin=False,
-                             command=False):
-        cls._unsupported_option('rcfile', rcfile)
+    def startup_capabilities(cls, rcfile=False, norc=False, stdin=False, command=False):
+        cls._unsupported_option("rcfile", rcfile)
         rcfile = False
-        cls._unsupported_option('norc', norc)
+        cls._unsupported_option("norc", norc)
         norc = False
-        cls._unsupported_option('stdin', stdin)
+        cls._unsupported_option("stdin", stdin)
         stdin = False
         return (rcfile, norc, stdin, command)
 
     @classmethod
     def get_startup_sequence(cls, rcfile, norc, stdin, command):
-        rcfile, norc, stdin, command = \
-            cls.startup_capabilities(rcfile, norc, stdin, command)
+        rcfile, norc, stdin, command = cls.startup_capabilities(
+            rcfile, norc, stdin, command
+        )
 
         return dict(
             stdin=stdin,
@@ -64,7 +65,7 @@ class CMD(Shell):
             envvar=None,
             files=[],
             bind_files=[],
-            source_bind_files=(not norc)
+            source_bind_files=(not norc),
         )
 
     @classmethod
@@ -88,18 +89,19 @@ class CMD(Shell):
             "QUERY",
             "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment",
             "/v",
-            "PATH"
+            "PATH",
         ]
 
-        expected = gen_expected_regex([
-            "HKEY_LOCAL_MACHINE\\\\SYSTEM\\\\CurrentControlSet\\\\Control\\\\Session Manager\\\\Environment",
-            "PATH",
-            "REG_(EXPAND_)?SZ",
-            "(.*)"
-        ])
+        expected = gen_expected_regex(
+            [
+                "HKEY_LOCAL_MACHINE\\\\SYSTEM\\\\CurrentControlSet\\\\Control\\\\Session Manager\\\\Environment",
+                "PATH",
+                "REG_(EXPAND_)?SZ",
+                "(.*)",
+            ]
+        )
 
-        p = popen(cmd, stdout=subprocess.PIPE,
-                  stderr=subprocess.PIPE, shell=True)
+        p = popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out_, _ = p.communicate()
         out_ = out_.strip()
 
@@ -108,23 +110,13 @@ class CMD(Shell):
             if match:
                 paths.extend(match.group(2).split(os.pathsep))
 
-        cmd = [
-            "REG",
-            "QUERY",
-            "HKCU\\Environment",
-            "/v",
-            "PATH"
-        ]
+        cmd = ["REG", "QUERY", "HKCU\\Environment", "/v", "PATH"]
 
-        expected = gen_expected_regex([
-            "HKEY_CURRENT_USER\\\\Environment",
-            "PATH",
-            "REG_(EXPAND_)?SZ",
-            "(.*)"
-        ])
+        expected = gen_expected_regex(
+            ["HKEY_CURRENT_USER\\\\Environment", "PATH", "REG_(EXPAND_)?SZ", "(.*)"]
+        )
 
-        p = popen(cmd, stdout=subprocess.PIPE,
-                  stderr=subprocess.PIPE, shell=True)
+        p = popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out_, _ = p.communicate()
         out_ = out_.strip()
 
@@ -144,14 +136,25 @@ class CMD(Shell):
                 self.setenv("REZ_STORED_PROMPT", curr_prompt)
 
             new_prompt = "%%REZ_ENV_PROMPT%%"
-            new_prompt = (new_prompt + " %s") if config.prefix_prompt \
-                else ("%s " + new_prompt)
+            new_prompt = (
+                (new_prompt + " %s") if config.prefix_prompt else ("%s " + new_prompt)
+            )
             new_prompt = new_prompt % curr_prompt
-            self._addline('set PROMPT=%s' % new_prompt)
+            self._addline("set PROMPT=%s" % new_prompt)
 
-    def spawn_shell(self, context_file, tmpdir, rcfile=None, norc=False,
-                    stdin=False, command=None, env=None, quiet=False,
-                    pre_command=None, **Popen_args):
+    def spawn_shell(
+        self,
+        context_file,
+        tmpdir,
+        rcfile=None,
+        norc=False,
+        stdin=False,
+        command=None,
+        env=None,
+        quiet=False,
+        pre_command=None,
+        **Popen_args
+    ):
 
         startup_sequence = self.get_startup_sequence(rcfile, norc, bool(stdin), command)
         shell_command = None
@@ -171,22 +174,26 @@ class CMD(Shell):
                     ex.command("cmd /Q /C rez context")
 
         def _create_ex():
-            return RexExecutor(interpreter=self.new_shell(),
-                               parent_environ={},
-                               add_default_namespaces=False)
+            return RexExecutor(
+                interpreter=self.new_shell(),
+                parent_environ={},
+                add_default_namespaces=False,
+            )
 
         executor = _create_ex()
 
         if self.settings.prompt:
-            newprompt = '%%REZ_ENV_PROMPT%%%s' % self.settings.prompt
-            executor.interpreter._saferefenv('REZ_ENV_PROMPT')
+            newprompt = "%%REZ_ENV_PROMPT%%%s" % self.settings.prompt
+            executor.interpreter._saferefenv("REZ_ENV_PROMPT")
             executor.env.REZ_ENV_PROMPT = literal(newprompt)
 
         if startup_sequence["command"] is not None:
             _record_shell(executor, files=startup_sequence["files"])
             shell_command = startup_sequence["command"]
         else:
-            _record_shell(executor, files=startup_sequence["files"], print_msg=(not quiet))
+            _record_shell(
+                executor, files=startup_sequence["files"], print_msg=(not quiet)
+            )
 
         if shell_command:
             # Launch the provided command in the configured shell and wait
@@ -196,19 +203,18 @@ class CMD(Shell):
         # Test for None specifically because resolved_context.execute_rex_code
         # passes '' and we do NOT want to keep a shell open during a rex code
         # exec operation.
-        elif shell_command is None: 
+        elif shell_command is None:
             # Launch the configured shell itself and wait for user interaction
             # to exit.
-            executor.command('cmd /Q /K')
-            
+            executor.command("cmd /Q /K")
+
         # Exit the configured shell.
-        executor.command('exit %errorlevel%')
+        executor.command("exit %errorlevel%")
 
         code = executor.get_output()
-        target_file = os.path.join(tmpdir, "rez-shell.%s"
-                                   % self.file_extension())
+        target_file = os.path.join(tmpdir, "rez-shell.%s" % self.file_extension())
 
-        with open(target_file, 'w') as f:
+        with open(target_file, "w") as f:
             f.write(code)
 
         if startup_sequence["stdin"] and stdin and (stdin is not True):
@@ -222,26 +228,26 @@ class CMD(Shell):
                 cmd = pre_command
 
         if shell_command:
-            cmd_flags = ['/Q', '/C']
+            cmd_flags = ["/Q", "/C"]
         else:
-            cmd_flags = ['/Q', '/K']
+            cmd_flags = ["/Q", "/K"]
 
-        cmd = cmd + [self.executable] + cmd_flags + ['call {}'.format(target_file)]
-        is_detached = (cmd[0] == 'START')
+        cmd = cmd + [self.executable] + cmd_flags + ["call {}".format(target_file)]
+        is_detached = cmd[0] == "START"
 
         p = popen(cmd, env=env, shell=is_detached, **Popen_args)
         return p
 
     def get_output(self, style=OutputStyle.file):
         if style == OutputStyle.file:
-            script = '\n'.join(self._lines) + '\n'
+            script = "\n".join(self._lines) + "\n"
         else:  # eval style
             lines = []
             for line in self._lines:
-                if not line.startswith('REM'):  # strip comments
+                if not line.startswith("REM"):  # strip comments
                     line = line.rstrip()
                     lines.append(line)
-            script = '&& '.join(lines)
+            script = "&& ".join(lines)
         return script
 
     def escape_string(self, value):
@@ -266,7 +272,7 @@ class CMD(Shell):
 
     def setenv(self, key, value):
         value = self.escape_string(value)
-        self._addline('set %s=%s' % (key, value))
+        self._addline("set %s=%s" % (key, value))
 
     def unsetenv(self, key):
         self._addline("set %s=" % key)
@@ -279,23 +285,24 @@ class CMD(Shell):
         # to unqualified 'doskey' if all else fails
         if self._doskey is None:
             try:
-                self.__class__._doskey = \
-                    self.find_executable("doskey", check_syspaths=True)
+                self.__class__._doskey = self.find_executable(
+                    "doskey", check_syspaths=True
+                )
             except:
                 self._doskey = "doskey"
 
         self._addline("%s %s=%s" % (self._doskey, key, value))
 
     def comment(self, value):
-        for line in value.split('\n'):
-            self._addline('REM %s' % line)
+        for line in value.split("\n"):
+            self._addline("REM %s" % line)
 
     def info(self, value):
-        for line in value.split('\n'):
-            self._addline('echo %s' % line)
+        for line in value.split("\n"):
+            self._addline("echo %s" % line)
 
     def error(self, value):
-        for line in value.split('\n'):
+        for line in value.split("\n"):
             self._addline('echo "%s" 1>&2' % line)
 
     def source(self, value):

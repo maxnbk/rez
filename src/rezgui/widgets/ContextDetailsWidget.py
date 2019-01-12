@@ -1,3 +1,4 @@
+from builtins import str
 from rezgui.qt import QtGui
 from rezgui.util import create_pane
 from rezgui.widgets.ContextEnvironWidget import ContextEnvironWidget

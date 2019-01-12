@@ -10,10 +10,10 @@ import textwrap
 
 
 variant_key_conversions = {
-    "name":         "name",
-    "version":      "version",
-    "index":        "index",
-    "search_path":  "location"
+    "name": "name",
+    "version": "version",
+    "index": "index",
+    "search_path": "location",
 }
 
 
@@ -22,9 +22,9 @@ def convert_old_variant_handle(handle_dict):
     old_variables = handle_dict.get("variables", {})
     variables = dict(repository_type="filesystem")
 
-    for old_key, key in variant_key_conversions.iteritems():
+    for old_key, key in variant_key_conversions.items():
         value = old_variables.get(old_key)
-        #if value is not None:
+        # if value is not None:
         variables[key] = value
 
     path = handle_dict["path"]
@@ -39,12 +39,12 @@ def convert_old_variant_handle(handle_dict):
 
 def convert_old_command_expansions(command):
     """Convert expansions from !OLD! style to {new}."""
-    command = command.replace("!VERSION!",       "{version}")
+    command = command.replace("!VERSION!", "{version}")
     command = command.replace("!MAJOR_VERSION!", "{version.major}")
     command = command.replace("!MINOR_VERSION!", "{version.minor}")
-    command = command.replace("!BASE!",          "{base}")
-    command = command.replace("!ROOT!",          "{root}")
-    command = command.replace("!USER!",          "{system.user}")
+    command = command.replace("!BASE!", "{base}")
+    command = command.replace("!ROOT!", "{root}")
+    command = command.replace("!USER!", "{system.user}")
     return command
 
 
@@ -66,14 +66,14 @@ def convert_old_commands(commands, annotate=True):
         # 'hey "there \"you\" " \"dude\" '
         # ..will convert to:
         # 'hey "there \"you\" " "dude" '
-        s_new = ''
+        s_new = ""
         prev_i = 0
 
         for m in within_unescaped_quotes_regex.finditer(s):
-            s_ = s[prev_i:m.start()]
+            s_ = s[prev_i : m.start()]
             s_new += _repl(s_)
 
-            s_new += s[m.start():m.end()]
+            s_new += s[m.start() : m.end()]
             prev_i = m.end()
 
         s_ = s[prev_i:]
@@ -93,7 +93,7 @@ def convert_old_commands(commands, annotate=True):
 
         try:
             if toks[0] == "export":
-                var, value = cmd.split(' ', 1)[1].split('=', 1)
+                var, value = cmd.split(" ", 1)[1].split("=", 1)
                 for bookend in ('"', "'"):
                     if value.startswith(bookend) and value.endswith(bookend):
                         value = value[1:-1]
@@ -132,14 +132,15 @@ def convert_old_commands(commands, annotate=True):
                         continue
 
                 loc.append("setenv('%s', %s)" % (var, _encode(value)))
-            elif toks[0].startswith('#'):
-                loc.append("comment(%s)" % _encode(' '.join(toks[1:])))
+            elif toks[0].startswith("#"):
+                loc.append("comment(%s)" % _encode(" ".join(toks[1:])))
             elif toks[0] == "alias":
                 match = re.search("alias (?P<key>.*?)=(?P<value>.*)", cmd)
-                key = match.groupdict()['key'].strip()
-                value = match.groupdict()['value'].strip()
-                if (value.startswith('"') and value.endswith('"')) or \
-                        (value.startswith("'") and value.endswith("'")):
+                key = match.groupdict()["key"].strip()
+                value = match.groupdict()["value"].strip()
+                if (value.startswith('"') and value.endswith('"')) or (
+                    value.startswith("'") and value.endswith("'")
+                ):
                     value = value[1:-1]
                 loc.append("alias('%s', %s)" % (key, _encode(value)))
             else:
@@ -149,11 +150,12 @@ def convert_old_commands(commands, annotate=True):
             # if anything goes wrong, just fall back to bash command
             loc.append("command(%s)" % _encode(cmd))
 
-    rex_code = '\n'.join(loc)
+    rex_code = "\n".join(loc)
     if config.debug("old_commands"):
-        br = '-' * 80
-        msg = textwrap.dedent(
-            """
+        br = "-" * 80
+        msg = (
+            textwrap.dedent(
+                """
             %s
             OLD COMMANDS:
             %s
@@ -161,7 +163,10 @@ def convert_old_commands(commands, annotate=True):
             NEW COMMANDS:
             %s
             %s
-            """) % (br, '\n'.join(commands), rex_code, br)
+            """
+            )
+            % (br, "\n".join(commands), rex_code, br)
+        )
         print_debug(msg)
     return rex_code
 

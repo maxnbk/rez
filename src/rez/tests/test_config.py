@@ -49,12 +49,12 @@ class TestConfig(TestBase):
         self.assertEqual(c.build_directory, "flabber")
 
         # remove override
-        value = c.tmpdir or ''
-        new_value = value + '_'
+        value = c.tmpdir or ""
+        new_value = value + "_"
         c.override("tmpdir", new_value)
         self.assertEqual(c.tmpdir, new_value)
         c.remove_override("tmpdir")
-        value_ = c.tmpdir or ''
+        value_ = c.tmpdir or ""
         self.assertEqual(value_, value)
 
         self._test_basic(c)
@@ -73,11 +73,12 @@ class TestConfig(TestBase):
         self.assertEqual(c.build_directory, "build")
 
         # check user path expansion
-        self.assertEqual(c.local_packages_path,
-                         os.path.expanduser(os.path.join("~", "packages")))
+        self.assertEqual(
+            c.local_packages_path, os.path.expanduser(os.path.join("~", "packages"))
+        )
 
         # check access to plugins settings common to a plugin type
-        self.assertEqual(c.plugins.release_vcs.tag_name, '{qualified_name}')
+        self.assertEqual(c.plugins.release_vcs.tag_name, "{qualified_name}")
 
         # check access to plugins settings
         self.assertEqual(c.plugins.release_hook.emailer.smtp_port, 25)
@@ -101,8 +102,7 @@ class TestConfig(TestBase):
         # check overrides in test1.yaml are being used
         self.assertEqual(c.warn_all, True)
         self.assertEqual(c.plugins.release_vcs.tag_name, "foo")
-        self.assertEqual(c.plugins.release_hook.emailer.sender,
-                         "santa.claus")
+        self.assertEqual(c.plugins.release_hook.emailer.sender, "santa.claus")
 
         self._test_overrides(c)
 
@@ -150,8 +150,10 @@ class TestConfig(TestBase):
             self.assertEqual(c.release_hooks, ["foo", "bah"])
 
             # check list modification within plugin settings is working
-            self.assertEqual(c.plugins.release_hook.emailer.recipients,
-                             ["joe@here.com", "jay@there.com"])
+            self.assertEqual(
+                c.plugins.release_hook.emailer.recipients,
+                ["joe@here.com", "jay@there.com"],
+            )
 
             # check system expansion in package overridden setting works
             expected_value = "%s@somewhere.com" % system.user
@@ -170,13 +172,7 @@ class TestConfig(TestBase):
         # overrides set to bad types
         overrides = {
             "build_directory": [],
-            "plugins": {
-                "release_hook": {
-                    "emailer": {
-                        "recipients": 42
-                    }
-                }
-            }
+            "plugins": {"release_hook": {"emailer": {"recipients": 42}}},
         }
         c = Config([self.root_config_file], overrides=overrides, locked=False)
         with self.assertRaises(ConfigurationError):
@@ -191,25 +187,21 @@ class TestConfig(TestBase):
         with self.assertRaises(ConfigurationError):
             _ = c.debug_all
 
-
     def test_6(self):
         """Test setting of dict values from environ"""
         from rez.config import Dict
         from rez.vendor.schema.schema import Schema
 
         class TestConfig(Config):
-            schema = Schema({
-                'dumb_dict': Dict,
-            })
+            schema = Schema({"dumb_dict": Dict})
 
-            DEFAULT_DUMB_DICT = {'default': 'value'}
+            DEFAULT_DUMB_DICT = {"default": "value"}
 
             # don't want to bother writing a file just to set a default value,
             # and can't use overrides, as that will make it ignore env vars...
             @property
             def _data(self):
-                return {'dumb_dict': self.DEFAULT_DUMB_DICT}
-
+                return {"dumb_dict": self.DEFAULT_DUMB_DICT}
 
         # need to NOT use locked, because we want to test setting from env
         # vars, but don't want values from "real" os.environ to pollute our
@@ -220,14 +212,14 @@ class TestConfig(TestBase):
             c = TestConfig([])
             self.assertEqual(c.dumb_dict, TestConfig.DEFAULT_DUMB_DICT)
 
-            os.environ = {'REZ_DUMB_DICT': 'foo:bar,more:stuff'}
+            os.environ = {"REZ_DUMB_DICT": "foo:bar,more:stuff"}
             c = TestConfig([])
-            self.assertEqual(c.dumb_dict, {'foo': 'bar', 'more': 'stuff'})
+            self.assertEqual(c.dumb_dict, {"foo": "bar", "more": "stuff"})
         finally:
             os.environ = old_environ
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
 
 

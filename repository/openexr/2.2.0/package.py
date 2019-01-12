@@ -2,26 +2,17 @@ name = "openexr"
 
 version = "2.2.0"
 
-authors = [
-    "ILM"
-]
+authors = ["ILM"]
 
-description = \
-    """
+description = """
     ILM's high dynamic-range (HDR) image file format library.
     """
 
-requires = [
-    "ilmbase-2.2"
-]
+requires = ["ilmbase-2.2"]
 
-build_requires = [
-    "gcc-4.8.2"
-]
+build_requires = ["gcc-4.8.2"]
 
-variants = [
-    ["platform-linux", "arch-x86_64", "os-Ubuntu-12.04"]
-]
+variants = [["platform-linux", "arch-x86_64", "os-Ubuntu-12.04"]]
 
 tools = [
     "exrenvmap",
@@ -30,10 +21,11 @@ tools = [
     "exrmaketiled",
     "exrmultipart",
     "exrmultiview",
-    "exrstdattr"
+    "exrstdattr",
 ]
 
 uuid = "repository.openexr"
+
 
 def commands():
     env.PATH.append("{root}/bin")

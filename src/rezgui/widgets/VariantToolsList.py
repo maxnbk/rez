@@ -1,3 +1,4 @@
+from builtins import str
 from rezgui.qt import QtCore, QtGui
 from rezgui.objects.App import app
 from rezgui.mixins.ContextViewMixin import ContextViewMixin
@@ -23,7 +24,7 @@ class VariantToolsList(QtGui.QTableWidget, ContextViewMixin):
         vh = self.verticalHeader()
         vh.setVisible(False)
 
-        #app.process_tracker.instanceCountChanged.connect(self._instanceCountChanged)
+        # app.process_tracker.instanceCountChanged.connect(self._instanceCountChanged)
 
     def clear(self):
         self.tool_widgets = {}
@@ -48,8 +49,11 @@ class VariantToolsList(QtGui.QTableWidget, ContextViewMixin):
                 self.setCellWidget(i, 0, widget)
                 self.tool_widgets[tool] = widget
 
-            select_mode = QtGui.QAbstractItemView.SingleSelection \
-                if context else QtGui.QAbstractItemView.NoSelection
+            select_mode = (
+                QtGui.QAbstractItemView.SingleSelection
+                if context
+                else QtGui.QAbstractItemView.NoSelection
+            )
             self.setSelectionMode(select_mode)
 
         self.variant = variant

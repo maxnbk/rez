@@ -1,9 +1,10 @@
 """
 test core resource system
 """
+from past.builtins import basestring
+from builtins import object
 from rez.tests.util import TestBase
-from rez.utils.resources import Resource, ResourcePool, ResourceHandle, \
-    ResourceWrapper
+from rez.utils.resources import Resource, ResourcePool, ResourceHandle, ResourceWrapper
 from rez.package_repository import PackageRepository
 from rez.utils.schema import Required
 from rez.exceptions import ResourceError
@@ -33,19 +34,24 @@ pets = dict(
     kitten=dict(
         obi=dict(colors=["black", "white"], male=True, age=1.0),
         scully=dict(colors=["tabby"], male=False, age=0.5),
-        mordor=dict(colors=["black"], male=True, age="infinite")),  # bad data
+        mordor=dict(colors=["black"], male=True, age="infinite"),
+    ),  # bad data
     puppy=dict(
         taco=dict(colors=["brown"], male=True, age=0.6, owner="joe.bloggs"),
-        ringo=dict(colors=["white", "grey"], male=True, age=0.8)))
+        ringo=dict(colors=["white", "grey"], male=True, age=0.8),
+    ),
+)
 
 
-pet_schema = Schema({
-    Required("name"):       basestring,
-    Required("colors"):     And([basestring], Use(set)),
-    Required("male"):       bool,
-    Required("age"):        float,
-    Optional("owner"):      basestring
-})
+pet_schema = Schema(
+    {
+        Required("name"): basestring,
+        Required("colors"): And([basestring], Use(set)),
+        Required("male"): bool,
+        Required("age"): float,
+        Optional("owner"): basestring,
+    }
+)
 
 
 class BasePetResource(Resource):
@@ -84,6 +90,7 @@ class KittenResource(PetResource):
 class PuppyResource(PetResource):
     key = "puppy"
 
+
 class PetPool(ResourcePool):
     # don't want to define get_resource on normal pool object anymore,
     # because it's dangerous, since we always want ResourceHandle creation to
@@ -94,12 +101,13 @@ class PetPool(ResourcePool):
         handle = ResourceHandle(resource_key, variables)
         return self.get_resource_from_handle(handle)
 
+
 class PetRepository(PackageRepository):
     def __init__(self, pool):
         self.pool = pool
         self.pool.register_resource(KittenResource)
         self.pool.register_resource(PuppyResource)
-        self.location = 'Pets R Us'
+        self.location = "Pets R Us"
 
     @classmethod
     def name(cls):
@@ -164,6 +172,7 @@ class PetStore(object):
 
 # -- test suite
 
+
 class TestResources_(TestBase):
     def test_1(self):
         """resource registration test."""
@@ -190,8 +199,9 @@ class TestResources_(TestBase):
         repo.pool.register_resource(ResourceB)
 
         # test that resource matches our request, and its data isn't loaded
-        variables = dict(foo="hey", bah="ho", repository_type='pet_repository',
-                         location='Pets R Us')
+        variables = dict(
+            foo="hey", bah="ho", repository_type="pet_repository", location="Pets R Us"
+        )
         resource = repo.get_resource("resource.a", **variables)
         self.assertTrue(isinstance(resource, ResourceA))
         self.assertEqual(resource.variables, variables)
@@ -227,14 +237,16 @@ class TestResources_(TestBase):
         the `name` attribute, which means we can query a resource for its name,
         without causing the resource data to be loaded.
         """
+
         def _validate(resource, expected_data):
             self.assertEqual(resource.validated_data(), expected_data)
 
             # after full validation, each attrib should validate exactly once.
             # Those with value None are optional and missing attributes, so were
             # never validated.
-            expected_validations = dict((k, 1) for k, v in expected_data.iteritems()
-                                        if v is not None)
+            expected_validations = dict(
+                (k, 1) for k, v in expected_data.items() if v is not None
+            )
             self.assertEqual(resource.validations, expected_validations)
 
         store = PetStore()
@@ -270,11 +282,16 @@ class TestResources_(TestBase):
         self.assertEqual(obi.male, True)
         self.assertEqual(obi.resource.validations, dict(colors=1, male=1))
 
-        _validate(obi.resource, dict(name="obi",
-                                     colors=set(["black", "white"]),
-                                     male=True,
-                                     age=1.0,
-                                     owner=None))
+        _validate(
+            obi.resource,
+            dict(
+                name="obi",
+                colors=set(["black", "white"]),
+                male=True,
+                age=1.0,
+                owner=None,
+            ),
+        )
 
         # load a bad resource, won't fail til bad attribute is accessed
         mordor = store.get_kitten("mordor")
@@ -290,14 +307,19 @@ class TestResources_(TestBase):
         self.assertEqual(taco.male, True)
         self.assertEqual(taco.colors, set(["brown"]))
 
-        _validate(taco.resource, dict(name="taco",
-                                      colors=set(["brown"]),
-                                      male=True,
-                                      age=0.6,
-                                      owner="joe.bloggs"))
+        _validate(
+            taco.resource,
+            dict(
+                name="taco",
+                colors=set(["brown"]),
+                male=True,
+                age=0.6,
+                owner="joe.bloggs",
+            ),
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
 
 

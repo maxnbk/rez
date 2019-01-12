@@ -29,15 +29,21 @@ data load is avoided.
 
 See the 'pets' unit test in tests/test_resources.py for a complete example.
 """
-from rez.utils.data_utils import cached_property, AttributeForwardMeta, \
-    LazyAttributeMeta
+from builtins import str
+from builtins import object
+from rez.utils.data_utils import (
+    cached_property,
+    AttributeForwardMeta,
+    LazyAttributeMeta,
+)
 from rez.config import config
 from rez.exceptions import ResourceError
 from rez.backport.lru_cache import lru_cache
 from rez.utils.logging_ import print_debug
+from future.utils import with_metaclass
 
 
-class Resource(object):
+class Resource(with_metaclass(LazyAttributeMeta, object)):
     """Abstract base class for a data resource.
 
     A resource is an object uniquely identified by a 'key' (the resource type),
@@ -70,7 +76,6 @@ class Resource(object):
         schema_error (Exception): The exception type to raise on key
             validation failure.
     """
-    __metaclass__ = LazyAttributeMeta
     key = None
     schema = None
     schema_error = Exception
@@ -113,7 +118,7 @@ class Resource(object):
         return hash((self.__class__, self.handle))
 
     def __eq__(self, other):
-        return (self.handle == other.handle)
+        return self.handle == other.handle
 
     def _load(self):
         """Load the data associated with the resource.
@@ -137,6 +142,7 @@ class ResourceHandle(object):
     A handle uniquely identifies a resource. A handle can be stored and used
     with a `ResourcePool` to retrieve the same resource at a later date.
     """
+
     def __init__(self, key, variables=None):
         self.key = key
         self.variables = variables or {}
@@ -171,7 +177,7 @@ class ResourceHandle(object):
         return (self.key == other.key) and (self.variables == other.variables)
 
     def __hash__(self):
-        return hash((self.key, frozenset(self.variables.items())))
+        return hash((self.key, frozenset(list(self.variables.items()))))
 
 
 class ResourcePool(object):
@@ -182,6 +188,7 @@ class ResourcePool(object):
     resources are created via some factory class, which first checks for the
     existence of the resource before creating one from a pool.
     """
+
     def __init__(self, cache_size=None):
         self.resource_classes = {}
         cache = lru_cache(maxsize=cache_size)
@@ -200,8 +207,12 @@ class ResourcePool(object):
                 raise ResourceError(
                     "Error registering resource class %s: Resource pool has "
                     "already registered %r to %s"
-                    % (resource_class.__class__.__name__, resource_key,
-                       cls_.__class__.__name__))
+                    % (
+                        resource_class.__class__.__name__,
+                        resource_key,
+                        cls_.__class__.__name__,
+                    )
+                )
 
         self.resource_classes[resource_key] = resource_class
 
@@ -214,8 +225,10 @@ class ResourcePool(object):
     def get_resource_class(self, resource_key):
         resource_class = self.resource_classes.get(resource_key)
         if resource_class is None:
-            raise ResourceError("Error getting resource from pool: Unknown "
-                                "resource type %r" % resource_key)
+            raise ResourceError(
+                "Error getting resource from pool: Unknown "
+                "resource type %r" % resource_key
+            )
         return resource_class
 
     def _get_resource(self, resource_handle):
@@ -223,7 +236,7 @@ class ResourcePool(object):
         return resource_class(resource_handle.variables)
 
 
-class ResourceWrapper(object):
+class ResourceWrapper(with_metaclass(AttributeForwardMeta, object)):
     """An object that wraps a resource instance.
 
     A resource wrapper is useful for two main reasons. First, we can wrap
@@ -241,7 +254,6 @@ class ResourceWrapper(object):
     the resource that you want to expose in the wrapper. The `schema_keys`
     function is provided to help get a list of keys from a resource schema.
     """
-    __metaclass__ = AttributeForwardMeta
     keys = None
 
     def __init__(self, resource):
@@ -266,8 +278,7 @@ class ResourceWrapper(object):
         self.resource.validate_data()
 
     def __eq__(self, other):
-        return (self.__class__ == other.__class__
-                and self.resource == other.resource)
+        return self.__class__ == other.__class__ and self.resource == other.resource
 
     def __str__(self):
         return "%s(%s)" % (self.__class__.__name__, str(self.resource))

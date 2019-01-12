@@ -1,3 +1,4 @@
+from builtins import str
 from rezgui.qt import QtCore, QtGui
 from rezgui.objects.App import app
 from rezgui.widgets.ContextManagerWidget import ContextManagerWidget
@@ -54,21 +55,21 @@ class ContextSubWindow(QtGui.QMdiSubWindow, ContextViewMixin, StoreSizeMixin):
                 title,
                 "%s is pending a resolve.\n"
                 "Close and discard changes?\n"
-                "If you close, your changes will be lost."
-                % id_str.capitalize(),
+                "If you close, your changes will be lost." % id_str.capitalize(),
                 QtGui.QMessageBox.Discard,
-                QtGui.QMessageBox.Cancel)
-            return (ret == QtGui.QMessageBox.Discard)
+                QtGui.QMessageBox.Cancel,
+            )
+            return ret == QtGui.QMessageBox.Discard
         else:
             ret = QtGui.QMessageBox.warning(
                 self,
                 title,
                 "Save the changes to %s before closing?\n"
-                "If you don't save the context, your changes will be lost."
-                % id_str,
+                "If you don't save the context, your changes will be lost." % id_str,
                 buttons=QtGui.QMessageBox.Save
-                    | QtGui.QMessageBox.Discard
-                    | QtGui.QMessageBox.Cancel)
+                | QtGui.QMessageBox.Discard
+                | QtGui.QMessageBox.Cancel,
+            )
 
             if ret == QtGui.QMessageBox.Save:
                 if self.is_saveable():
@@ -78,7 +79,7 @@ class ContextSubWindow(QtGui.QMdiSubWindow, ContextViewMixin, StoreSizeMixin):
                     assert self.is_save_as_able()
                     return self._save_context_as()
             else:
-                return (ret == QtGui.QMessageBox.Discard)
+                return ret == QtGui.QMessageBox.Discard
 
         # should never get here
         assert False
@@ -126,7 +127,8 @@ class ContextSubWindow(QtGui.QMdiSubWindow, ContextViewMixin, StoreSizeMixin):
     def _save_context_as(self):
         dir_ = os.path.dirname(self.filepath()) if self.filepath() else ""
         filepath = QtGui.QFileDialog.getSaveFileName(
-            self, "Save Context", dir_, "Context files (*.rxt)")
+            self, "Save Context", dir_, "Context files (*.rxt)"
+        )
 
         if filepath:
             filepath = str(filepath)

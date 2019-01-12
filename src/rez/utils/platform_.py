@@ -1,3 +1,6 @@
+from builtins import map
+from builtins import str
+from builtins import object
 import platform
 import sys
 import os
@@ -14,6 +17,7 @@ from tempfile import gettempdir
 class Platform(object):
     """Abstraction of a platform.
     """
+
     name = None
 
     def __init__(self):
@@ -85,8 +89,10 @@ class Platform(object):
             return self._physical_cores_base()
         except Exception as e:
             from rez.utils.logging_ import print_error
-            print_error("Error detecting physical core count, defaulting to 1: %s"
-                        % str(e))
+
+            print_error(
+                "Error detecting physical core count, defaulting to 1: %s" % str(e)
+            )
         return 1
 
     @cached_property
@@ -100,8 +106,10 @@ class Platform(object):
             return self._logical_cores()
         except Exception as e:
             from rez.utils.logging_ import print_error
-            print_error("Error detecting logical core count, defaulting to 1: %s"
-                        % str(e))
+
+            print_error(
+                "Error detecting logical core count, defaulting to 1: %s" % str(e)
+            )
         return 1
 
     # -- implementation
@@ -147,8 +155,11 @@ class Platform(object):
         cores = self._physical_cores()
         if cores is None:
             from rez.utils.logging_ import print_warning
-            print_warning("Could not determine number of physical cores - "
-                          "falling back on logical cores value")
+
+            print_warning(
+                "Could not determine number of physical cores - "
+                "falling back on logical cores value"
+            )
             cores = self.logical_cores
         return cores
 
@@ -157,12 +168,14 @@ class Platform(object):
 
     def _logical_cores(self):
         from multiprocessing import cpu_count
+
         return cpu_count()
 
 
 # -----------------------------------------------------------------------------
 # Unix (Linux and OSX)
 # -----------------------------------------------------------------------------
+
 
 class _UnixPlatform(Platform):
     def _new_session_popen_args(self):
@@ -173,6 +186,7 @@ class _UnixPlatform(Platform):
 # Linux
 # -----------------------------------------------------------------------------
 
+
 class LinuxPlatform(_UnixPlatform):
     name = "linux"
 
@@ -181,8 +195,9 @@ class LinuxPlatform(_UnixPlatform):
         release = None
 
         def _str(s):
-            if (s.startswith("'") and s.endswith("'")) \
-                    or (s.startswith('"') and s.endswith('"')):
+            if (s.startswith("'") and s.endswith("'")) or (
+                s.startswith('"') and s.endswith('"')
+            ):
                 return s[1:-1]
             else:
                 return s
@@ -196,13 +211,13 @@ class LinuxPlatform(_UnixPlatform):
         def _parse(txt, distributor_key, release_key):
             distributor_ = None
             release_ = None
-            lines = txt.strip().split('\n')
+            lines = txt.strip().split("\n")
             for line in lines:
                 if line.startswith(distributor_key):
-                    s = line[len(distributor_key):].strip()
+                    s = line[len(distributor_key) :].strip()
                     distributor_ = _str(s)
                 elif line.startswith(release_key):
-                    s = line[len(release_key):].strip()
+                    s = line[len(release_key) :].strip()
                     release_ = _str(s)
             return distributor_, release_
 
@@ -211,9 +226,7 @@ class LinuxPlatform(_UnixPlatform):
         if os.path.isfile(file):
             with open(file) as f:
                 txt = f.read()
-            distributor, release = _parse(txt,
-                                          "DISTRIB_ID=",
-                                          "DISTRIB_RELEASE=")
+            distributor, release = _parse(txt, "DISTRIB_ID=", "DISTRIB_RELEASE=")
             result = _os()
             if result:
                 return result
@@ -221,14 +234,15 @@ class LinuxPlatform(_UnixPlatform):
         # next, try getting the output of the lsb_release program
         import subprocess
 
-        p = popen(['/usr/bin/env', 'lsb_release', '-a'],
-                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = popen(
+            ["/usr/bin/env", "lsb_release", "-a"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
         txt = p.communicate()[0]
 
         if not p.returncode:
-            distributor_, release_ = _parse(txt,
-                                            "Distributor ID:",
-                                            "Release:")
+            distributor_, release_ = _parse(txt, "Distributor ID:", "Release:")
             if distributor_ and not distributor:
                 distributor = distributor_
             if release_ and not release:
@@ -242,13 +256,11 @@ class LinuxPlatform(_UnixPlatform):
         # this file contains OS specific data on linux
         # distributions
         # see https://www.freedesktop.org/software/systemd/man/os-release.html
-        os_release = '/etc/os-release'
+        os_release = "/etc/os-release"
         if os.path.isfile(os_release):
-            with open(os_release, 'r') as f:
+            with open(os_release, "r") as f:
                 txt = f.read()
-            distributor_, release_ = _parse(txt,
-                                            "ID=",
-                                            "VERSION_ID=")
+            distributor_, release_ = _parse(txt, "ID=", "VERSION_ID=")
             if distributor_ and not distributor:
                 distributor = distributor_
             if release_ and not release:
@@ -294,33 +306,36 @@ class LinuxPlatform(_UnixPlatform):
 
     def _image_viewer(self):
         from rez.util import which
+
         return which("xdg-open", "eog", "kview")
 
     def _editor(self):
         ed = os.getenv("EDITOR")
         if ed is None:
             from rez.util import which
+
             ed = which("vi", "vim", "xdg-open")
         return ed
 
     def _difftool(self):
         from rez.util import which
+
         return which("kdiff3", "meld", "diff")
 
     @classmethod
     def _parse_colon_table_to_dict(cls, table_text):
-        '''Given a simple text output where each line gives a key-value pair
-      of the form "key: value", parse and return a dict'''
+        """Given a simple text output where each line gives a key-value pair
+      of the form "key: value", parse and return a dict"""
         lines = [l.strip() for l in table_text.splitlines()]
         lines = [l for l in lines if l]
-        pairs = [l.split(':', 1) for l in lines]
+        pairs = [l.split(":", 1) for l in lines]
         pairs = [(k.strip(), v.strip()) for k, v in pairs]
         data = dict(pairs)
         assert len(data) == len(pairs)
         return data
 
     def _physical_cores_from_cpuinfo(self):
-        cpuinfo = '/proc/cpuinfo'
+        cpuinfo = "/proc/cpuinfo"
         if not os.path.isfile(cpuinfo):
             return None
 
@@ -329,7 +344,7 @@ class LinuxPlatform(_UnixPlatform):
 
         known_ids = set()
 
-        proc_re = re.compile('^processor\s*:\s+[0-9]+\s*$', re.MULTILINE)
+        proc_re = re.compile("^processor\s*:\s+[0-9]+\s*$", re.MULTILINE)
         procsplit = proc_re.split(contents)
 
         if len(procsplit) <= 1:
@@ -350,8 +365,8 @@ class LinuxPlatform(_UnixPlatform):
             proc = self._parse_colon_table_to_dict(proc)
             # physical id corresponds to the socket, and core id to the
             # physical core number on that socket
-            p_id = proc.get('physical id')
-            c_id = proc.get('core id')
+            p_id = proc.get("physical id")
+            c_id = proc.get("core id")
             if p_id is None or c_id is None:
                 # something is screwy, we weren't able to parse correctly...
                 return None
@@ -364,8 +379,9 @@ class LinuxPlatform(_UnixPlatform):
 
     def _physical_cores_from_lscpu(self):
         import subprocess
+
         try:
-            p = popen(['lscpu'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p = popen(["lscpu"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except (OSError, IOError):
             return None
 
@@ -386,10 +402,10 @@ class LinuxPlatform(_UnixPlatform):
         # we want to take sockets * cores, and ignore threads...
 
         # some versions of lscpu format the sockets line differently...
-        sockets = data.get('Socket(s)', data.get('CPU socket(s)'))
+        sockets = data.get("Socket(s)", data.get("CPU socket(s)"))
         if not sockets:
             return None
-        cores = data.get('Core(s) per socket')
+        cores = data.get("Core(s) per socket")
         if not cores:
             return None
         return int(sockets) * int(cores)
@@ -404,6 +420,7 @@ class LinuxPlatform(_UnixPlatform):
 # -----------------------------------------------------------------------------
 # OSX
 # -----------------------------------------------------------------------------
+
 
 class OSXPlatform(_UnixPlatform):
     name = "osx"
@@ -431,9 +448,13 @@ class OSXPlatform(_UnixPlatform):
 
     def _physical_cores_from_osx_sysctl(self):
         import subprocess
+
         try:
-            p = popen(['sysctl', '-n', 'hw.physicalcpu'],
-                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p = popen(
+                ["sysctl", "-n", "hw.physicalcpu"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
         except (OSError, IOError):
             return None
 
@@ -448,6 +469,7 @@ class OSXPlatform(_UnixPlatform):
 
     def _difftool(self):
         from rez.util import which
+
         return which("meld", "diff")
 
 
@@ -455,14 +477,16 @@ class OSXPlatform(_UnixPlatform):
 # Windows
 # -----------------------------------------------------------------------------
 
+
 class WindowsPlatform(Platform):
     name = "windows"
 
     def _arch(self):
         # http://stackoverflow.com/questions/7164843/in-python-how-do-you-determine-whether-the-kernel-is-running-in-32-bit-or-64-bi
-        if os.name == 'nt' and sys.version_info[:2] < (2, 7):
-            arch = os.environ.get("PROCESSOR_ARCHITEW6432",
-                                  os.environ.get('PROCESSOR_ARCHITECTURE'))
+        if os.name == "nt" and sys.version_info[:2] < (2, 7):
+            arch = os.environ.get(
+                "PROCESSOR_ARCHITEW6432", os.environ.get("PROCESSOR_ARCHITECTURE")
+            )
             if arch:
                 return arch
         return super(WindowsPlatform, self)._arch()
@@ -473,16 +497,16 @@ class WindowsPlatform(Platform):
         for item in (version, csd):
             if item:  # initial release would not have a service pack (csd)
                 toks.append(item)
-        final_version = str('.').join(toks)
+        final_version = str(".").join(toks)
         return "windows-%s" % final_version
 
     def _image_viewer(self):
         # os.system("file.jpg") will open default viewer on windows
-        return ''
+        return ""
 
     def _editor(self):
         # os.system("file.txt") will open default editor on windows
-        return ''
+        return ""
 
     def _new_session_popen_args(self):
         # https://msdn.microsoft.com/en-us/library/windows/desktop/ms684863%28v=vs.85%29.aspx
@@ -498,6 +522,7 @@ class WindowsPlatform(Platform):
             os.symlink(source, link_name)
         else:
             import ctypes
+
             csl = ctypes.windll.kernel32.CreateSymbolicLinkW
             csl.argtypes = (ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint32)
             csl.restype = ctypes.c_ubyte
@@ -511,9 +536,13 @@ class WindowsPlatform(Platform):
     def _physical_cores_from_wmic(self):
         # windows
         import subprocess
+
         try:
-            p = popen('wmic cpu get NumberOfCores /value'.split(),
-                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p = popen(
+                "wmic cpu get NumberOfCores /value".split(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
         except (OSError, IOError):
             return None
 
@@ -527,7 +556,7 @@ class WindowsPlatform(Platform):
         # N is the number of physical cores in the machine: this will be exactly one half the
         # number of logical cores (ie from multiprocessing.cpu_count) if HyperThreading is
         # enabled on the CPU(s)
-        result = re.findall(r'NumberOfCores=(\d+)', stdout.strip())
+        result = re.findall(r"NumberOfCores=(\d+)", stdout.strip())
 
         if not result:
             # don't know what's wrong... should get back a result like:
@@ -542,6 +571,7 @@ class WindowsPlatform(Platform):
     def _difftool(self):
         # although meld would be preferred, fc ships with all Windows versions back to DOS
         from rez.util import which
+
         return which("meld", "fc")
 
 

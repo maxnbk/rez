@@ -10,6 +10,7 @@ class RemoteBuildProcess(BuildProcessHelper):
 
     This process builds a package's variants sequentially, on remote hosts.
     """
+
     @classmethod
     def name(cls):
         return "remote"

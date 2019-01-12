@@ -2,22 +2,15 @@ name = "python"
 
 version = "2.7.4"
 
-authors = [
-    "Guido van Rossum"
-]
+authors = ["Guido van Rossum"]
 
-description = \
-    """
+description = """
     The Python programming language.
     """
 
-build_requires = [
-    "gcc-4.8.2"
-]
+build_requires = ["gcc-4.8.2"]
 
-variants = [
-    ["platform-linux", "arch-x86_64", "os-Ubuntu-12.04"]
-]
+variants = [["platform-linux", "arch-x86_64", "os-Ubuntu-12.04"]]
 
 tools = [
     "2to3",
@@ -29,10 +22,11 @@ tools = [
     "python2.7-config",
     "python2-config",
     "python-config",
-    "smtpd.py"
+    "smtpd.py",
 ]
 
 uuid = "repository.python"
+
 
 def commands():
     env.PATH.append("{root}/bin")

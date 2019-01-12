@@ -2,6 +2,8 @@
 Utility functions for bind modules.
 """
 from __future__ import absolute_import
+from builtins import str
+from past.builtins import basestring
 from rez.vendor.version.version import Version
 from rez.exceptions import RezBindError
 from rez.config import config
@@ -36,8 +38,7 @@ def run_python_command(commands, exe=None):
 def get_version_in_python(name, commands):
     success, out, err = run_python_command(commands)
     if not success or not out:
-        raise RezBindError("Couldn't determine version of module %s: %s"
-                           % (name, err))
+        raise RezBindError("Couldn't determine version of module %s: %s" % (name, err))
     version = out
     return version
 
@@ -50,8 +51,9 @@ def check_version(version, range_=None):
         range_: Allowable version range as a VersionRange object.
     """
     if range_ and version not in range_:
-        raise RezBindError("found version %s is not within range %s"
-                           % (str(version), str(range_)))
+        raise RezBindError(
+            "found version %s is not within range %s" % (str(version), str(range_))
+        )
 
 
 def find_exe(name, filepath=None):
@@ -95,27 +97,29 @@ def extract_version(exepath, version_arg, word_index=-1, version_rank=3):
 
     stdout, stderr, returncode = _run_command(args)
     if returncode:
-        raise RezBindError("failed to execute %s: %s\n(error code %d)"
-                           % (exepath, stderr, returncode))
+        raise RezBindError(
+            "failed to execute %s: %s\n(error code %d)" % (exepath, stderr, returncode)
+        )
 
-    stdout = stdout.strip().split('\n')[0].strip()
+    stdout = stdout.strip().split("\n")[0].strip()
     log("extracting version from output: '%s'" % stdout)
 
     try:
         strver = stdout.split()[word_index]
-        toks = strver.replace('.', ' ').replace('-', ' ').split()
-        strver = '.'.join(toks[:version_rank])
+        toks = strver.replace(".", " ").replace("-", " ").split()
+        strver = ".".join(toks[:version_rank])
         version = Version(strver)
     except Exception as e:
-        raise RezBindError("failed to parse version from output '%s': %s"
-                           % (stdout, str(e)))
+        raise RezBindError(
+            "failed to parse version from output '%s': %s" % (stdout, str(e))
+        )
 
     log("extracted version: '%s'" % str(version))
     return version
 
 
 def _run_command(args):
-    cmd_str = ' '.join(quote(x) for x in args)
+    cmd_str = " ".join(quote(x) for x in args)
     log("running: %s" % cmd_str)
 
     p = popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

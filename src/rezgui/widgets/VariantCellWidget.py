@@ -1,3 +1,4 @@
+from builtins import str
 from rezgui.qt import QtGui
 from rezgui.util import create_pane, get_icon_widget, add_menu_action, update_font
 from rezgui.models.ContextModel import ContextModel
@@ -12,8 +13,15 @@ from functools import partial
 
 # TODO deal with variant missing from disk
 class VariantCellWidget(QtGui.QWidget, ContextViewMixin):
-    def __init__(self, context_model, variant, reference_variant=None,
-                 hide_locks=False, read_only=False, parent=None):
+    def __init__(
+        self,
+        context_model,
+        variant,
+        reference_variant=None,
+        hide_locks=False,
+        read_only=False,
+        parent=None,
+    ):
         super(VariantCellWidget, self).__init__(parent)
         ContextViewMixin.__init__(self, context_model)
 
@@ -33,8 +41,12 @@ class VariantCellWidget(QtGui.QWidget, ContextViewMixin):
 
         self.depends_icon = get_icon_widget("depends", "dependent package")
         self.depends_icon.hide()
-        create_pane([self.label, self.depends_icon, None],
-                    True, compact=True, parent_widget=self)
+        create_pane(
+            [self.label, self.depends_icon, None],
+            True,
+            compact=True,
+            parent_widget=self,
+        )
 
         self.refresh()
 
@@ -58,8 +70,10 @@ class VariantCellWidget(QtGui.QWidget, ContextViewMixin):
                     desc = "Exact version (%s)" % str(req)
                 elif req and req not in consumed_reqs:
                     unit = lock_type.description.split()[0]
-                    desc = ("%s version updates only (%s.*)"
-                            % (unit.capitalize(), str(req)))
+                    desc = "%s version updates only (%s.*)" % (
+                        unit.capitalize(),
+                        str(req),
+                    )
                     consumed_reqs.add(req)
                 else:
                     continue
@@ -83,12 +97,14 @@ class VariantCellWidget(QtGui.QWidget, ContextViewMixin):
         if variant is None or self.variant.name == variant.name:
             access = 0
         else:
-            access = self.context_model.package_depends_on(self.variant.name, variant.name)
+            access = self.context_model.package_depends_on(
+                self.variant.name, variant.name
+            )
 
         update_font(self.label, underline=(access == 2))
         self.depends_icon.setVisible(bool(access))
         if access:
-            enable = (access == 2)
+            enable = access == 2
             if access == 1:
                 desc = "%s indirectly requires %s"
             else:
@@ -99,8 +115,7 @@ class VariantCellWidget(QtGui.QWidget, ContextViewMixin):
     def _contextChanged(self, flags=0):
         self._set_stale(self.context_model.is_stale())
 
-        if flags & (ContextModel.PACKAGES_PATH_CHANGED |
-                    ContextModel.CONTEXT_CHANGED):
+        if flags & (ContextModel.PACKAGES_PATH_CHANGED | ContextModel.CONTEXT_CHANGED):
             # update icons
             new_icons = []
 
@@ -114,7 +129,9 @@ class VariantCellWidget(QtGui.QWidget, ContextViewMixin):
                 new_icons.append(("local", "package is local"))
 
             package_paths = PackageSearchPath(self.context_model.packages_path)
-            package_filter = PackageFilterList.from_pod(self.context_model.package_filter)
+            package_filter = PackageFilterList.from_pod(
+                self.context_model.package_filter
+            )
 
             # TODO: move this all into a thread, it's blocking up the GUI during context load
             if self.variant in package_paths:
@@ -122,8 +139,9 @@ class VariantCellWidget(QtGui.QWidget, ContextViewMixin):
                 ge_range = VersionRange.from_version(self.variant.version, ">=")
                 packages = None
                 try:
-                    it = package_paths.iter_packages(name=self.variant.name,
-                                                     range_=ge_range)
+                    it = package_paths.iter_packages(
+                        name=self.variant.name, range_=ge_range
+                    )
 
                     packages = sorted(it, key=lambda x: x.version)
                 except:
@@ -159,86 +177,113 @@ class VariantCellWidget(QtGui.QWidget, ContextViewMixin):
                             if packages_:
                                 latest_pkg = packages_[-1]
                                 if self.variant.version == latest_pkg.version:
-                                    new_icons.append(("yellow_tick",
-                                                      "package is latest possible"))
+                                    new_icons.append(
+                                        ("yellow_tick", "package is latest possible")
+                                    )
                                     ticked = True
 
-                    packages2 = [x for x in (packages_ or packages)
-                                 if x.version > self.variant.version]
+                    packages2 = [
+                        x
+                        for x in (packages_ or packages)
+                        if x.version > self.variant.version
+                    ]
 
                     # test if variant is latest within package filter
-                    if (not ticked
-                            and packages2
-                            and package_filter):
+                    if not ticked and packages2 and package_filter:
                         if all(package_filter.excludes(x) for x in packages2):
-                            new_icons.append(("yellow_tick",
-                                              "package is latest possible"))
+                            new_icons.append(
+                                ("yellow_tick", "package is latest possible")
+                            )
                             ticked = True
 
                     # test if variant was latest package at time of resolve
                     if not ticked and self.variant.timestamp:
-                        untimestamped_packages = [x for x in packages
-                                                  if not x.timestamp]
+                        untimestamped_packages = [
+                            x for x in packages if not x.timestamp
+                        ]
                         if not untimestamped_packages:
                             resolve_time = self.context().timestamp
-                            old_packages = [x for x in packages
-                                            if x.timestamp <= resolve_time]
+                            old_packages = [
+                                x for x in packages if x.timestamp <= resolve_time
+                            ]
                             if old_packages:
                                 latest_pkg = old_packages[-1]
                                 if self.variant.version == latest_pkg.version:
                                     new_icons.append(
-                                        ("green_white_tick",
-                                         "package was latest at time of resolve"))
+                                        (
+                                            "green_white_tick",
+                                            "package was latest at time of resolve",
+                                        )
+                                    )
                                     ticked = True
 
                     # test if variant is in request, and was latest possible at
                     # the time of resolve
-                    if (not ticked
-                            and self.variant.timestamp
-                            and range_ is not None
-                            and packages_ is not None):
-                        untimestamped_packages = any(x for x in packages_ if not x.timestamp)
+                    if (
+                        not ticked
+                        and self.variant.timestamp
+                        and range_ is not None
+                        and packages_ is not None
+                    ):
+                        untimestamped_packages = any(
+                            x for x in packages_ if not x.timestamp
+                        )
                         if not untimestamped_packages:
                             resolve_time = self.context().timestamp
-                            old_packages = [x for x in packages_
-                                            if x.timestamp <= resolve_time]
+                            old_packages = [
+                                x for x in packages_ if x.timestamp <= resolve_time
+                            ]
                             if old_packages:
                                 latest_pkg = old_packages[-1]
                                 if self.variant.version == latest_pkg.version:
                                     new_icons.append(
-                                        ("yellow_white_tick",
-                                         "package was latest possible at time of resolve"))
+                                        (
+                                            "yellow_white_tick",
+                                            "package was latest possible at time of resolve",
+                                        )
+                                    )
                                     ticked = True
 
                     # test if variant is within package filter, and was latest
                     # possible at the time of resolve
-                    if (not ticked
-                            and packages2
-                            and package_filter
-                            and self.variant.timestamp):
-                        untimestamped_packages = any(x for x in (packages_ or packages)
-                                                     if not x.timestamp)
+                    if (
+                        not ticked
+                        and packages2
+                        and package_filter
+                        and self.variant.timestamp
+                    ):
+                        untimestamped_packages = any(
+                            x for x in (packages_ or packages) if not x.timestamp
+                        )
                         if not untimestamped_packages:
-                            newer_package = any(x for x in packages2
-                                                if not package_filter.excludes(x)
-                                                and x.timestamp <= resolve_time)
+                            newer_package = any(
+                                x
+                                for x in packages2
+                                if not package_filter.excludes(x)
+                                and x.timestamp <= resolve_time
+                            )
                             if not newer_package:
-                                    new_icons.append(
-                                        ("yellow_white_tick",
-                                         "package was latest possible at time of resolve"))
-                                    ticked = True
+                                new_icons.append(
+                                    (
+                                        "yellow_white_tick",
+                                        "package was latest possible at time of resolve",
+                                    )
+                                )
+                                ticked = True
 
                     # bring in the old man
                     if not ticked:
                         new_icons.append(
-                            ("old_man", "newer packages are/were available"))
+                            ("old_man", "newer packages are/were available")
+                        )
             else:
                 new_icons.append(("error", "package is not in the search path"))
 
             self._set_icons(new_icons)
 
-        if (not self.hide_locks) and (flags & (ContextModel.LOCKS_CHANGED |
-                                      ContextModel.CONTEXT_CHANGED)):
+        if (not self.hide_locks) and (
+            flags & (ContextModel.LOCKS_CHANGED | ContextModel.CONTEXT_CHANGED)
+        ):
             # update lock icon
             lock = self.context_model.get_patch_lock(self.variant.name)
             if lock is None:
@@ -257,8 +302,10 @@ class VariantCellWidget(QtGui.QWidget, ContextViewMixin):
                         desc = "Exact version (%s)" % str(req)
                     else:
                         unit = lock.description.split()[0]
-                        desc = ("%s version updates only (%s.*)"
-                                % (unit.capitalize(), str(req)))
+                        desc = "%s version updates only (%s.*)" % (
+                            unit.capitalize(),
+                            str(req),
+                        )
                 else:
                     desc = lock.description
 
@@ -268,8 +315,11 @@ class VariantCellWidget(QtGui.QWidget, ContextViewMixin):
     def _get_lock_requirement(self, lock_type):
         if lock_type == PatchLock.no_lock:
             return None
-        version = self.reference_variant.version if self.reference_variant \
+        version = (
+            self.reference_variant.version
+            if self.reference_variant
             else self.variant.version
+        )
         return get_lock_request(self.variant.name, version, lock_type, weak=False)
 
     def _set_lock_type(self, lock_type):

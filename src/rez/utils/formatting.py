@@ -3,8 +3,12 @@ Utilities related to formatting output or translating input.
 """
 from __future__ import absolute_import
 
+from builtins import zip
+from builtins import map
+from builtins import str
+from builtins import object
 from string import Formatter
-from rez.vendor.enum import Enum
+from enum import Enum
 from rez.vendor.version.requirement import Requirement
 from rez.exceptions import PackageRequestError
 from pprint import pformat
@@ -17,7 +21,7 @@ import time
 PACKAGE_NAME_REGSTR = "[a-zA-Z_0-9](\.?[a-zA-Z0-9_]+)*"
 PACKAGE_NAME_REGEX = re.compile(r"^%s\Z" % PACKAGE_NAME_REGSTR)
 
-ENV_VAR_REGSTR = r'\$(\w+|\{[^}]*\})'
+ENV_VAR_REGSTR = r"\$(\w+|\{[^}]*\})"
 ENV_VAR_REGEX = re.compile(ENV_VAR_REGSTR)
 
 FORMAT_VAR_REGSTR = "{(?P<var>.+?)}"
@@ -49,6 +53,7 @@ class PackageRequest(Requirement):
         >>> print pr.name, pr.range
         foo 1.3+
     """
+
     def __init__(self, s):
         super(PackageRequest, self).__init__(s)
         is_valid_package_name(self.name, True)
@@ -56,6 +61,7 @@ class PackageRequest(Requirement):
 
 class StringFormatType(Enum):
     """Behaviour of key expansion when using `ObjectStringFormatter`."""
+
     error = 1  # raise exception on unknown key
     empty = 2  # expand to empty on unknown key
     unchanged = 3  # leave string unchanged on unknown key
@@ -66,6 +72,7 @@ class ObjectStringFormatter(Formatter):
 
     This formatter will expand any reference to an object's attributes.
     """
+
     error = StringFormatType.error
     empty = StringFormatType.empty
     unchanged = StringFormatType.unchanged
@@ -87,15 +94,16 @@ class ObjectStringFormatter(Formatter):
     def convert_field(self, value, conversion):
         if self.pretty:
             if value is None:
-                return ''
+                return ""
             elif isinstance(value, list):
+
                 def _str(x):
-                    if isinstance(x, unicode):
+                    if isinstance(x, str):
                         return x
                     else:
                         return str(x)
 
-                return ' '.join(map(_str, value))
+                return " ".join(map(_str, value))
 
         return Formatter.convert_field(self, value, conversion)
 
@@ -111,7 +119,7 @@ class ObjectStringFormatter(Formatter):
             except:
                 key = field_name
             if self.expand == StringFormatType.empty:
-                return ('', key)
+                return ("", key)
             else:  # StringFormatType.unchanged
                 return ("{%s}" % field_name, key)
 
@@ -144,6 +152,7 @@ class StringFormatMixin(object):
     An object inheriting this mixin will have a `format` function added, that is
     able to format using attributes of the object.
     """
+
     format_expand = StringFormatType.error
     format_pretty = True
 
@@ -190,6 +199,7 @@ def expand_abbreviations(txt, fields):
     Returns:
         Expanded string.
     """
+
     def _expand(matchobj):
         s = matchobj.group("var")
         if s not in fields:
@@ -197,6 +207,7 @@ def expand_abbreviations(txt, fields):
             if len(matches) == 1:
                 s = matches[0]
         return "{%s}" % s
+
     return re.sub(FORMAT_VAR_REGEX, _expand, txt)
 
 
@@ -213,7 +224,7 @@ def expandvars(text, environ=None):
     Returns:
         The expanded string.
     """
-    if '$' not in text:
+    if "$" not in text:
         return text
 
     i = 0
@@ -226,7 +237,7 @@ def expandvars(text, environ=None):
             break
         i, j = m.span(0)
         name = m.group(1)
-        if name.startswith('{') and name.endswith('}'):
+        if name.startswith("{") and name.endswith("}"):
             name = name[1:-1]
         if name in environ:
             tail = text[j:]
@@ -240,8 +251,8 @@ def expandvars(text, environ=None):
 
 def indent(txt):
     """Indent the given text by 4 spaces."""
-    lines = (("    " + x) for x in txt.split('\n'))
-    return '\n'.join(lines)
+    lines = (("    " + x) for x in txt.split("\n"))
+    return "\n".join(lines)
 
 
 def dict_to_attributes_code(dict_):
@@ -258,25 +269,25 @@ def dict_to_attributes_code(dict_):
         str.
     """
     lines = []
-    for key, value in dict_.iteritems():
+    for key, value in dict_.items():
         if isinstance(value, dict):
             txt = dict_to_attributes_code(value)
-            lines_ = txt.split('\n')
+            lines_ = txt.split("\n")
             for line in lines_:
-                if not line.startswith(' '):
+                if not line.startswith(" "):
                     line = "%s.%s" % (key, line)
                 lines.append(line)
         else:
             value_txt = pformat(value)
-            if '\n' in value_txt:
+            if "\n" in value_txt:
                 lines.append("%s = \\" % key)
                 value_txt = indent(value_txt)
-                lines.extend(value_txt.split('\n'))
+                lines.extend(value_txt.split("\n"))
             else:
                 line = "%s = %s" % (key, value_txt)
                 lines.append(line)
 
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 def columnise(rows, padding=2):
@@ -293,12 +304,12 @@ def columnise(rows, padding=2):
                 maxwidths[i] = nse
 
     for row in rows:
-        s = ''
+        s = ""
         for i, e in enumerate(row):
             se = str(e)
             if i < len(row) - 1:
                 n = maxwidths[i] + padding - len(se)
-                se += ' ' * n
+                se += " " * n
             s += se
         strs.append(s)
     return strs
@@ -326,7 +337,8 @@ time_divs = (
     (24 * 3600, "days", 7),
     (3600, "hours", 10),
     (60, "minutes", 10),
-    (1, "seconds", 60))
+    (1, "seconds", 60),
+)
 
 
 def readable_time_duration(secs):
@@ -340,7 +352,8 @@ memory_divs = (
     (1024 * 1024 * 1024, "Gb", 64),
     (1024 * 1024, "Mb", 32),
     (1024, "Kb", 16),
-    (1, "bytes", 1024))
+    (1, "bytes", 1024),
+)
 
 
 def readable_memory_size(bytes_):
@@ -353,7 +366,7 @@ def _readable_units(value, divs, plural_aware=False):
     if value == 0:
         unit = divs[-1][1]
         return "0 %s" % unit
-    neg = (value < 0)
+    neg = value < 0
     if neg:
         value = -value
 
@@ -369,7 +382,7 @@ def _readable_units(value, divs, plural_aware=False):
             break
 
     if neg:
-        txt = '-' + txt
+        txt = "-" + txt
     return txt
 
 
@@ -386,11 +399,8 @@ def get_epoch_time_from_str(s):
         pass
 
     try:
-        if s.startswith('-'):
-            chars = {'d': 24 * 60 * 60,
-                     'h': 60 * 60,
-                     'm': 60,
-                     's': 1}
+        if s.startswith("-"):
+            chars = {"d": 24 * 60 * 60, "h": 60 * 60, "m": 60, "s": 1}
             m = chars.get(s[-1])
             if m:
                 n = float(s[1:-1])
@@ -431,9 +441,11 @@ def positional_number_string(n):
 
 # regex used to expand user; set here to avoid recompile on every call
 EXPANDUSER_RE = re.compile(
-    r'(\A|\s|[{pathseps}])~([{seps}]|[{pathseps}]|\s|\Z)'.format(
-    seps = re.escape(''.join(set([os.sep + (getattr(os, 'altsep') or os.sep)]))),
-    pathseps = re.escape(''.join(set([os.pathsep + ';'])))))
+    r"(\A|\s|[{pathseps}])~([{seps}]|[{pathseps}]|\s|\Z)".format(
+        seps=re.escape("".join(set([os.sep + (getattr(os, "altsep") or os.sep)]))),
+        pathseps=re.escape("".join(set([os.pathsep + ";"]))),
+    )
+)
 
 
 def expanduser(path):
@@ -445,26 +457,26 @@ def expanduser(path):
     string '~packagename' may inadvertently convert to a homedir, if a package
     happens to match a username.
     """
-    if '~' not in path:
+    if "~" not in path:
         return path
 
     if os.name == "nt":
-        if 'HOME' in os.environ:
-            userhome = os.environ['HOME']
-        elif 'USERPROFILE' in os.environ:
-            userhome = os.environ['USERPROFILE']
-        elif 'HOMEPATH' in os.environ:
-            drive = os.environ.get('HOMEDRIVE', '')
-            userhome = os.path.join(drive, os.environ['HOMEPATH'])
+        if "HOME" in os.environ:
+            userhome = os.environ["HOME"]
+        elif "USERPROFILE" in os.environ:
+            userhome = os.environ["USERPROFILE"]
+        elif "HOMEPATH" in os.environ:
+            drive = os.environ.get("HOMEDRIVE", "")
+            userhome = os.path.join(drive, os.environ["HOMEPATH"])
         else:
             return path
     else:
-        userhome = os.path.expanduser('~')
+        userhome = os.path.expanduser("~")
 
     def _expanduser(path):
         return EXPANDUSER_RE.sub(
-            lambda m: m.groups()[0] + userhome + m.groups()[1],
-            path)
+            lambda m: m.groups()[0] + userhome + m.groups()[1], path
+        )
 
     # only replace '~' if it's at start of string or is preceeded by pathsep or
     # ';' or whitespace; AND, is followed either by sep, pathsep, ';', ' ' or
@@ -480,12 +492,12 @@ def as_block_string(txt):
     import json
 
     lines = []
-    for line in txt.split('\n'):
+    for line in txt.split("\n"):
         line_ = json.dumps(line)
         line_ = line_[1:-1].rstrip()  # drop double quotes
         lines.append(line_)
 
-    return '"""\n%s\n"""' % '\n'.join(lines)
+    return '"""\n%s\n"""' % "\n".join(lines)
 
 
 # Copyright 2013-2016 Allan Johns.

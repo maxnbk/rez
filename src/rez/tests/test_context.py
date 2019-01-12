@@ -1,8 +1,7 @@
 """
 test resolved contexts
 """
-from rez.tests.util import restore_os_environ, restore_sys_path, TempdirMixin, \
-    TestBase
+from rez.tests.util import restore_os_environ, restore_sys_path, TempdirMixin, TestBase
 from rez.resolved_context import ResolvedContext
 from rez.bind import hello_world
 from rez.utils.platform_ import platform_
@@ -26,7 +25,8 @@ class TestContext(TestBase, TempdirMixin):
             package_filter=None,
             implicit_packages=[],
             warn_untimestamped=False,
-            resolve_caching=False)
+            resolve_caching=False,
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -52,9 +52,11 @@ class TestContext(TestBase, TempdirMixin):
     def test_execute_command(self):
         """Test command execution in context."""
         if platform_.name == "windows":
-            self.skipTest("This test does not run on Windows due to problems"
-                          " with the automated binding of the 'hello_world'"
-                          " executable.")
+            self.skipTest(
+                "This test does not run on Windows due to problems"
+                " with the automated binding of the 'hello_world'"
+                " executable."
+            )
 
         r = ResolvedContext(["hello_world"])
         p = r.execute_command(["hello_world"], stdout=subprocess.PIPE)
@@ -67,17 +69,18 @@ class TestContext(TestBase, TempdirMixin):
         parent_environ = {"BIGLY": "covfefe"}
         r = ResolvedContext(["hello_world"])
 
-        pycode = ("import os; "
-                  "print os.getenv(\"BIGLY\"); "
-                  "print os.getenv(\"OH_HAI_WORLD\")")
+        pycode = (
+            "import os; " 'print os.getenv("BIGLY"); ' 'print os.getenv("OH_HAI_WORLD")'
+        )
 
         args = ["python", "-c", pycode]
 
-        p = r.execute_command(args, parent_environ=parent_environ,
-                              stdout=subprocess.PIPE)
+        p = r.execute_command(
+            args, parent_environ=parent_environ, stdout=subprocess.PIPE
+        )
         stdout, _ = p.communicate()
         stdout = stdout.strip()
-        parts = [x.strip() for x in stdout.split('\n')]
+        parts = [x.strip() for x in stdout.split("\n")]
 
         self.assertEqual(parts, ["covfefe", "hello"])
 
@@ -92,7 +95,7 @@ class TestContext(TestBase, TempdirMixin):
         self.assertEqual(r.resolved_packages, r2.resolved_packages)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
 
 

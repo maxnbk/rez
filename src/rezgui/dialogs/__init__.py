@@ -1,5 +1,3 @@
-
-
 # Copyright 2013-2016 Allan Johns.
 #
 # This library is free software: you can redistribute it and/or

@@ -7,11 +7,18 @@ class LoadPackagesThread(QtCore.QObject):
 
     Packages are loaded in decreasing version order.
     """
+
     progress = QtCore.Signal(int, int)
     finished = QtCore.Signal(object)
 
-    def __init__(self, package_paths, package_name, range_=None,
-                 package_attributes=None, callback=None):
+    def __init__(
+        self,
+        package_paths,
+        package_name,
+        range_=None,
+        package_attributes=None,
+        callback=None,
+    ):
         super(LoadPackagesThread, self).__init__()
         self.stopped = False
         self.package_paths = package_paths
@@ -24,7 +31,9 @@ class LoadPackagesThread(QtCore.QObject):
         self.stopped = True
 
     def run(self):
-        it = iter_packages(name=self.package_name, paths=self.package_paths, range_=self.range_)
+        it = iter_packages(
+            name=self.package_name, paths=self.package_paths, range_=self.range_
+        )
         packages = sorted(it, key=lambda x: x.version, reverse=True)
         num_packages = len(packages)
         self.progress.emit(0, num_packages)

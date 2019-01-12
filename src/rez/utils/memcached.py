@@ -1,3 +1,5 @@
+from past.builtins import basestring
+from builtins import object
 from rez.config import config
 from rez.vendor.memcache.memcache import Client as Client_, SERVER_MAX_KEY_LENGTH
 from threading import local
@@ -20,8 +22,11 @@ class Client(object):
     - hard/soft flushing;
     - ability to cache None.
     """
+
     class _Miss(object):
-        def __nonzero__(self): return False
+        def __bool__(self):
+            return False
+
     miss = _Miss()
 
     logger = config.debug_printer("memcache")
@@ -39,9 +44,9 @@ class Client(object):
         self.key_hasher = self._debug_key_hash if debug else self._key_hash
         self._client = None
         self.debug = debug
-        self.current = ''
+        self.current = ""
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self.servers)
 
     @property
@@ -79,10 +84,9 @@ class Client(object):
         hashed_key = self.key_hasher(key)
         val = (key, val)
 
-        self.client.set(key=hashed_key,
-                        val=val,
-                        time=time,
-                        min_compress_len=min_compress_len)
+        self.client.set(
+            key=hashed_key, val=val, time=time, min_compress_len=min_compress_len
+        )
         self.logger("SET: %s", key)
 
     def get(self, key):
@@ -131,6 +135,7 @@ class Client(object):
             self.reset_stats()
         else:
             from uuid import uuid4
+
             tag = uuid4().hex
             if self.debug:
                 tag = "flushed" + tag
@@ -152,7 +157,7 @@ class Client(object):
         """Disconnect from server(s). Behaviour is undefined after this call."""
         if self.servers and self._client:
             self._client.disconnect_all()
-        #print "Disconnected memcached client %s" % str(self)
+        # print "Disconnected memcached client %s" % str(self)
 
     def _qualified_key(self, key):
         return "%s:%s:%s" % (cache_interface_version, self.current, key)
@@ -167,10 +172,11 @@ class Client(object):
     @classmethod
     def _debug_key_hash(cls, key):
         import re
+
         h = cls._key_hash(key)[:16]
         value = "%s:%s" % (h, key)
         value = value[:SERVER_MAX_KEY_LENGTH]
-        value = re.sub("[^0-9a-zA-Z]+", '_', value)
+        value = re.sub("[^0-9a-zA-Z]+", "_", value)
         return value
 
 
@@ -233,11 +239,14 @@ def pool_memcached_connections(func):
     will cause a single memcached client to be shared for all connections.
     """
     if isgeneratorfunction(func):
+
         def wrapper(*nargs, **kwargs):
             with memcached_client():
                 for result in func(*nargs, **kwargs):
                     yield result
+
     else:
+
         def wrapper(*nargs, **kwargs):
             with memcached_client():
                 return func(*nargs, **kwargs)
@@ -245,8 +254,15 @@ def pool_memcached_connections(func):
     return update_wrapper(wrapper, func)
 
 
-def memcached(servers, key=None, from_cache=None, to_cache=None, time=0,
-              min_compress_len=0, debug=False):
+def memcached(
+    servers,
+    key=None,
+    from_cache=None,
+    to_cache=None,
+    time=0,
+    min_compress_len=0,
+    debug=False,
+):
     """memcached memoization function decorator.
 
     The wrapped function is expected to return a value that is stored to a
@@ -295,6 +311,7 @@ def memcached(servers, key=None, from_cache=None, to_cache=None, time=0,
             However this increases chances of key clashes so should not be left
             turned on.
     """
+
     def default_key(func, *nargs, **kwargs):
         parts = [func.__module__]
 
@@ -311,7 +328,7 @@ def memcached(servers, key=None, from_cache=None, to_cache=None, time=0,
 
         parts.append(func.__name__)
 
-        value = ('.'.join(parts), nargs, tuple(sorted(kwargs.items())))
+        value = (".".join(parts), nargs, tuple(sorted(kwargs.items())))
         # make sure key is hashable. We don't strictly need it to be, but this
         # is a way of hopefully avoiding object types that are not ordered (these
         # would give an unreliable key). If you need to key on unhashable args,
@@ -327,6 +344,7 @@ def memcached(servers, key=None, from_cache=None, to_cache=None, time=0,
 
     def decorator(func):
         if servers:
+
             def wrapper(*nargs, **kwargs):
                 with memcached_client(servers, debug=debug) as client:
                     if key:
@@ -346,12 +364,16 @@ def memcached(servers, key=None, from_cache=None, to_cache=None, time=0,
 
                     # store
                     cache_result = to_cache(result, *nargs, **kwargs)
-                    client.set(key=cache_key,
-                               val=cache_result,
-                               time=time,
-                               min_compress_len=min_compress_len)
+                    client.set(
+                        key=cache_key,
+                        val=cache_result,
+                        time=time,
+                        min_compress_len=min_compress_len,
+                    )
                     return result
+
         else:
+
             def wrapper(*nargs, **kwargs):
                 result = func(*nargs, **kwargs)
                 if isinstance(result, DoNotCache):
@@ -372,6 +394,7 @@ def memcached(servers, key=None, from_cache=None, to_cache=None, time=0,
         wrapper.forget = forget
         wrapper.__wrapped__ = func
         return update_wrapper(wrapper, func)
+
     return decorator
 
 

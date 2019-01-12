@@ -1,4 +1,4 @@
-name = 'unversioned_py'
+name = "unversioned_py"
 
 
 # Copyright 2013-2016 Allan Johns.

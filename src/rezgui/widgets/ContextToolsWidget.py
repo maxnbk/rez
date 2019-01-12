@@ -1,3 +1,4 @@
+from builtins import str
 from rezgui.qt import QtCore, QtGui
 from rezgui.widgets.ToolWidget import ToolWidget
 from rezgui.models.ContextModel import ContextModel
@@ -41,7 +42,7 @@ class ContextToolsWidget(QtGui.QTreeWidget, ContextViewMixin):
         self.setColumnCount(2)
         self.setFocusPolicy(QtCore.Qt.NoFocus)
 
-        #app.process_tracker.instanceCountChanged.connect(self._instanceCountChanged)
+        # app.process_tracker.instanceCountChanged.connect(self._instanceCountChanged)
 
         self.refresh()
 
@@ -68,7 +69,7 @@ class ContextToolsWidget(QtGui.QTreeWidget, ContextViewMixin):
 
             for tool in sorted(variant.tools):
                 item_ = QtGui.QTreeWidgetItem(item)
-                widget = ToolWidget(context, tool)  #, app.process_tracker)
+                widget = ToolWidget(context, tool)  # , app.process_tracker)
                 widget.clicked.connect(self._clear_selection)
                 self.setItemWidget(item_, 1, widget)
                 self.tool_widgets[tool] = widget

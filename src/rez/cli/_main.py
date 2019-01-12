@@ -1,4 +1,7 @@
 """The main command-line entry point."""
+from __future__ import print_function
+from builtins import str
+from builtins import object
 import sys
 from rez.vendor.argparse import _StoreTrueAction, SUPPRESS
 from rez.cli._util import subcommands, LazyArgumentParser, _env_var_true
@@ -10,6 +13,7 @@ from rez import __version__
 class SetupRezSubParser(object):
     """Callback class for lazily setting up rez sub-parsers.
     """
+
     def __init__(self, module_name):
         self.module_name = module_name
 
@@ -18,16 +22,22 @@ class SetupRezSubParser(object):
 
         error_msg = None
         if not mod.__doc__:
-            error_msg = "command module %s must have a module-level " \
+            error_msg = (
+                "command module %s must have a module-level "
                 "docstring (used as the command help)" % self.module_name
-        if not hasattr(mod, 'command'):
-            error_msg = "command module %s must provide a command() " \
+            )
+        if not hasattr(mod, "command"):
+            error_msg = (
+                "command module %s must provide a command() "
                 "function" % self.module_name
-        if not hasattr(mod, 'setup_parser'):
-            error_msg = "command module %s  must provide a setup_parser() " \
+            )
+        if not hasattr(mod, "setup_parser"):
+            error_msg = (
+                "command module %s  must provide a setup_parser() "
                 "function" % self.module_name
+            )
         if error_msg:
-            print >> sys.stderr, error_msg
+            print(error_msg, file=sys.stderr)
             return SUPPRESS
 
         mod.setup_parser(parser)
@@ -37,7 +47,7 @@ class SetupRezSubParser(object):
         _add_common_args(parser)
 
         # optionally, return the brief help line for this sub-parser
-        brief = mod.__doc__.strip('\n').split('\n')[0]
+        brief = mod.__doc__.strip("\n").split("\n")[0]
         return brief
 
     def get_module(self):
@@ -47,31 +57,37 @@ class SetupRezSubParser(object):
 
 
 def _add_common_args(parser):
-    parser.add_argument("-v", "--verbose", action="count", default=0,
-                        help="verbose mode, repeat for more verbosity")
-    parser.add_argument("--debug", dest="debug", action="store_true",
-                        help=SUPPRESS)
-    parser.add_argument("--profile", dest="profile", type=str,
-                        help=SUPPRESS)
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="verbose mode, repeat for more verbosity",
+    )
+    parser.add_argument("--debug", dest="debug", action="store_true", help=SUPPRESS)
+    parser.add_argument("--profile", dest="profile", type=str, help=SUPPRESS)
 
 
 class InfoAction(_StoreTrueAction):
     def __call__(self, parser, args, values, option_string=None):
         from rez.system import system
+
         txt = system.get_summary_string()
-        print
-        print txt
-        print
+        print()
+        print(txt)
+        print()
         sys.exit(0)
 
 
 def run(command=None):
     parser = LazyArgumentParser("rez")
 
-    parser.add_argument("-i", "--info", action=InfoAction,
-                        help="print information about rez and exit")
-    parser.add_argument("-V", "--version", action="version",
-                        version="Rez %s" % __version__)
+    parser.add_argument(
+        "-i", "--info", action=InfoAction, help="print information about rez and exit"
+    )
+    parser.add_argument(
+        "-V", "--version", action="version", version="Rez %s" % __version__
+    )
 
     # add args common to all subcommands... we add them both to the top parser,
     # AND to the subparsers, for two reasons:
@@ -82,14 +98,15 @@ def run(command=None):
     _add_common_args(parser)
 
     # add lazy subparsers
-    subparser = parser.add_subparsers(dest='cmd', metavar='COMMAND')
+    subparser = parser.add_subparsers(dest="cmd", metavar="COMMAND")
     for subcommand in subcommands:
         module_name = "rez.cli.%s" % subcommand
 
         subparser.add_parser(
             subcommand,
-            help='',  # required so that it can be setup later
-            setup_subparser=SetupRezSubParser(module_name))
+            help="",  # required so that it can be setup later
+            setup_subparser=SetupRezSubParser(module_name),
+        )
 
     # construct args list. Note that commands like 'rez-env foo' and
     # 'rez env foo' are equivalent
@@ -111,7 +128,7 @@ def run(command=None):
         # args split into groups by '--'
         arg_groups = [[]]
         for arg in args:
-            if arg == '--':
+            if arg == "--":
                 arg_groups.append([])
                 continue
             arg_groups[-1].append(arg)
@@ -137,6 +154,7 @@ def run(command=None):
 
     if opts.profile:
         import cProfile
+
         cProfile.runctx("run_cmd()", globals(), locals(), filename=opts.profile)
         returncode = 0
     else:
@@ -151,7 +169,7 @@ def run(command=None):
     sys.exit(returncode or 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run()
 
 

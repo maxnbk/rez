@@ -1,3 +1,4 @@
+from builtins import str
 from rezgui.qt import QtCore, QtGui
 from rezgui.util import create_pane
 from rez.utils.graph_utils import save_graph, prune_graph
@@ -27,7 +28,7 @@ class Writer(QtCore.QObject):
         else:
             graph_str = self.graph_str
 
-        error_msg = ''
+        error_msg = ""
         try:
             save_graph(graph_str, self.filepath)
         except Exception as e:
@@ -96,8 +97,9 @@ class WriteGraphDialog(QtGui.QDialog):
         self.setWindowTitle("Rendered graph")
 
         if error_message:
-            QtGui.QMessageBox.critical(self, "Failed rendering resolve graph",
-                                       error_message)
+            QtGui.QMessageBox.critical(
+                self, "Failed rendering resolve graph", error_message
+            )
         elif filepath:
             self.success = True
         self.close()

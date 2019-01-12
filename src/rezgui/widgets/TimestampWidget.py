@@ -19,10 +19,9 @@ class TimestampWidget(QtGui.QFrame):
         self.package_btn = IconButton("package", "select package release date")
         self.clock_btn = IconButton("clock", "select time in the past")
         self.checkbox = QtGui.QCheckBox("ignore packages released after:")
-        pane = create_pane([None,
-                           self.checkbox,
-                           self.package_btn,
-                           self.clock_btn], True, compact=True)
+        pane = create_pane(
+            [None, self.checkbox, self.package_btn, self.clock_btn], True, compact=True
+        )
 
         self.edit = QtGui.QDateTimeEdit()
         self.edit.setCalendarPopup(True)
@@ -60,9 +59,11 @@ class TimestampWidget(QtGui.QFrame):
 
     def _selectPackage(self):
         fn = lambda x: bool(x.timestamp)
-        dlg = BrowsePackageDialog(context_model=self.context_model,
-                                  parent=self.parentWidget(),
-                                  package_selectable_callback=fn)
+        dlg = BrowsePackageDialog(
+            context_model=self.context_model,
+            parent=self.parentWidget(),
+            package_selectable_callback=fn,
+        )
         dlg.exec_()
         if dlg.package:
             self.set_time(dlg.package.timestamp)

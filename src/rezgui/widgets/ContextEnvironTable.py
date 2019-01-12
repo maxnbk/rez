@@ -56,10 +56,10 @@ class ContextEnvironTable(QtGui.QTableWidget):
         for i, (name, value) in enumerate(sorted(environ.items())):
             item = QtGui.QTableWidgetItem(name)
             self.setItem(i, 0, item)
-            if self.split_char == ' ':
-                value = '\n'.join(value.strip().split())
+            if self.split_char == " ":
+                value = "\n".join(value.strip().split())
             elif self.split_char is not None:
-                value = value.strip(self.split_char).replace(self.split_char, '\n')
+                value = value.strip(self.split_char).replace(self.split_char, "\n")
             item = QtGui.QTableWidgetItem(value)
             self.setItem(i, 1, item)
 

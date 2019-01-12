@@ -1,3 +1,5 @@
+from builtins import str
+from past.builtins import basestring
 from rez.config import config
 from rez.packages_ import Package
 from rez.serialise import load_from_file, FileFormat, set_objects
@@ -17,6 +19,7 @@ class DeveloperPackage(Package):
     This is a package in a source directory that is subsequently built or
     released.
     """
+
     def __init__(self, resource):
         super(DeveloperPackage, self).__init__(resource)
         self.filepath = None
@@ -58,14 +61,14 @@ class DeveloperPackage(Package):
             mode = os.stat(path).st_mode
         except (IOError, OSError):
             raise PackageMetadataError(
-                "Path %r did not exist, or was not accessible" % path)
+                "Path %r did not exist, or was not accessible" % path
+            )
         is_dir = stat.S_ISDIR(mode)
 
         for name_ in config.plugins.package_repository.filesystem.package_filenames:
             for format_ in formats:
                 if is_dir:
-                    filepath = os.path.join(path, "%s.%s" % (name_,
-                                                             format_.extension))
+                    filepath = os.path.join(path, "%s.%s" % (name_, format_.extension))
                     exists = os.path.isfile(filepath)
                 else:
                     # if format was not specified, verify that it has the
@@ -89,7 +92,8 @@ class DeveloperPackage(Package):
 
         if name is None or not isinstance(name, basestring):
             raise PackageMetadataError(
-                "Error in %r - missing or non-string field 'name'" % filepath)
+                "Error in %r - missing or non-string field 'name'" % filepath
+            )
 
         package = create_package(name, data, package_cls=cls)
 
@@ -106,9 +110,9 @@ class DeveloperPackage(Package):
         package.includes = set()
 
         def visit(d):
-            for k, v in d.iteritems():
+            for k, v in d.items():
                 if isinstance(v, SourceCode):
-                    package.includes |= (v.includes or set())
+                    package.includes |= v.includes or set()
                 elif isinstance(v, dict):
                     visit(v)
 
@@ -145,7 +149,8 @@ class DeveloperPackage(Package):
             raise InvalidPackageError(
                 "Package %s uses @include decorator, but no include path "
                 "has been configured with the 'package_definition_python_path' "
-                "setting." % self.filepath)
+                "setting." % self.filepath
+            )
 
         for name in self.includes:
             filepath = os.path.join(definition_python_path, name)
@@ -154,7 +159,8 @@ class DeveloperPackage(Package):
             if not os.path.exists(filepath):
                 raise InvalidPackageError(
                     "@include decorator requests module '%s', but the file "
-                    "%s does not exist." % (name, filepath))
+                    "%s does not exist." % (name, filepath)
+                )
 
     def _get_preprocessed(self, data):
         """
@@ -178,20 +184,23 @@ class DeveloperPackage(Package):
                 if not dotted:
                     return None
 
-                if '.' not in dotted:
+                if "." not in dotted:
                     print_error(
                         "Setting 'package_preprocess_function' must be of "
                         "form 'module[.module.module...].funcname'. Package  "
-                        "preprocessing has not been applied.")
+                        "preprocessing has not been applied."
+                    )
                     return None
 
-                name, funcname = dotted.rsplit('.', 1)
+                name, funcname = dotted.rsplit(".", 1)
 
                 try:
                     module = __import__(name=name, fromlist=[funcname])
                 except Exception as e:
-                    print_error("Failed to load preprocessing function '%s': %s"
-                                % (dotted, str(e)))
+                    print_error(
+                        "Failed to load preprocessing function '%s': %s"
+                        % (dotted, str(e))
+                    )
                     return None
 
                 setattr(module, "InvalidPackageError", InvalidPackageError)
@@ -211,8 +220,10 @@ class DeveloperPackage(Package):
             except InvalidPackageError:
                 raise
             except Exception as e:
-                print_error("Failed to apply preprocess: %s: %s"
-                            % (e.__class__.__name__, str(e)))
+                print_error(
+                    "Failed to apply preprocess: %s: %s"
+                    % (e.__class__.__name__, str(e))
+                )
                 return None
 
         # if preprocess added functions, these may need to be converted to
@@ -223,14 +234,15 @@ class DeveloperPackage(Package):
             return None
 
         # recreate package from modified package data
-        package = create_package(self.name, preprocessed_data,
-                                 package_cls=self.__class__)
+        package = create_package(
+            self.name, preprocessed_data, package_cls=self.__class__
+        )
 
         # print summary of changed package attributes
         txt = get_dict_diff_str(
             data,
             preprocessed_data,
-            title="Package attributes were changed in preprocessing:"
+            title="Package attributes were changed in preprocessing:",
         )
         print_info(txt)
 

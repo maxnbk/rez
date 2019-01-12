@@ -2,19 +2,14 @@ name = "gcc"
 
 version = "4.8.2"
 
-authors = [
-    "GNU"
-]
+authors = ["GNU"]
 
-description = \
-    """
+description = """
     GNU project C and C++ compiler.
     """
 
-variants = [
-    ["platform-linux", "arch-x86_64", "os-Ubuntu-12.04"]
-]
-requires = [ "binutils-2.25" ]
+variants = [["platform-linux", "arch-x86_64", "os-Ubuntu-12.04"]]
+requires = ["binutils-2.25"]
 
 tools = [
     "gcc",
@@ -25,10 +20,11 @@ tools = [
     "gcc-ranlib",
     "gfortran",
     "gcc-nm",
-    "gcov"
+    "gcov",
 ]
 
 uuid = "repository.gcc"
+
 
 def commands():
     env.PATH.append("{root}/bin")

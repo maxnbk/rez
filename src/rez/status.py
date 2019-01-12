@@ -1,3 +1,7 @@
+from __future__ import print_function
+from builtins import str
+from builtins import next
+from builtins import object
 import sys
 import os
 import os.path
@@ -19,6 +23,7 @@ class Status(object):
     The current status tells you things such as if you are within a context, or
     if suite(s) are visible on $PATH.
     """
+
     def __init__(self):
         pass
 
@@ -104,17 +109,19 @@ class Status(object):
             return True
 
         b = False
-        for fn in (self._print_tool_info,
-                   self._print_package_info,
-                   self._print_suite_info,
-                   self._print_context_info):
+        for fn in (
+            self._print_tool_info,
+            self._print_package_info,
+            self._print_suite_info,
+            self._print_context_info,
+        ):
             b_ = fn(obj, buf, b)
             b |= b_
             if b_:
-                print >> buf, ''
+                print("", file=buf)
 
         if not b:
-            print >> buf, "Rez does not know what '%s' is" % obj
+            print("Rez does not know what '%s' is" % obj, file=buf)
         return b
 
     def print_tools(self, pattern=None, buf=sys.stdout):
@@ -140,14 +147,14 @@ class Status(object):
                         label = "(in conflict)"
                         color = critical
                     else:
-                        label = ''
+                        label = ""
                         color = None
 
-                    rows.append([tool, '-', pkg_str, "active context", label, color])
+                    rows.append([tool, "-", pkg_str, "active context", label, color])
                     seen.add(tool)
 
         for suite in self.suites:
-            for tool, d in suite.get_tools().iteritems():
+            for tool, d in suite.get_tools().items():
                 if tool in seen:
                     continue
                 if pattern and not fnmatch(tool, pattern):
@@ -172,11 +179,13 @@ class Status(object):
 
                 orig_tool = d["tool_name"]
                 if orig_tool == tool:
-                    orig_tool = '-'
+                    orig_tool = "-"
 
-                label = ' '.join(label)
-                source = ("context '%s' in suite '%s'"
-                          % (d["context_name"], suite.load_path))
+                label = " ".join(label)
+                source = "context '%s' in suite '%s'" % (
+                    d["context_name"],
+                    suite.load_path,
+                )
 
                 rows.append([tool, orig_tool, pkg_str, source, label, color])
                 seen.add(tool)
@@ -186,8 +195,10 @@ class Status(object):
             _pr("No matching tools.")
             return False
 
-        headers = [["TOOL", "ALIASING", "PACKAGE", "SOURCE", "", None],
-                   ["----", "--------", "-------", "------", "", None]]
+        headers = [
+            ["TOOL", "ALIASING", "PACKAGE", "SOURCE", "", None],
+            ["----", "--------", "-------", "------", "", None],
+        ]
         rows = headers + sorted(rows, key=lambda x: x[0].lower())
         print_colored_columns(_pr, rows)
         return True
@@ -204,7 +215,7 @@ class Status(object):
 
         # find it on disk
         filepath = None
-        unpathed = (os.path.basename(value) == value)
+        unpathed = os.path.basename(value) == value
         if unpathed:
             filepath = which(value)
 
@@ -238,7 +249,7 @@ class Status(object):
                     msg = "Packages (in conflict): %s" % vars_str
                     _pr(msg, critical)
                 else:
-                    variant = iter(variants).next()
+                    variant = next(iter(variants))
                     _pr("Package:  %s" % variant.qualified_package_name)
                 return True
 
@@ -250,8 +261,11 @@ class Status(object):
                 if os.path.isfile(filepath_):
                     w = _load_wrapper(filepath_)
                     if w:
-                        _pr("'%s' %s a suite tool, but is hidden by an unknown tool '%s':"
-                            % (tool_name, word, filepath), warning)
+                        _pr(
+                            "'%s' %s a suite tool, but is hidden by an unknown tool '%s':"
+                            % (tool_name, word, filepath),
+                            warning,
+                        )
                         w.print_about()
                     return True
 
@@ -362,10 +376,12 @@ class Status(object):
 
         if self.parent_suite:
             context_name = self.active_suite_context_name
-            lines.append("\nCurrently within context %r in suite at %s"
-                         % (context_name, self.parent_suite.load_path))
+            lines.append(
+                "\nCurrently within context %r in suite at %s"
+                % (context_name, self.parent_suite.load_path)
+            )
 
-        print >> buf, "\n".join(lines)
+        print("\n".join(lines), file=buf)
 
 
 # singleton

@@ -83,14 +83,15 @@ class PackageTabWidget(QtGui.QTabWidget, ContextViewMixin):
         prev_index = self.currentIndex()
         disabled_tabs = set()
 
-        for d in self.tabs.itervalues():
+        for d in self.tabs.values():
             index = d["index"]
             if (not d["lazy"]) or (self.currentIndex() == index):
                 self.widget(index).set_variant(variant)
 
         tab_index = self.tabs["variants"]["index"]
-        if (isinstance(variant, Variant) and variant.index is not None) \
-                or (is_package and variant.num_variants):
+        if (isinstance(variant, Variant) and variant.index is not None) or (
+            is_package and variant.num_variants
+        ):
             n = variant.num_variants if is_package else variant.parent.num_variants
             label = "variants (%d)" % n
             self.setTabEnabled(tab_index, True)

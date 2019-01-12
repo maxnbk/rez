@@ -1,6 +1,10 @@
 """
 Pluggable API for creating subshells using different programs, such as bash.
 """
+from builtins import next
+from builtins import map
+from builtins import str
+from past.builtins import basestring
 from rez.rex import RexExecutor, ActionInterpreter, OutputStyle
 from rez.util import shlex_join
 from rez.backport.shutilwhich import which
@@ -19,7 +23,8 @@ import pipes
 def get_shell_types():
     """Returns the available shell types: bash, tcsh etc."""
     from rez.plugin_managers import plugin_manager
-    return plugin_manager.get_plugins('shell')
+
+    return plugin_manager.get_plugins("shell")
 
 
 def create_shell(shell=None, **kwargs):
@@ -29,18 +34,19 @@ def create_shell(shell=None, **kwargs):
         shell = config.default_shell
         if not shell:
             from rez.system import system
+
             shell = system.shell
 
     from rez.plugin_managers import plugin_manager
-    return plugin_manager.create_instance('shell', shell, **kwargs)
+
+    return plugin_manager.create_instance("shell", shell, **kwargs)
 
 
 class Shell(ActionInterpreter):
     """Class representing a shell, such as bash or tcsh.
     """
 
-    schema_dict = {
-        "prompt": basestring}
+    schema_dict = {"prompt": basestring}
 
     @classmethod
     def name(cls):
@@ -51,8 +57,7 @@ class Shell(ActionInterpreter):
         raise NotImplementedError
 
     @classmethod
-    def startup_capabilities(cls, rcfile=False, norc=False, stdin=False,
-                             command=False):
+    def startup_capabilities(cls, rcfile=False, norc=False, stdin=False, command=False):
         """
         Given a set of options related to shell startup, return the actual
         options that will be applied.
@@ -73,14 +78,14 @@ class Shell(ActionInterpreter):
 
     def get_output(self, style=OutputStyle.file):
         if style == OutputStyle.file:
-            script = '\n'.join(self._lines) + '\n'
+            script = "\n".join(self._lines) + "\n"
         else:  # eval style
             lines = []
             for line in self._lines:
-                if not line.startswith('#'):  # strip comments
-                    line = line.rstrip().rstrip(';')
+                if not line.startswith("#"):  # strip comments
+                    line = line.rstrip().rstrip(";")
                     lines.append(line)
-            script = ';'.join(lines)
+            script = ";".join(lines)
 
         return script
 
@@ -91,14 +96,17 @@ class Shell(ActionInterpreter):
     @classmethod
     def _unsupported_option(cls, option, val):
         if val and config.warn("shell_startup"):
-            print_warning("%s ignored, not supported by %s shell"
-                          % (option, cls.name()))
+            print_warning(
+                "%s ignored, not supported by %s shell" % (option, cls.name())
+            )
 
     @classmethod
     def _overruled_option(cls, option, overruling_option, val):
         if val and config.warn("shell_startup"):
-            print_warning("%s ignored by %s shell - overruled by %s option"
-                          % (option, cls.name(), overruling_option))
+            print_warning(
+                "%s ignored by %s shell - overruled by %s option"
+                % (option, cls.name(), overruling_option)
+            )
 
     @classmethod
     def find_executable(cls, name, check_syspaths=False):
@@ -124,10 +132,21 @@ class Shell(ActionInterpreter):
             raise RuntimeError("Couldn't find executable '%s'." % name)
         return exe
 
-    def spawn_shell(self, context_file, tmpdir, rcfile=None, norc=False,
-                    stdin=False, command=None, env=None, quiet=False,
-                    pre_command=None, add_rez=True,
-                    package_commands_sourced_first=None, **Popen_args):
+    def spawn_shell(
+        self,
+        context_file,
+        tmpdir,
+        rcfile=None,
+        norc=False,
+        stdin=False,
+        command=None,
+        env=None,
+        quiet=False,
+        pre_command=None,
+        add_rez=True,
+        package_commands_sourced_first=None,
+        **Popen_args
+    ):
         """Spawn a possibly interactive subshell.
         Args:
             context:_file File that must be sourced in the new shell, this
@@ -171,18 +190,20 @@ class Shell(ActionInterpreter):
         """
         raise NotImplementedError
 
+
 class UnixShell(Shell):
     """
     A base class for common *nix shells, such as bash and tcsh.
     """
+
     executable = None
     rcfile_arg = None
     norc_arg = None
     histfile = None
     histvar = None
-    command_arg = '-c'
-    stdin_arg = '-s'
-    last_command_status = '$?'
+    command_arg = "-c"
+    stdin_arg = "-s"
+    last_command_status = "$?"
     syspaths = None
 
     #
@@ -218,10 +239,21 @@ class UnixShell(Shell):
         """
         raise NotImplementedError
 
-    def spawn_shell(self, context_file, tmpdir, rcfile=None, norc=False,
-                    stdin=False, command=None, env=None, quiet=False,
-                    pre_command=None, add_rez=True,
-                    package_commands_sourced_first=None, **Popen_args):
+    def spawn_shell(
+        self,
+        context_file,
+        tmpdir,
+        rcfile=None,
+        norc=False,
+        stdin=False,
+        command=None,
+        env=None,
+        quiet=False,
+        pre_command=None,
+        add_rez=True,
+        package_commands_sourced_first=None,
+        **Popen_args
+    ):
 
         d = self.get_startup_sequence(rcfile, norc, bool(stdin), command)
         envvar = d["envvar"]
@@ -249,29 +281,31 @@ class UnixShell(Shell):
             if add_rez and bind_rez:
                 ex.interpreter._bind_interactive_rez()
             if print_msg and add_rez and not quiet:
-                ex.info('')
-                ex.info('You are now in a rez-configured environment.')
-                ex.info('')
+                ex.info("")
+                ex.info("You are now in a rez-configured environment.")
+                ex.info("")
                 if system.is_production_rez_install:
-                    ex.command('rezolve context')
+                    ex.command("rezolve context")
 
         def _write_shell(ex, filename):
             code = ex.get_output()
             target_file = os.path.join(tmpdir, filename)
-            with open(target_file, 'w') as f:
+            with open(target_file, "w") as f:
                 f.write(code)
             return target_file
 
         def _create_ex():
-            return RexExecutor(interpreter=self.new_shell(),
-                               parent_environ={},
-                               add_default_namespaces=False)
+            return RexExecutor(
+                interpreter=self.new_shell(),
+                parent_environ={},
+                add_default_namespaces=False,
+            )
 
         executor = _create_ex()
 
         if self.settings.prompt:
-            newprompt = '${REZ_ENV_PROMPT}%s' % self.settings.prompt
-            executor.interpreter._saferefenv('REZ_ENV_PROMPT')
+            newprompt = "${REZ_ENV_PROMPT}%s" % self.settings.prompt
+            executor.interpreter._saferefenv("REZ_ENV_PROMPT")
             executor.env.REZ_ENV_PROMPT = newprompt
 
         if d["command"] is not None:
@@ -279,11 +313,11 @@ class UnixShell(Shell):
             shell_command = d["command"]
         else:
             if d["stdin"]:
-                assert(self.stdin_arg)
+                assert self.stdin_arg
                 shell_command = "%s %s" % (self.executable, self.stdin_arg)
                 quiet = True
             elif do_rcfile:
-                assert(self.rcfile_arg)
+                assert self.rcfile_arg
                 shell_command = "%s %s" % (self.executable, self.rcfile_arg)
             else:
                 shell_command = self.executable
@@ -316,9 +350,10 @@ class UnixShell(Shell):
                             files_ = [file_]
 
                         ex = _create_ex()
-                        ex.setenv('HOME', os.environ.get('HOME', ''))
-                        _record_shell(ex, files=files_, bind_rez=bind_rez,
-                                      print_msg=bind_rez)
+                        ex.setenv("HOME", os.environ.get("HOME", ""))
+                        _record_shell(
+                            ex, files=files_, bind_rez=bind_rez, print_msg=bind_rez
+                        )
                         _write_shell(ex, os.path.basename(file_))
 
                     executor.setenv("HOME", tmpdir)
@@ -333,7 +368,8 @@ class UnixShell(Shell):
                         print_warning(
                             "WARNING: Could not configure environment from "
                             "within the target shell (%s); this has been done "
-                            "in the parent process instead." % self.name())
+                            "in the parent process instead." % self.name()
+                        )
                     executor.source(context_file)
 
         if shell_command:  # an empty string means 'run no command and exit'
@@ -342,7 +378,7 @@ class UnixShell(Shell):
 
         code = executor.get_output()
         target_file = os.path.join(tmpdir, "rez-shell.%s" % self.file_extension())
-        with open(target_file, 'w') as f:
+        with open(target_file, "w") as f:
             f.write(code)
 
         if d["stdin"] and stdin and (stdin is not True):
@@ -359,30 +395,29 @@ class UnixShell(Shell):
         try:
             p = popen(cmd, env=env, **Popen_args)
         except Exception as e:
-            cmd_str = ' '.join(map(pipes.quote, cmd))
-            raise RezSystemError("Error running command:\n%s\n%s"
-                                 % (cmd_str, str(e)))
+            cmd_str = " ".join(map(pipes.quote, cmd))
+            raise RezSystemError("Error running command:\n%s\n%s" % (cmd_str, str(e)))
         return p
 
     def resetenv(self, key, value, friends=None):
         self._addline(self.setenv(key, value))
 
     def info(self, value):
-        for line in value.split('\n'):
+        for line in value.split("\n"):
             line = self.escape_string(line)
-            self._addline('echo %s' % line)
+            self._addline("echo %s" % line)
 
     def error(self, value):
-        for line in value.split('\n'):
+        for line in value.split("\n"):
             line = self.escape_string(line)
-            self._addline('echo %s 1>&2' % line)
+            self._addline("echo %s 1>&2" % line)
 
     # escaping is allowed in args, but not in program string
     def command(self, value):
-        if hasattr(value, '__iter__'):
+        if hasattr(value, "__iter__"):
             it = iter(value)
-            cmd = EscapedString.disallow(it.next())
-            args_str = ' '.join(self.escape_string(x) for x in it)
+            cmd = EscapedString.disallow(next(it))
+            args_str = " ".join(self.escape_string(x) for x in it)
             value = "%s %s" % (cmd, args_str)
         else:
             value = EscapedString.disallow(value)
@@ -390,8 +425,8 @@ class UnixShell(Shell):
 
     def comment(self, value):
         value = EscapedString.demote(value)
-        for line in value.split('\n'):
-            self._addline('# %s' % line)
+        for line in value.split("\n"):
+            self._addline("# %s" % line)
 
     def shebang(self):
         self._addline("#!%s" % self.executable)

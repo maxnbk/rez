@@ -9,10 +9,8 @@ def bind(path, version_range=None, opts=None, parser=None):
     name = "PySide"
     tools = ["pyuic4"]
 
-    variants = _pymodule.bind(name,
-                              path=path,
-                              version_range=version_range,
-                              pure_python=False,
-                              tools=tools)
+    variants = _pymodule.bind(
+        name, path=path, version_range=version_range, pure_python=False, tools=tools
+    )
 
     return variants

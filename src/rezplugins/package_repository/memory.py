@@ -1,9 +1,16 @@
 """
 In-memory package repository
 """
+from builtins import hex
+from builtins import str
 from rez.package_repository import PackageRepository
-from rez.package_resources_ import PackageFamilyResource, PackageResource, \
-    VariantResourceHelper, PackageResourceHelper, package_pod_schema
+from rez.package_resources_ import (
+    PackageFamilyResource,
+    PackageResource,
+    VariantResourceHelper,
+    PackageResourceHelper,
+    package_pod_schema,
+)
 from rez.exceptions import PackageMetadataError
 from rez.utils.formatting import is_valid_package_name, PackageRequest
 from rez.utils.resources import ResourceHandle, ResourcePool, cached_property
@@ -15,9 +22,10 @@ from rez.vendor.version.requirement import VersionedObject
 # creating packages via `PackageMaker`.
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # resource classes
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
 
 class MemoryPackageFamilyResource(PackageFamilyResource):
     key = "memory.family"
@@ -32,19 +40,19 @@ class MemoryPackageFamilyResource(PackageFamilyResource):
         # check for unversioned package
         if "_NO_VERSION" in data:
             package = self._repository.get_resource(
-                MemoryPackageResource.key,
-                location=self.location,
-                name=self.name)
+                MemoryPackageResource.key, location=self.location, name=self.name
+            )
             yield package
             return
 
         # versioned packages
-        for version_str in data.iterkeys():
+        for version_str in data.keys():
             package = self._repository.get_resource(
                 MemoryPackageResource.key,
                 location=self.location,
                 name=self.name,
-                version=version_str)
+                version=version_str,
+            )
             yield package
 
 
@@ -65,9 +73,8 @@ class MemoryPackageResource(PackageResourceHelper):
     @cached_property
     def parent(self):
         family = self._repository.get_resource(
-            MemoryPackageFamilyResource.key,
-            location=self.location,
-            name=self.name)
+            MemoryPackageFamilyResource.key, location=self.location, name=self.name
+        )
         return family
 
     def _load(self):
@@ -91,14 +98,16 @@ class MemoryVariantResource(VariantResourceHelper):
         package = self._repository.get_resource(
             MemoryPackageResource.key,
             location=self.location,
-             name=self.name,
-             version=self.get("version"))
+            name=self.name,
+            version=self.get("version"),
+        )
         return package
 
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # repository
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
 
 class MemoryPackageRepository(PackageRepository):
     """An in-memory package repository.
@@ -126,6 +135,7 @@ class MemoryPackageRepository(PackageRepository):
         This example repository contains one versioned package 'foo', and one
         unversioned package 'bah'.
     """
+
     @classmethod
     def name(cls):
         return "memory"
@@ -167,14 +177,13 @@ class MemoryPackageRepository(PackageRepository):
         is_valid_package_name(name, raise_error=True)
         if name in self.data:
             family = self.get_resource(
-                MemoryPackageFamilyResource.key,
-                location=self.location,
-                name=name)
+                MemoryPackageFamilyResource.key, location=self.location, name=name
+            )
             return family
         return None
 
     def iter_package_families(self):
-        for name in self.data.iterkeys():
+        for name in self.data.keys():
             family = self.get_package_family(name)
             yield family
 

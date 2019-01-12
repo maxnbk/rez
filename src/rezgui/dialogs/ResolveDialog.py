@@ -1,3 +1,6 @@
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 from rezgui.qt import QtCore, QtGui
 from rezgui.util import create_pane
 from rezgui.mixins.StoreSizeMixin import StoreSizeMixin
@@ -8,13 +11,14 @@ from rezgui.objects.ResolveThread import ResolveThread
 from rezgui.objects.App import app
 from rez.vendor.version.requirement import Requirement
 from rez.config import config
-import StringIO
+import io
 
 
 class ResolveDialog(QtGui.QDialog, StoreSizeMixin):
     def __init__(self, context_model, parent=None, advanced=False):
-        config_key = ("layout/window/advanced_resolve" if advanced
-                      else "layout/window/resolve")
+        config_key = (
+            "layout/window/advanced_resolve" if advanced else "layout/window/resolve"
+        )
         super(ResolveDialog, self).__init__(parent)
         StoreSizeMixin.__init__(self, app.config, config_key)
 
@@ -28,7 +32,7 @@ class ResolveDialog(QtGui.QDialog, StoreSizeMixin):
         self.started = False
         self._finished = False
 
-        #self.busy_cursor = QtGui.QCursor(QtCore.Qt.WaitCursor)
+        # self.busy_cursor = QtGui.QCursor(QtCore.Qt.WaitCursor)
 
         self.edit = StreamableTextEdit()
         self.edit.setStyleSheet("font: 9pt 'Courier'")
@@ -47,14 +51,18 @@ class ResolveDialog(QtGui.QDialog, StoreSizeMixin):
         self.start_again_btn.hide()
         self.save_context_btn.hide()
 
-        btn_pane = create_pane([None,
-                               self.save_context_btn,
-                               self.graph_btn,
-                               self.start_again_btn,
-                               self.ok_btn,
-                               self.cancel_btn,
-                               self.resolve_btn],
-                               not self.advanced)
+        btn_pane = create_pane(
+            [
+                None,
+                self.save_context_btn,
+                self.graph_btn,
+                self.start_again_btn,
+                self.ok_btn,
+                self.cancel_btn,
+                self.resolve_btn,
+            ],
+            not self.advanced,
+        )
 
         layout = QtGui.QVBoxLayout()
         layout.addWidget(self.bar)
@@ -94,25 +102,27 @@ class ResolveDialog(QtGui.QDialog, StoreSizeMixin):
 
             self.show_package_loads_checkbox = QtGui.QCheckBox("show package loads")
             self.show_package_loads_checkbox.setLayoutDirection(QtCore.Qt.RightToLeft)
-            app.config.attach(self.show_package_loads_checkbox, "resolve/show_package_loads")
-            show_loads_pane = create_pane([None, self.show_package_loads_checkbox], True)
+            app.config.attach(
+                self.show_package_loads_checkbox, "resolve/show_package_loads"
+            )
+            show_loads_pane = create_pane(
+                [None, self.show_package_loads_checkbox], True
+            )
 
             self.timestamp_widget = TimestampWidget(self.context_model)
             context = self.context_model.context()
             if context and context.requested_timestamp:
                 self.timestamp_widget.set_time(context.requested_timestamp)
 
-            left_pane = create_pane([self.timestamp_widget, None], False,
-                                    compact=True)
+            left_pane = create_pane([self.timestamp_widget, None], False, compact=True)
 
-            right_pane = create_pane([max_fails_pane,
-                                      verbosity_pane,
-                                      show_loads_pane,
-                                      None],
-                                     False, compact=True)
+            right_pane = create_pane(
+                [max_fails_pane, verbosity_pane, show_loads_pane, None],
+                False,
+                compact=True,
+            )
 
-            create_pane([left_pane, right_pane], True,
-                        parent_widget=self.resolve_group)
+            create_pane([left_pane, right_pane], True, parent_widget=self.resolve_group)
 
             pane = create_pane([self.resolve_group, None, btn_pane], True)
             self.cancel_btn.hide()
@@ -231,7 +241,8 @@ class ResolveDialog(QtGui.QDialog, StoreSizeMixin):
             max_fails=max_fails,
             timestamp=timestamp,
             show_package_loads=show_package_loads,
-            buf=self.edit)
+            buf=self.edit,
+        )
 
         if config.gui_threads:
             self.resolver.finished.connect(self._resolve_finished)
@@ -274,7 +285,7 @@ class ResolveDialog(QtGui.QDialog, StoreSizeMixin):
 
         if self.resolver.success():
             if self.advanced:
-                sbuf = StringIO.StringIO()
+                sbuf = io.StringIO()
                 self.resolver.context.print_info(buf=sbuf)
                 msg = "\nTHE RESOLVE SUCCEEDED:\n\n"
                 msg += sbuf.getvalue()
@@ -308,7 +319,8 @@ class ResolveDialog(QtGui.QDialog, StoreSizeMixin):
 
     def _save_context(self):
         filepath = QtGui.QFileDialog.getSaveFileName(
-            self, "Save Context", filter="Context files (*.rxt)")
+            self, "Save Context", filter="Context files (*.rxt)"
+        )
         if filepath:
             self.resolver.context.save(filepath)
             self._log("\nSaved context to: %s" % filepath)

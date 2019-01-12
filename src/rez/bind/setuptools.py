@@ -13,14 +13,16 @@ def bind(path, version_range=None, opts=None, parser=None):
     #
     # python version 2.7.5 can't run ./easy_install.  Try the alternative(s): ...
     #
-    #tools = ["easy_install"]
+    # tools = ["easy_install"]
     tools = []
 
-    variants = _pymodule.bind(name,
-                              path=path,
-                              version_range=version_range,
-                              pure_python=False,
-                              tools=tools,
-                              extra_module_names=("pkg_resources",))
+    variants = _pymodule.bind(
+        name,
+        path=path,
+        version_range=version_range,
+        pure_python=False,
+        tools=tools,
+        extra_module_names=("pkg_resources",),
+    )
 
     return variants

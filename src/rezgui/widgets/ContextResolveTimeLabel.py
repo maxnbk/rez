@@ -1,3 +1,5 @@
+from __future__ import division
+from past.utils import old_div
 from rezgui.qt import QtCore, QtGui
 from rezgui.models.ContextModel import ContextModel
 from rezgui.mixins.ContextViewMixin import ContextViewMixin
@@ -22,7 +24,7 @@ class ContextResolveTimeLabel(QtGui.QLabel, ContextViewMixin):
             self.setText("")
             return
 
-        minutes = (int(time.time()) - context.created) / 60
+        minutes = old_div((int(time.time()) - context.created), 60)
 
         if minutes:
             time_txt = readable_time_duration(minutes * 60)

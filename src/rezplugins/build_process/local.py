@@ -19,6 +19,7 @@ class LocalBuildProcess(BuildProcessHelper):
 
     This process builds a package's variants sequentially and on localhost.
     """
+
     @classmethod
     def name(cls):
         return "local"
@@ -32,12 +33,13 @@ class LocalBuildProcess(BuildProcessHelper):
             variants=variants,
             install_path=install_path,
             clean=clean,
-            install=install)
+            install=install,
+        )
 
         if None not in build_env_scripts:
             self._print("\nThe following executable script(s) have been created:")
-            self._print('\n'.join(build_env_scripts))
-            self._print('')
+            self._print("\n".join(build_env_scripts))
+            self._print("")
         else:
             self._print("\nAll %d build(s) were successful.\n", num_visited)
         return num_visited
@@ -55,31 +57,34 @@ class LocalBuildProcess(BuildProcessHelper):
         previous_revision = release_data.get("previous_revision")
 
         # run pre-release hooks
-        self.run_hooks(ReleaseHookEvent.pre_release,
-                       install_path=release_path,
-                       variants=variants,
-                       release_message=release_message,
-                       changelog=changelog,
-                       previous_version=previous_version,
-                       previous_revision=previous_revision)
+        self.run_hooks(
+            ReleaseHookEvent.pre_release,
+            install_path=release_path,
+            variants=variants,
+            release_message=release_message,
+            changelog=changelog,
+            previous_version=previous_version,
+            previous_revision=previous_revision,
+        )
 
         # release variants
         num_visited, released_variants = self.visit_variants(
-            self._release_variant,
-            variants=variants,
-            release_message=release_message)
+            self._release_variant, variants=variants, release_message=release_message
+        )
 
         released_variants = [x for x in released_variants if x is not None]
         num_released = len(released_variants)
 
         # run post-release hooks
-        self.run_hooks(ReleaseHookEvent.post_release,
-                       install_path=release_path,
-                       variants=released_variants,
-                       release_message=release_message,
-                       changelog=changelog,
-                       previous_version=previous_version,
-                       previous_revision=previous_revision)
+        self.run_hooks(
+            ReleaseHookEvent.post_release,
+            install_path=release_path,
+            variants=released_variants,
+            release_message=release_message,
+            changelog=changelog,
+            previous_version=previous_version,
+            previous_revision=previous_revision,
+        )
 
         # perform post-release actions: tag repo etc
         if released_variants:
@@ -94,8 +99,15 @@ class LocalBuildProcess(BuildProcessHelper):
 
         return num_released
 
-    def _build_variant_base(self, variant, build_type, install_path=None,
-                            clean=False, install=False, **kwargs):
+    def _build_variant_base(
+        self,
+        variant,
+        build_type,
+        install_path=None,
+        clean=False,
+        install=False,
+        **kwargs
+    ):
         # create build/install paths
         install_path = install_path or self.package.config.local_packages_path
         variant_install_path = self.get_package_install_path(install_path)
@@ -128,18 +140,21 @@ class LocalBuildProcess(BuildProcessHelper):
         # of creating the build context. The variant that is actually installed
         # is the one evaluated where 'building' is False.
         #
-        re_evaluated_package = variant.parent.get_reevaluated({
-            "building": True,
-            "build_variant_index": variant.index or 0,
-            "build_variant_requires": variant.variant_requires
-        })
+        re_evaluated_package = variant.parent.get_reevaluated(
+            {
+                "building": True,
+                "build_variant_index": variant.index or 0,
+                "build_variant_requires": variant.variant_requires,
+            }
+        )
         re_evaluated_variant = re_evaluated_package.get_variant(variant.index)
 
         # create build environment
         context, rxt_filepath = self.create_build_context(
             variant=re_evaluated_variant,
             build_type=build_type,
-            build_path=variant_build_path)
+            build_path=variant_build_path,
+        )
 
         # run build system
         build_system_name = self.build_system.name()
@@ -151,7 +166,8 @@ class LocalBuildProcess(BuildProcessHelper):
             build_path=variant_build_path,
             install_path=variant_install_path,
             install=install,
-            build_type=build_type)
+            build_type=build_type,
+        )
 
         if not build_result.get("success"):
             raise BuildError("The %s build system failed." % build_system_name)
@@ -197,12 +213,13 @@ class LocalBuildProcess(BuildProcessHelper):
             if not os.path.exists(dest_filepath):
                 shutil.copy(filepath, dest_filepath)
 
-    def _build_variant(self, variant, install_path=None, clean=False,
-                       install=False, **kwargs):
+    def _build_variant(
+        self, variant, install_path=None, clean=False, install=False, **kwargs
+    ):
         if variant.index is not None:
             self._print_header(
-                "Building variant %s (%s)..."
-                % (variant.index, self._n_of_m(variant)))
+                "Building variant %s (%s)..." % (variant.index, self._n_of_m(variant))
+            )
 
         # build and possibly install variant
         install_path = install_path or self.package.config.local_packages_path
@@ -211,7 +228,8 @@ class LocalBuildProcess(BuildProcessHelper):
             variant=variant,
             install_path=install_path,
             clean=clean,
-            install=install)
+            install=install,
+        )
 
         # install variant into package repository
         if install:
@@ -225,8 +243,10 @@ class LocalBuildProcess(BuildProcessHelper):
         # test if variant has already been released
         variant_ = variant.install(release_path, dry_run=True)
         if variant_ is not None:
-            self._print_header("Skipping %s: destination variant already exists (%r)"
-                               % (self._n_of_m(variant), variant_.uri))
+            self._print_header(
+                "Skipping %s: destination variant already exists (%r)"
+                % (self._n_of_m(variant), variant_.uri)
+            )
             return None
 
         if variant.index is not None:
@@ -238,7 +258,8 @@ class LocalBuildProcess(BuildProcessHelper):
             variant=variant,
             install_path=release_path,
             clean=True,
-            install=True)
+            install=True,
+        )
 
         # add release info to variant, and install it into package repository
         release_data = self.get_release_data()

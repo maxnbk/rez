@@ -1,6 +1,8 @@
 """
 CMake-based build system
 """
+from __future__ import print_function
+from past.builtins import basestring
 from rez.build_system import BuildSystem
 from rez.build_process_ import BuildType
 from rez.resolved_context import ResolvedContext
@@ -38,22 +40,22 @@ class CMakeBuildSystem(BuildSystem):
     """
 
     build_systems = {
-        'eclipse': "Eclipse CDT4 - Unix Makefiles",
-        'codeblocks': "CodeBlocks - Unix Makefiles",
-        'make': "Unix Makefiles",
-        'nmake': "NMake Makefiles",
-        'mingw': "MinGW Makefiles",
-        'xcode': "Xcode"
+        "eclipse": "Eclipse CDT4 - Unix Makefiles",
+        "codeblocks": "CodeBlocks - Unix Makefiles",
+        "make": "Unix Makefiles",
+        "nmake": "NMake Makefiles",
+        "mingw": "MinGW Makefiles",
+        "xcode": "Xcode",
     }
 
     build_targets = ["Debug", "Release", "RelWithDebInfo"]
 
     schema_dict = {
         "build_target": Or(*build_targets),
-        "build_system": Or(*build_systems.keys()),
+        "build_system": Or(*list(build_systems.keys())),
         "cmake_args": [basestring],
         "cmake_binary": Or(None, basestring),
-        "make_binary": Or(None, basestring)
+        "make_binary": Or(None, basestring),
     }
 
     @classmethod
@@ -71,17 +73,33 @@ class CMakeBuildSystem(BuildSystem):
     @classmethod
     def bind_cli(cls, parser):
         settings = config.plugins.build_system.cmake
-        parser.add_argument("--bt", "--build-target", dest="build_target",
-                            type=str, choices=cls.build_targets,
-                            default=settings.build_target,
-                            help="set the build target (default: %(default)s).")
-        parser.add_argument("--bs", "--cmake-build-system",
-                            choices=cls.build_systems.keys(),
-                            default=settings.build_system,
-                            help="set the cmake build system (default: %(default)s).")
+        parser.add_argument(
+            "--bt",
+            "--build-target",
+            dest="build_target",
+            type=str,
+            choices=cls.build_targets,
+            default=settings.build_target,
+            help="set the build target (default: %(default)s).",
+        )
+        parser.add_argument(
+            "--bs",
+            "--cmake-build-system",
+            choices=list(cls.build_systems.keys()),
+            default=settings.build_system,
+            help="set the cmake build system (default: %(default)s).",
+        )
 
-    def __init__(self, working_dir, opts=None, package=None, write_build_scripts=False,
-                 verbose=False, build_args=[], child_build_args=[]):
+    def __init__(
+        self,
+        working_dir,
+        opts=None,
+        package=None,
+        write_build_scripts=False,
+        verbose=False,
+        build_args=[],
+        child_build_args=[],
+    ):
         super(CMakeBuildSystem, self).__init__(
             working_dir,
             opts=opts,
@@ -89,21 +107,32 @@ class CMakeBuildSystem(BuildSystem):
             write_build_scripts=write_build_scripts,
             verbose=verbose,
             build_args=build_args,
-            child_build_args=child_build_args)
+            child_build_args=child_build_args,
+        )
 
         self.settings = self.package.config.plugins.build_system.cmake
         self.build_target = getattr(opts, "build_target", self.settings.build_target)
-        self.cmake_build_system = getattr(opts, "cmake_build_system", self.settings.build_system)
+        self.cmake_build_system = getattr(
+            opts, "cmake_build_system", self.settings.build_system
+        )
 
-        if self.cmake_build_system == 'xcode' and platform_.name != 'osx':
-            raise RezCMakeError("Generation of Xcode project only available "
-                                "on the OSX platform")
+        if self.cmake_build_system == "xcode" and platform_.name != "osx":
+            raise RezCMakeError(
+                "Generation of Xcode project only available " "on the OSX platform"
+            )
 
-    def build(self, context, variant, build_path, install_path, install=False,
-              build_type=BuildType.local):
+    def build(
+        self,
+        context,
+        variant,
+        build_path,
+        install_path,
+        install=False,
+        build_type=BuildType.local,
+    ):
         def _pr(s):
             if self.verbose:
-                print s
+                print(s)
 
         # find cmake binary
         if self.settings.cmake_binary:
@@ -120,42 +149,47 @@ class CMakeBuildSystem(BuildSystem):
 
         # assemble cmake command
         cmd = [found_exe, "-d", self.working_dir]
-        cmd += (self.settings.cmake_args or [])
-        cmd += (self.build_args or [])
+        cmd += self.settings.cmake_args or []
+        cmd += self.build_args or []
 
         cmd.append("-DCMAKE_INSTALL_PREFIX=%s" % install_path)
-        cmd.append("-DCMAKE_MODULE_PATH=%s" %
-                   sh.get_key_token("CMAKE_MODULE_PATH").replace('\\', '/'))
+        cmd.append(
+            "-DCMAKE_MODULE_PATH=%s"
+            % sh.get_key_token("CMAKE_MODULE_PATH").replace("\\", "/")
+        )
         cmd.append("-DCMAKE_BUILD_TYPE=%s" % self.build_target)
         cmd.append("-DREZ_BUILD_TYPE=%s" % build_type.name)
         cmd.append("-DREZ_BUILD_INSTALL=%d" % (1 if install else 0))
         cmd.extend(["-G", self.build_systems[self.cmake_build_system]])
 
-        if config.rez_1_cmake_variables and \
-                not config.disable_rez_1_compatibility and \
-                build_type == BuildType.central:
+        if (
+            config.rez_1_cmake_variables
+            and not config.disable_rez_1_compatibility
+            and build_type == BuildType.central
+        ):
             cmd.append("-DCENTRAL=1")
 
         # execute cmake within the build env
-        _pr("Executing: %s" % ' '.join(cmd))
+        _pr("Executing: %s" % " ".join(cmd))
         if not os.path.abspath(build_path):
             build_path = os.path.join(self.working_dir, build_path)
             build_path = os.path.realpath(build_path)
 
-        callback = functools.partial(self._add_build_actions,
-                                     context=context,
-                                     package=self.package,
-                                     variant=variant,
-                                     build_type=build_type,
-                                     install=install,
-                                     build_path=build_path,
-                                     install_path=install_path)
+        callback = functools.partial(
+            self._add_build_actions,
+            context=context,
+            package=self.package,
+            variant=variant,
+            build_type=build_type,
+            install=install,
+            build_path=build_path,
+            install_path=install_path,
+        )
 
         # run the build command and capture/print stderr at the same time
-        retcode, _, _ = context.execute_shell(command=cmd,
-                                              block=True,
-                                              cwd=build_path,
-                                              actions_callback=callback)
+        retcode, _, _ = context.execute_shell(
+            command=cmd, block=True, cwd=build_path, actions_callback=callback
+        )
         ret = {}
         if retcode:
             ret["success"] = False
@@ -165,14 +199,16 @@ class CMakeBuildSystem(BuildSystem):
             # write out the script that places the user in a build env, where
             # they can run make directly themselves.
             build_env_script = os.path.join(build_path, "build-env")
-            create_forwarding_script(build_env_script,
-                                     module=("build_system", "cmake"),
-                                     func_name="_FWD__spawn_build_shell",
-                                     working_dir=self.working_dir,
-                                     build_path=build_path,
-                                     variant_index=variant.index,
-                                     install=install,
-                                     install_path=install_path)
+            create_forwarding_script(
+                build_env_script,
+                module=("build_system", "cmake"),
+                func_name="_FWD__spawn_build_shell",
+                working_dir=self.working_dir,
+                build_path=build_path,
+                variant_index=variant.index,
+                install=install,
+                install_path=install_path,
+            )
             ret["success"] = True
             ret["build_env_script"] = build_env_script
             return ret
@@ -197,65 +233,77 @@ class CMakeBuildSystem(BuildSystem):
                 cmd.append("-j%d" % n)
 
         # execute make within the build env
-        _pr("\nExecuting: %s" % ' '.join(cmd))
-        retcode, _, _ = context.execute_shell(command=cmd,
-                                              block=True,
-                                              cwd=build_path,
-                                              actions_callback=callback)
+        _pr("\nExecuting: %s" % " ".join(cmd))
+        retcode, _, _ = context.execute_shell(
+            command=cmd, block=True, cwd=build_path, actions_callback=callback
+        )
 
         if not retcode and install and "install" not in cmd:
             cmd.append("install")
 
             # execute make install within the build env
-            _pr("\nExecuting: %s" % ' '.join(cmd))
-            retcode, _, _ = context.execute_shell(command=cmd,
-                                                  block=True,
-                                                  cwd=build_path,
-                                                  actions_callback=callback)
+            _pr("\nExecuting: %s" % " ".join(cmd))
+            retcode, _, _ = context.execute_shell(
+                command=cmd, block=True, cwd=build_path, actions_callback=callback
+            )
 
-        ret["success"] = (not retcode)
+        ret["success"] = not retcode
         return ret
 
     @classmethod
-    def _add_build_actions(cls, executor, context, package, variant,
-                           build_type, install, build_path, install_path=None):
+    def _add_build_actions(
+        cls,
+        executor,
+        context,
+        package,
+        variant,
+        build_type,
+        install,
+        build_path,
+        install_path=None,
+    ):
         settings = package.config.plugins.build_system.cmake
         cmake_path = os.path.join(os.path.dirname(__file__), "cmake_files")
         template_path = os.path.join(os.path.dirname(__file__), "template_files")
 
-        cls.set_standard_vars(executor=executor,
-                              context=context,
-                              variant=variant,
-                              build_type=build_type,
-                              install=install,
-                              build_path=build_path,
-                              install_path=install_path)
+        cls.set_standard_vars(
+            executor=executor,
+            context=context,
+            variant=variant,
+            build_type=build_type,
+            install=install,
+            build_path=build_path,
+            install_path=install_path,
+        )
 
-        executor.env.CMAKE_MODULE_PATH.append(cmake_path.replace('\\', '/'))
-        executor.env.REZ_BUILD_DOXYFILE = os.path.join(template_path, 'Doxyfile')
-        executor.env.REZ_BUILD_INSTALL_PYC = '1' if settings.install_pyc else '0'
+        executor.env.CMAKE_MODULE_PATH.append(cmake_path.replace("\\", "/"))
+        executor.env.REZ_BUILD_DOXYFILE = os.path.join(template_path, "Doxyfile")
+        executor.env.REZ_BUILD_INSTALL_PYC = "1" if settings.install_pyc else "0"
 
 
-def _FWD__spawn_build_shell(working_dir, build_path, variant_index, install,
-                            install_path=None):
+def _FWD__spawn_build_shell(
+    working_dir, build_path, variant_index, install, install_path=None
+):
     # This spawns a shell that the user can run 'make' in directly
     context = ResolvedContext.load(os.path.join(build_path, "build.rxt"))
     package = get_developer_package(working_dir)
     variant = package.get_variant(variant_index)
     config.override("prompt", "BUILD>")
 
-    callback = functools.partial(CMakeBuildSystem._add_build_actions,
-                                 context=context,
-                                 package=package,
-                                 variant=variant,
-                                 build_type=BuildType.local,
-                                 install=install,
-                                 build_path=build_path,
-                                 install_path=install_path)
+    callback = functools.partial(
+        CMakeBuildSystem._add_build_actions,
+        context=context,
+        package=package,
+        variant=variant,
+        build_type=BuildType.local,
+        install=install,
+        build_path=build_path,
+        install_path=install_path,
+    )
 
-    retcode, _, _ = context.execute_shell(block=True,
-                                          cwd=build_path,
-                                          actions_callback=callback)
+    retcode, _, _ = context.execute_shell(
+        block=True, cwd=build_path, actions_callback=callback
+    )
     sys.exit(retcode)
 
 

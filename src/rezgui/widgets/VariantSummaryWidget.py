@@ -1,3 +1,4 @@
+from builtins import str
 from rezgui.qt import QtCore, QtGui
 from rezgui.util import create_pane, get_timestamp_str
 from rez.packages_ import Package, Variant
@@ -23,8 +24,7 @@ class VariantSummaryWidget(QtGui.QWidget):
         vh = self.table.verticalHeader()
         vh.setResizeMode(QtGui.QHeaderView.ResizeToContents)
 
-        create_pane([self.label, self.table], False, compact=True,
-                    parent_widget=self)
+        create_pane([self.label, self.table], False, compact=True, parent_widget=self)
 
         self.clear()
 

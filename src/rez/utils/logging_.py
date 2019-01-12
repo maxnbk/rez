@@ -1,3 +1,5 @@
+from builtins import str
+from builtins import object
 from contextlib import contextmanager
 import logging
 import time
@@ -56,7 +58,7 @@ class _Printer(object):
                 msg = msg % nargs
             self.printer_function(msg)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self.printer_function)
 
 

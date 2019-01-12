@@ -6,11 +6,13 @@ from rezgui.objects.App import app
 
 class ContextEnvironWidget(QtGui.QWidget):
 
-    split_entries = [("None", None),
-                     ("Colon (:)", ':'),
-                     ("Semicolon (;)", ';'),
-                     ("Comma (,)", ','),
-                     ("Whitespace", ' ')]
+    split_entries = [
+        ("None", None),
+        ("Colon (:)", ":"),
+        ("Semicolon (;)", ";"),
+        ("Comma (,)", ","),
+        ("Whitespace", " "),
+    ]
 
     def __init__(self, parent=None):
         super(ContextEnvironWidget, self).__init__(parent)

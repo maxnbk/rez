@@ -1,13 +1,14 @@
 """
 test shell invocation
 """
+from __future__ import print_function
+from builtins import str
 from rez.system import system
 from rez.shells import create_shell
 from rez.resolved_context import ResolvedContext
 from rez.rex import RexExecutor, literal, expandable
 import rez.vendor.unittest2 as unittest
-from rez.tests.util import TestBase, TempdirMixin, shell_dependent, \
-    install_dependent
+from rez.tests.util import TestBase, TempdirMixin, shell_dependent, install_dependent
 from rez.util import which
 from rez.bind import hello_world
 from rez.utils.platform_ import platform_
@@ -37,7 +38,8 @@ class TestShells(TestBase, TempdirMixin):
             packages_path=[packages_path],
             package_filter=None,
             implicit_packages=[],
-            warn_untimestamped=False)
+            warn_untimestamped=False,
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -46,6 +48,7 @@ class TestShells(TestBase, TempdirMixin):
     @classmethod
     def _create_context(cls, pkgs):
         from rez.config import config
+
         return ResolvedContext(pkgs, caching=False)
 
     @shell_dependent(exclude=["cmd"])
@@ -58,14 +61,15 @@ class TestShells(TestBase, TempdirMixin):
         _, _, _, command = sh.startup_capabilities(command=True)
         if command:
             r = self._create_context(["hello_world"])
-            p = r.execute_shell(command="hello_world -q",
-                                stdout=subprocess.PIPE)
+            p = r.execute_shell(command="hello_world -q", stdout=subprocess.PIPE)
 
             self.assertEqual(
-                _stdout(p), '',
+                _stdout(p),
+                "",
                 "This test and others will fail, because one or more of your "
                 "startup scripts are printing to stdout. Please remove the "
-                "printout and try again.")
+                "printout and try again.",
+            )
 
     @shell_dependent(exclude=["cmd"])
     def test_command(self):
@@ -78,8 +82,7 @@ class TestShells(TestBase, TempdirMixin):
 
         if command:
             r = self._create_context(["hello_world"])
-            p = r.execute_shell(command="hello_world",
-                                stdout=subprocess.PIPE)
+            p = r.execute_shell(command="hello_world", stdout=subprocess.PIPE)
             self.assertEqual(_stdout(p), "Hello Rez World!")
 
     @shell_dependent(exclude=["cmd"])
@@ -107,9 +110,9 @@ class TestShells(TestBase, TempdirMixin):
 
         if norc and command:
             r = self._create_context(["hello_world"])
-            p = r.execute_shell(norc=True,
-                                command="hello_world",
-                                stdout=subprocess.PIPE)
+            p = r.execute_shell(
+                norc=True, command="hello_world", stdout=subprocess.PIPE
+            )
             self.assertEqual(_stdout(p), "Hello Rez World!")
 
     @shell_dependent()
@@ -119,9 +122,9 @@ class TestShells(TestBase, TempdirMixin):
 
         if stdin:
             r = self._create_context(["hello_world"])
-            p = r.execute_shell(stdout=subprocess.PIPE,
-                                stdin=subprocess.PIPE,
-                                norc=True)
+            p = r.execute_shell(
+                stdout=subprocess.PIPE, stdin=subprocess.PIPE, norc=True
+            )
             stdout, _ = p.communicate(input="hello_world\n")
             stdout = stdout.strip()
             self.assertEqual(stdout, "Hello Rez World!")
@@ -137,9 +140,9 @@ class TestShells(TestBase, TempdirMixin):
             os.close(f)
 
             r = self._create_context(["hello_world"])
-            p = r.execute_shell(rcfile=path,
-                                command="hello_world -q",
-                                stdout=subprocess.PIPE)
+            p = r.execute_shell(
+                rcfile=path, command="hello_world -q", stdout=subprocess.PIPE
+            )
             self.assertEqual(_stdout(p), "Hello Rez World!")
             os.remove(path)
 
@@ -150,11 +153,13 @@ class TestShells(TestBase, TempdirMixin):
         # exactly what we expect.
         echo_cmd = which("echo")
         if not echo_cmd:
-            print "\nskipping test, 'echo' command not found."
+            print("\nskipping test, 'echo' command not found.")
             return
 
         cmd = [os.path.join(system.rez_bin_path, "rez-env"), "--", "echo", "hey"]
-        process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(
+            cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         sh_out, _ = process.communicate()
         out = str(sh_out).strip()
         self.assertEqual(out, "hey")
@@ -179,20 +184,22 @@ class TestShells(TestBase, TempdirMixin):
     def test_rex_code(self):
         """Test that Rex code run in the shell creates the environment variable
         values that we expect."""
+
         def _execute_code(func, expected_output):
             loc = inspect.getsourcelines(func)[0][1:]
-            code = textwrap.dedent('\n'.join(loc))
+            code = textwrap.dedent("\n".join(loc))
             r = self._create_context([])
             p = r.execute_rex_code(code, stdout=subprocess.PIPE)
 
             out, _ = p.communicate()
             self.assertEqual(p.returncode, 0)
-            token = '\r\n' if platform_.name == 'windows' else '\n'
+            token = "\r\n" if platform_.name == "windows" else "\n"
             output = out.strip().split(token)
             self.assertEqual(output, expected_output)
 
         def _rex_assigning():
             import os
+
             windows = os.name == "nt"
 
             def _print(value):
@@ -211,10 +218,10 @@ class TestShells(TestBase, TempdirMixin):
             _print(expandable("ello"))
             _print("\\")
             _print("\\'")
-            _print("\\\"")
+            _print('\\"')
             _print(literal("\\"))
             _print(literal("\\'"))
-            _print(literal("\\\""))
+            _print(literal('\\"'))
             _print("\\path1\\path2\\path3")
             _print(literal("\\path1").e("\\path2\\path3"))
             _print("hello world")
@@ -225,16 +232,20 @@ class TestShells(TestBase, TempdirMixin):
             _print(literal('hello "world"'))
             _print("hey %WHO%" if windows else "hey $WHO")
             _print("hey %WHO%" if windows else "hey ${WHO}")
-            _print(expandable("%GREET% " if windows else "${GREET} ").e("%WHO%" if windows else "$WHO"))
+            _print(
+                expandable("%GREET% " if windows else "${GREET} ").e(
+                    "%WHO%" if windows else "$WHO"
+                )
+            )
             _print(expandable("%GREET% " if windows else "${GREET} ").l("$WHO"))
             _print(literal("${WHO}"))
             _print(literal("${WHO}").e(" %WHO%" if windows else " $WHO"))
 
             # Make sure we are escaping &, <, >, ^ properly.
-            _print('hey & world')
-            _print('hey > world')
-            _print('hey < world')
-            _print('hey ^ world')
+            _print("hey & world")
+            _print("hey > world")
+            _print("hey < world")
+            _print("hey ^ world")
 
         expected_output = [
             "ello",
@@ -242,10 +253,10 @@ class TestShells(TestBase, TempdirMixin):
             "ello",
             "\\",
             "\\'",
-            "\\\"",
+            '\\"',
             "\\",
             "\\'",
-            "\\\"",
+            '\\"',
             "\\path1\\path2\\path3",
             "\\path1\\path2\\path3",
             "hello world",
@@ -263,7 +274,7 @@ class TestShells(TestBase, TempdirMixin):
             "hey & world",
             "hey > world",
             "hey < world",
-            "hey ^ world"
+            "hey ^ world",
         ]
 
         # We are wrapping all variable outputs in quotes in order to make sure
@@ -275,6 +286,7 @@ class TestShells(TestBase, TempdirMixin):
 
         def _rex_appending():
             import os
+
             windows = os.name == "nt"
 
             env.FOO.append("hey")
@@ -287,7 +299,7 @@ class TestShells(TestBase, TempdirMixin):
         expected_output = [
             "hey",
             os.pathsep.join(["hey", "$DAVE"]),
-            os.pathsep.join(["hey", "$DAVE", "Dave's not here man"])
+            os.pathsep.join(["hey", "$DAVE", "Dave's not here man"]),
         ]
 
         _execute_code(_rex_appending, expected_output)
@@ -302,9 +314,10 @@ class TestShells(TestBase, TempdirMixin):
         use the absolute path after the modifications.
 
         """
+
         def _execute_code(func):
             loc = inspect.getsourcelines(func)[0][1:]
-            code = textwrap.dedent('\n'.join(loc))
+            code = textwrap.dedent("\n".join(loc))
             r = self._create_context([])
             p = r.execute_rex_code(code, stdout=subprocess.PIPE)
 
@@ -315,7 +328,7 @@ class TestShells(TestBase, TempdirMixin):
             # Appending something to the PATH and creating an alias afterwards
             # did fail before we implemented a doskey specific fix.
             env.PATH.append("hey")
-            alias('alias_test', '"echo test_echo"')
+            alias("alias_test", '"echo test_echo"')
 
             # We can not run the command from a batch file because the Windows
             # doskey doesn't support it. From the docs:
@@ -327,7 +340,7 @@ class TestShells(TestBase, TempdirMixin):
         _execute_code(_alias_after_path_manipulation)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
 
 

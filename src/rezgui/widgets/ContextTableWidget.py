@@ -1,3 +1,6 @@
+from builtins import zip
+from builtins import str
+from builtins import range
 from rezgui.qt import QtCore, QtGui
 from rezgui.util import update_font, create_pane, interp_color
 from rezgui.widgets.EffectivePackageCellWidget import EffectivePackageCellWidget
@@ -15,8 +18,9 @@ import os.path
 
 
 class CompareCell(QtGui.QWidget):
-    def __init__(self, context_model, variant_left=None, variant_right=None,
-                 parent=None):
+    def __init__(
+        self, context_model, variant_left=None, variant_right=None, parent=None
+    ):
         super(CompareCell, self).__init__(parent)
         self.context_model = context_model
         self.left_variant = variant_left
@@ -31,17 +35,19 @@ class CompareCell(QtGui.QWidget):
         widget = None
         if self.left_variant and self.right_variant:
             self.side = "both"
-            equal_versions = (self.left_variant.version == self.right_variant.version)
-            right_variant_visible = (self.right_variant.wrapped.location in package_paths)
+            equal_versions = self.left_variant.version == self.right_variant.version
+            right_variant_visible = self.right_variant.wrapped.location in package_paths
             self.comparable = right_variant_visible and not equal_versions
 
             if self.comparable:
                 # determine how far apart the variant versions are
-                versions = sorted([self.left_variant.version,
-                                   self.right_variant.version])
+                versions = sorted(
+                    [self.left_variant.version, self.right_variant.version]
+                )
                 range_ = VersionRange.as_span(*versions)
-                it = iter_packages(name=self.left_variant.name,
-                                   paths=package_paths, range_=range_)
+                it = iter_packages(
+                    name=self.left_variant.name, paths=package_paths, range_=range_
+                )
                 diff_num = sum(1 for x in it) - 1
 
                 unit = "version" if diff_num == 1 else "versions"
@@ -59,7 +65,8 @@ class CompareCell(QtGui.QWidget):
                 self.mode = "equalish"
                 self._set_color(1, 1, 0)
                 widget = IconButton(
-                    "equalish", "packages versions are equal, but package is different")
+                    "equalish", "packages versions are equal, but package is different"
+                )
             elif self.left_variant.version > self.right_variant.version:
                 self.mode = "greater_than"
                 self._set_color(0, 1, 0)
@@ -88,28 +95,30 @@ class CompareCell(QtGui.QWidget):
             widget = IconButton("new", "package is new")
 
         if widget:
-            create_pane([None, widget, None], True, compact=True,
-                        parent_widget=self)
+            create_pane([None, widget, None], True, compact=True, parent_widget=self)
             widget.clicked.connect(self._clicked)
 
     def left(self):
-        return (self.side in ("left", "both"))
+        return self.side in ("left", "both")
 
     def right(self):
-        return (self.side in ("right", "both"))
+        return self.side in ("right", "both")
 
     def _clicked(self):
         if self.comparable:
             from rezgui.dialogs.VariantVersionsDialog import VariantVersionsDialog
-            dlg = VariantVersionsDialog(self.context_model, self.left_variant,
-                                        reference_variant=self.right_variant,
-                                        parent=self)
+
+            dlg = VariantVersionsDialog(
+                self.context_model,
+                self.left_variant,
+                reference_variant=self.right_variant,
+                parent=self,
+            )
             dlg.exec_()
         elif self.mode == "equal_to":
             QtGui.QMessageBox.information(
-                self,
-                "Equal Package",
-                "The packages are equal")
+                self, "Equal Package", "The packages are equal"
+            )
         elif self.mode == "equalish":
             QtGui.QMessageBox.information(
                 self,
@@ -117,31 +126,36 @@ class CompareCell(QtGui.QWidget):
                 "The package in the current resolve:\n(%s)\n\nis the same "
                 "version as the package in the reference resolve:\n(%s)\n\n"
                 "but is a different package."
-                % (self.left_variant.uri, self.right_variant.uri))
+                % (self.left_variant.uri, self.right_variant.uri),
+            )
         elif self.mode == "missing":
             QtGui.QMessageBox.information(
                 self,
                 "Missing Package",
-                "The package is present in the reference resolve only")
+                "The package is present in the reference resolve only",
+            )
         elif self.mode == "new":
             QtGui.QMessageBox.information(
                 self,
                 "New Package",
-                "The package is present in the current resolve only")
+                "The package is present in the current resolve only",
+            )
         elif self.mode == "greater_than":
             QtGui.QMessageBox.information(
                 self,
                 "Newer Package",
                 "The package in the current resolve:\n(%s)\n\nis newer than "
                 "the package in the reference resolve (%s)"
-                % (self.left_variant.uri, self.right_variant.uri))
+                % (self.left_variant.uri, self.right_variant.uri),
+            )
         else:
             QtGui.QMessageBox.information(
                 self,
                 "Older Package",
                 "The package in the current resolve:\n(%s)\n\nis older than "
                 "the package in the reference resolve (%s)"
-                % (self.left_variant.uri, self.right_variant.uri))
+                % (self.left_variant.uri, self.right_variant.uri),
+            )
 
     def _set_color(self, *c):
         f = 0.8
@@ -202,9 +216,9 @@ class CellDelegate(QtGui.QStyledItemDelegate):
         bg_color = None
         if (row, column) in selected_cells:
             bg_color = self.highlight_brush
-        elif cmp_widget and \
-                ((cmp_widget.left() and column == 1)
-                 or (cmp_widget.right() and column == 3)):
+        elif cmp_widget and (
+            (cmp_widget.left() and column == 1) or (cmp_widget.right() and column == 3)
+        ):
             bg_color = cmp_widget.color
         else:
             bg_color = pal.color(QtGui.QPalette.Base)
@@ -289,8 +303,7 @@ class ContextTableWidget(QtGui.QTableWidget, ContextViewMixin):
 
     def __init__(self, context_model=None, parent=None):
         """Create a context table."""
-        super(ContextTableWidget, self).__init__(self.default_row_count,
-                                                 2, parent)
+        super(ContextTableWidget, self).__init__(self.default_row_count, 2, parent)
         ContextViewMixin.__init__(self, context_model)
 
         self.diff_mode = False
@@ -389,22 +402,29 @@ class ContextTableWidget(QtGui.QTableWidget, ContextViewMixin):
 
     def get_title(self):
         """Returns a string suitable for titling a window containing this table."""
+
         def _title(context_model):
             context = context_model.context()
             if context is None:
                 return "new context*"
-            title = os.path.basename(context.load_path) if context.load_path \
+            title = (
+                os.path.basename(context.load_path)
+                if context.load_path
                 else "new context"
+            )
             if context_model.is_modified():
-                title += '*'
+                title += "*"
             return title
 
         if self.diff_mode:
             diff_title = _title(self.diff_context_model)
             if self.diff_from_source:
                 diff_title += "'"
-            return "%s  %s  %s" % (_title(self.context_model),
-                                   self.short_double_arrow, diff_title)
+            return "%s  %s  %s" % (
+                _title(self.context_model),
+                self.short_double_arrow,
+                diff_title,
+            )
         else:
             return _title(self.context_model)
 
@@ -438,11 +458,13 @@ class ContextTableWidget(QtGui.QTableWidget, ContextViewMixin):
             if self.context():
                 if self.diff_mode:
                     self._apply_request(self.diff_context_model, 4)
-                    self._apply_resolve(self.diff_context_model, 3, 4,
-                                        hide_locks=True, read_only=True)
+                    self._apply_resolve(
+                        self.diff_context_model, 3, 4, hide_locks=True, read_only=True
+                    )
                     self._apply_request(self.context_model, 0)
-                    self._apply_resolve(self.context_model, 1, 3,
-                                        reference_column_is_variants=True)
+                    self._apply_resolve(
+                        self.context_model, 1, 3, reference_column_is_variants=True
+                    )
                     self._update_comparison_column(2)
                     update_request_columns[4] = self.diff_context_model
                 else:
@@ -455,21 +477,22 @@ class ContextTableWidget(QtGui.QTableWidget, ContextViewMixin):
         if flags & ContextModel.LOCKS_CHANGED and self._show_effective_request:
             update_request_columns[0] = self.context_model
 
-        for column, context_model in update_request_columns.iteritems():
+        for column, context_model in update_request_columns.items():
             self._update_request_column(column, context_model)
 
         # set column headers
         if self.diff_mode:
-            headers = [["current request", False],
-                       ["current resolve", False],
-                       [self.double_arrow, False],
-                       ["reference resolve", True],
-                       ["reference request", True]]
+            headers = [
+                ["current request", False],
+                ["current resolve", False],
+                [self.double_arrow, False],
+                ["reference resolve", True],
+                ["reference request", True],
+            ]
         else:
-            headers = [["request", False],
-                       ["resolve", False]]
+            headers = [["request", False], ["resolve", False]]
         if self.context_model.is_stale():
-            headers[0][0] += '*'
+            headers[0][0] += "*"
             headers[1][0] += " (stale)"
             headers[1][1] = True
 
@@ -482,7 +505,9 @@ class ContextTableWidget(QtGui.QTableWidget, ContextViewMixin):
 
     def _update_request_column(self, column, context_model):
         # remove effective request cells
-        for row, widget in self._iter_column_widgets(column, EffectivePackageCellWidget):
+        for row, widget in self._iter_column_widgets(
+            column, EffectivePackageCellWidget
+        ):
             self.removeCellWidget(row, column)
 
         # update effective request cells
@@ -498,22 +523,27 @@ class ContextTableWidget(QtGui.QTableWidget, ContextViewMixin):
                 row += 1
 
             d = context_model.get_lock_requests()
-            for lock, requests in d.iteritems():
+            for lock, requests in d.items():
                 for request in requests:
                     request_str = str(request)
-                    self._set_effective_package_cell(row, column, request_str, lock.name)
+                    self._set_effective_package_cell(
+                        row, column, request_str, lock.name
+                    )
                     row += 1
 
         self._trim_trailing_rows()
 
     def _widget_is_selectable(self, widget):
-        return (widget
-                and widget.isEnabled()
-                and isinstance(widget, VariantCellWidget)
-                and not widget.read_only)
+        return (
+            widget
+            and widget.isEnabled()
+            and isinstance(widget, VariantCellWidget)
+            and not widget.read_only
+        )
 
-    def _currentCellChanged(self, currentRow, currentColumn,
-                            previousRow, previousColumn):
+    def _currentCellChanged(
+        self, currentRow, currentColumn, previousRow, previousColumn
+    ):
         widget = self.cellWidget(currentRow, currentColumn)
         if self._widget_is_selectable(widget):
             self._current_variant = widget.variant
@@ -523,7 +553,9 @@ class ContextTableWidget(QtGui.QTableWidget, ContextViewMixin):
 
         # update other variants, this causes them to show/hide the depends icon
         if previousColumn != currentColumn:
-            for _, widget in self._iter_column_widgets(previousColumn, VariantCellWidget):
+            for _, widget in self._iter_column_widgets(
+                previousColumn, VariantCellWidget
+            ):
                 widget.set_reference_sibling(None)
         for _, widget in self._iter_column_widgets(currentColumn, VariantCellWidget):
             widget.set_reference_sibling(self._current_variant)
@@ -564,16 +596,23 @@ class ContextTableWidget(QtGui.QTableWidget, ContextViewMixin):
             self._set_package_cell(i, column, request)
         self._set_package_cell(num_requests, column)
 
-    def _apply_resolve(self, context_model, column, reference_column,
-                       hide_locks=False, read_only=False,
-                       reference_column_is_variants=False):
+    def _apply_resolve(
+        self,
+        context_model,
+        column,
+        reference_column,
+        hide_locks=False,
+        read_only=False,
+        reference_column_is_variants=False,
+    ):
         context = context_model.context()
         resolved = context.resolved_packages[:]
         consumed_rows = set()
 
         # match variants up with matching request/variant in source column
         for row, widget in self._iter_column_widgets(
-                reference_column, (PackageSelectWidget, VariantCellWidget)):
+            reference_column, (PackageSelectWidget, VariantCellWidget)
+        ):
             request_str = str(widget.text())
             if not request_str:
                 continue
@@ -584,11 +623,19 @@ class ContextTableWidget(QtGui.QTableWidget, ContextViewMixin):
                 variant = matches[0]
                 resolved = [x for x in resolved if x.name != package_name]
                 reference_variant = None
-                if reference_column_is_variants and isinstance(widget, VariantCellWidget):
+                if reference_column_is_variants and isinstance(
+                    widget, VariantCellWidget
+                ):
                     reference_variant = widget.variant
-                self._set_variant_cell(row, column, context_model, variant,
-                                       reference_variant=reference_variant,
-                                       hide_locks=hide_locks, read_only=read_only)
+                self._set_variant_cell(
+                    row,
+                    column,
+                    context_model,
+                    variant,
+                    reference_variant=reference_variant,
+                    hide_locks=hide_locks,
+                    read_only=read_only,
+                )
             consumed_rows.add(row)
 
         # append variants that don't match reference requests/variants
@@ -601,12 +648,18 @@ class ContextTableWidget(QtGui.QTableWidget, ContextViewMixin):
             resolved = resolved[1:]
             while row in consumed_rows:
                 row += 1
-            self._set_variant_cell(row, column, context_model, variant,
-                                   hide_locks=hide_locks, read_only=read_only)
+            self._set_variant_cell(
+                row,
+                column,
+                context_model,
+                variant,
+                hide_locks=hide_locks,
+                read_only=read_only,
+            )
             row += 1
 
     def _update_comparison_column(self, column):
-        #no_color = self.palette().color(QtGui.QPalette.Active, QtGui.QPalette.Base)
+        # no_color = self.palette().color(QtGui.QPalette.Active, QtGui.QPalette.Base)
 
         for row in range(self.rowCount()):
             left = self.cellWidget(row, column - 1)
@@ -628,15 +681,16 @@ class ContextTableWidget(QtGui.QTableWidget, ContextViewMixin):
                 return None
 
         txt = str(request) if request else ""
-        read_only = (column != 0)
+        read_only = column != 0
 
         edit = PackageSelectWidget(self.context_model, read_only=read_only)
         edit.setText(txt)
         self.setCellWidget(row, column, edit)
         edit.textChanged.connect(partial(self._packageTextChanged, row, column))
         edit.focusOut.connect(partial(self._packageFocusOut, row, column))
-        edit.focusOutViaKeyPress.connect(partial(self._packageFocusOutViaKeyPress,
-                                                 row, column))
+        edit.focusOutViaKeyPress.connect(
+            partial(self._packageFocusOutViaKeyPress, row, column)
+        )
         return edit
 
     def _set_effective_package_cell(self, row, column, request, lock_type):
@@ -645,15 +699,26 @@ class ContextTableWidget(QtGui.QTableWidget, ContextViewMixin):
         cell = EffectivePackageCellWidget(request, lock_type)
         self.setCellWidget(row, column, cell)
 
-    def _set_variant_cell(self, row, column, context_model, variant,
-                          reference_variant=None, hide_locks=False,
-                          read_only=False):
+    def _set_variant_cell(
+        self,
+        row,
+        column,
+        context_model,
+        variant,
+        reference_variant=None,
+        hide_locks=False,
+        read_only=False,
+    ):
         if row >= self.rowCount():
             self.setRowCount(row + 1)
 
-        widget = VariantCellWidget(context_model, variant,
-                                   reference_variant=reference_variant,
-                                   hide_locks=hide_locks, read_only=read_only)
+        widget = VariantCellWidget(
+            context_model,
+            variant,
+            reference_variant=reference_variant,
+            hide_locks=hide_locks,
+            read_only=read_only,
+        )
         self.setCellWidget(row, column, widget)
         widget._set_stale(column != 1)
 
@@ -707,9 +772,10 @@ class ContextTableWidget(QtGui.QTableWidget, ContextViewMixin):
 
     def _trim_trailing_rows(self):
         n = 0
-        for i in reversed(range(self.default_row_count, self.rowCount())):
-            row_clear = not any(self.cellWidget(i, x)
-                                for x in range(self.columnCount()))
+        for i in reversed(list(range(self.default_row_count, self.rowCount()))):
+            row_clear = not any(
+                self.cellWidget(i, x) for x in range(self.columnCount())
+            )
             if row_clear:
                 n += 1
             else:

@@ -1,13 +1,14 @@
+from __future__ import print_function
+from builtins import str
 import shutil
 import os.path
 
 
-
-def build_directory_recurse(src_dir, dest_dir, source_path, build_path,
-                            install_path=None):
-
+def build_directory_recurse(
+    src_dir, dest_dir, source_path, build_path, install_path=None
+):
     def _copy(src, dest):
-        print "copying %s to %s..." % (src, dest)
+        print("copying %s to %s..." % (src, dest))
         if os.path.exists(dest):
             shutil.rmtree(dest)
         shutil.copytree(src, dest)
@@ -30,8 +31,10 @@ def check_visible(module, try_module):
     try:
         __import__(try_module, {})
     except ImportError as e:
-        raise Exception(("%s's rezbuild.py should have been able to access "
-                        "%s! Error: %s") % (module, try_module, str(e)))
+        raise Exception(
+            ("%s's rezbuild.py should have been able to access " "%s! Error: %s")
+            % (module, try_module, str(e))
+        )
 
 
 # Copyright 2013-2016 Allan Johns.

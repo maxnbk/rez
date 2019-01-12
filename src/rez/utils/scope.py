@@ -1,9 +1,11 @@
+from builtins import str
+from builtins import object
 from rez.utils.formatting import StringFormatMixin, StringFormatType
-import UserDict
+import collections
 import sys
 
 
-class RecursiveAttribute(UserDict.UserDict, StringFormatMixin):
+class RecursiveAttribute(collections.UserDict, StringFormatMixin):
     """An object that can have new attributes added recursively::
 
         >>> a = RecursiveAttribute()
@@ -25,6 +27,7 @@ class RecursiveAttribute(UserDict.UserDict, StringFormatMixin):
         >>> a.new = True
         AttributeError: 'RecursiveAttribute' object has no attribute 'new'
     """
+
     format_expand = StringFormatType.unchanged
 
     def __init__(self, data=None, read_only=False):
@@ -33,10 +36,12 @@ class RecursiveAttribute(UserDict.UserDict, StringFormatMixin):
 
     def __getattr__(self, attr):
         def _noattrib():
-            raise AttributeError("'%s' object has no attribute '%s'"
-                                 % (self.__class__.__name__, attr))
+            raise AttributeError(
+                "'%s' object has no attribute '%s'" % (self.__class__.__name__, attr)
+            )
+
         d = self.__dict__
-        if attr.startswith('__') and attr.endswith('__'):
+        if attr.startswith("__") and attr.endswith("__"):
             try:
                 return d[attr]
             except KeyError:
@@ -50,7 +55,7 @@ class RecursiveAttribute(UserDict.UserDict, StringFormatMixin):
         # to something. This stops code like "print instance.notexist" from
         # adding empty attributes
         attr_ = self._create_child_attribute(attr)
-        assert(isinstance(attr_, RecursiveAttribute))
+        assert isinstance(attr_, RecursiveAttribute)
         attr_.__dict__["pending"] = (attr, self)
         return attr_
 
@@ -58,12 +63,16 @@ class RecursiveAttribute(UserDict.UserDict, StringFormatMixin):
         d = self.__dict__
         if d["read_only"]:
             if attr in d["data"]:
-                raise AttributeError("'%s' object attribute '%s' is read-only"
-                                     % (self.__class__.__name__, attr))
+                raise AttributeError(
+                    "'%s' object attribute '%s' is read-only"
+                    % (self.__class__.__name__, attr)
+                )
             else:
-                raise AttributeError("'%s' object has no attribute '%s'"
-                                     % (self.__class__.__name__, attr))
-        elif attr.startswith('__') and attr.endswith('__'):
+                raise AttributeError(
+                    "'%s' object has no attribute '%s'"
+                    % (self.__class__.__name__, attr)
+                )
+        elif attr.startswith("__") and attr.endswith("__"):
             d[attr] = value
         else:
             d["data"][attr] = value
@@ -89,7 +98,7 @@ class RecursiveAttribute(UserDict.UserDict, StringFormatMixin):
     def to_dict(self):
         """Get an equivalent dict representation."""
         d = {}
-        for k, v in self.__dict__["data"].iteritems():
+        for k, v in self.__dict__["data"].items():
             if isinstance(v, RecursiveAttribute):
                 d[k] = v.to_dict()
             else:
@@ -97,7 +106,7 @@ class RecursiveAttribute(UserDict.UserDict, StringFormatMixin):
         return d
 
     def copy(self):
-        return self.__class__(self.__dict__['data'].copy())
+        return self.__class__(self.__dict__["data"].copy())
 
     def update(self, data):
         """Dict-like update operation."""
@@ -106,7 +115,7 @@ class RecursiveAttribute(UserDict.UserDict, StringFormatMixin):
         self._update(data)
 
     def _update(self, data):
-        for k, v in data.iteritems():
+        for k, v in data.items():
             if isinstance(v, dict):
                 v = RecursiveAttribute(v)
             self.__dict__["data"][k] = v
@@ -123,9 +132,7 @@ class RecursiveAttribute(UserDict.UserDict, StringFormatMixin):
 class _Scope(RecursiveAttribute):
     def __init__(self, name=None, context=None):
         RecursiveAttribute.__init__(self)
-        self.__dict__.update(dict(name=name,
-                                  context=context,
-                                  locals=None))
+        self.__dict__.update(dict(name=name, context=context, locals=None))
 
     def __enter__(self):
         locals_ = sys._getframe(1).f_locals
@@ -138,10 +145,12 @@ class _Scope(RecursiveAttribute):
         d = self.__dict__
         locals_ = sys._getframe(1).f_locals
         self_locals = d["locals"]
-        for k, v in locals_.iteritems():
-            if not (k.startswith("__") and k.endswith("__")) \
-                    and (k not in self_locals or v != self_locals[k]) \
-                    and not isinstance(v, _Scope):
+        for k, v in locals_.items():
+            if (
+                not (k.startswith("__") and k.endswith("__"))
+                and (k not in self_locals or v != self_locals[k])
+                and not isinstance(v, _Scope)
+            ):
                 updates[k] = v
 
         # merge updated local vars with attributes
@@ -196,6 +205,7 @@ class ScopeContext(object):
     and the assigned properties will be merged. If the same property is set
     multiple times, it will be overwritten.
     """
+
     def __init__(self):
         self.scopes = {}
         self.scope_stack = [_Scope()]
@@ -213,8 +223,8 @@ class ScopeContext(object):
 
     def _scope_exit(self, name):
         scope = self.scope_stack.pop()
-        assert(self.scope_stack)
-        assert(name == scope.name)
+        assert self.scope_stack
+        assert name == scope.name
         data = {scope.name: scope.to_dict()}
         self.scope_stack[-1].update(data)
 
@@ -223,7 +233,7 @@ class ScopeContext(object):
         return self.scope_stack[-1].to_dict()
 
     def __str__(self):
-        names = ('.'.join(y for y in x) for x in self.scopes.keys())
+        names = (".".join(y for y in x) for x in list(self.scopes.keys()))
         return "%r" % (tuple(names),)
 
 

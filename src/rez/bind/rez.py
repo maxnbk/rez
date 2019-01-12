@@ -12,7 +12,7 @@ import os.path
 
 
 def commands():
-    env.PYTHONPATH.append('{this.root}')
+    env.PYTHONPATH.append("{this.root}")
 
 
 def bind(path, version_range=None, opts=None, parser=None):

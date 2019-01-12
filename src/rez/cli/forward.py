@@ -1,4 +1,6 @@
 """See util.create_forwarding_script()."""
+from builtins import str
+from past.builtins import basestring
 from rez.vendor import argparse
 
 __doc__ = argparse.SUPPRESS
@@ -26,7 +28,7 @@ def command(opts, parser, extra_arg_groups=None):
     yaml_file = os.path.abspath(opts.YAML)
 
     cli_args = opts.ARG
-    for arg_group in (extra_arg_groups or []):
+    for arg_group in extra_arg_groups or []:
         cli_args.extend(arg_group)
 
     with open(yaml_file) as f:
@@ -34,8 +36,7 @@ def command(opts, parser, extra_arg_groups=None):
     try:
         doc = yaml.load(content)
     except YAMLError as e:
-        raise RezSystemError("Invalid executable file %s: %s"
-                             % (yaml_file, str(e)))
+        raise RezSystemError("Invalid executable file %s: %s" % (yaml_file, str(e)))
 
     func_name = doc["func_name"]
     nargs = doc.get("nargs", [])
@@ -44,11 +45,13 @@ def command(opts, parser, extra_arg_groups=None):
     if isinstance(doc["module"], basestring):
         # refers to a rez module
         from rez.backport.importlib import import_module
+
         namespace = "rez.%s" % doc["module"]
         module = import_module(namespace)
     else:
         # refers to a rez plugin module
         from rez.plugin_managers import plugin_manager
+
         plugin_type, plugin_name = doc["module"]
         module = plugin_manager.get_plugin_module(plugin_type, plugin_name)
 

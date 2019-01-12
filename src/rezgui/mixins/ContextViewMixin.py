@@ -1,3 +1,4 @@
+from builtins import object
 from rezgui.qt import QtCore
 from rezgui.models.ContextModel import ContextModel
 
@@ -15,6 +16,7 @@ class ContextViewMixin(object):
             def _contextChanged(self, flags=0):
                 # handle the context update
     """
+
     def __init__(self, context_model=None):
         assert isinstance(self, QtCore.QObject)
         self.context_model = context_model or ContextModel()

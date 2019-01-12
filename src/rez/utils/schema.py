@@ -1,6 +1,7 @@
 """
 Utilities for working with dict-based schemas.
 """
+from past.builtins import basestring
 from rez.vendor.schema.schema import Schema, Optional, Use, And
 
 
@@ -20,6 +21,7 @@ def schema_keys(schema):
             schema = Schema({Required("foo"): int,
                              Optional("bah"): basestring})
     """
+
     def _get_leaf(value):
         if isinstance(value, Schema):
             return _get_leaf(value._schema)
@@ -29,7 +31,7 @@ def schema_keys(schema):
     dict_ = schema._schema
     assert isinstance(dict_, dict)
 
-    for key in dict_.iterkeys():
+    for key in dict_.keys():
         key_ = _get_leaf(key)
         if isinstance(key_, basestring):
             keys.add(key_)
@@ -56,7 +58,7 @@ def dict_to_schema(schema_dict, required, allow_custom_keys=True, modifier=None)
     def _to(value):
         if isinstance(value, dict):
             d = {}
-            for k, v in value.iteritems():
+            for k, v in value.items():
                 if isinstance(k, basestring):
                     k = Required(k) if required else Optional(k)
                 d[k] = _to(v)

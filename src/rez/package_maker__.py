@@ -1,3 +1,5 @@
+from builtins import next
+from past.builtins import basestring
 from rez.utils._version import _rez_Version
 from rez.utils.schema import Required, schema_keys
 from rez.utils.filesystem import retain_cwd
@@ -5,8 +7,12 @@ from rez.utils.formatting import PackageRequest
 from rez.utils.data_utils import AttrDictWrapper
 from rez.utils.logging_ import print_warning
 from rez.exceptions import PackageMetadataError
-from rez.package_resources_ import help_schema, _commands_schema, \
-    _function_schema, late_bound
+from rez.package_resources_ import (
+    help_schema,
+    _commands_schema,
+    _function_schema,
+    late_bound,
+)
 from rez.package_repository import create_memory_package_repository
 from rez.packages_ import Package
 from rez.package_py_utils import expand_requirement
@@ -19,60 +25,57 @@ import os
 # this schema will automatically harden request strings like 'python-*'; see
 # the 'expand_requires' function for more info.
 #
-package_request_schema = Or(And(basestring, Use(expand_requirement)),
-                            And(PackageRequest, Use(str)))
+package_request_schema = Or(
+    And(basestring, Use(expand_requirement)), And(PackageRequest, Use(str))
+)
 
-tests_schema = Schema({
-    Optional(basestring): Or(
-        Or(basestring, [basestring]),
-        {
-            "command": Or(basestring, [basestring]),
-            Optional("requires"): [package_request_schema]
-        }
-    )
-})
+tests_schema = Schema(
+    {
+        Optional(basestring): Or(
+            Or(basestring, [basestring]),
+            {
+                "command": Or(basestring, [basestring]),
+                Optional("requires"): [package_request_schema],
+            },
+        )
+    }
+)
 
 
-package_schema = Schema({
-    Optional("requires_rez_version"):   And(basestring, Use(Version)),
-
-    Required("name"):                   basestring,
-    Optional("base"):                   basestring,
-    Optional("version"):                Or(basestring,
-                                           And(Version, Use(str))),
-    Optional('description'):            basestring,
-    Optional('authors'):                [basestring],
-
-    Optional('requires'):               late_bound([package_request_schema]),
-    Optional('build_requires'):         late_bound([package_request_schema]),
-    Optional('private_build_requires'): late_bound([package_request_schema]),
-
-    # deliberately not possible to late bind
-    Optional('variants'):               [[package_request_schema]],
-
-    Optional('uuid'):                   basestring,
-    Optional('config'):                 dict,
-    Optional('tools'):                  late_bound([basestring]),
-    Optional('help'):                   late_bound(help_schema),
-
-    Optional('tests'):                  late_bound(tests_schema),
-
-    Optional('pre_commands'):           _commands_schema,
-    Optional('commands'):               _commands_schema,
-    Optional('post_commands'):          _commands_schema,
-
-    # attributes specific to pre-built packages
-    Optional("build_system"):           basestring,
-    Optional("build_command"):          Or([basestring], basestring, False),
-    Optional("preprocess"):             _function_schema,
-
-    # arbitrary fields
-    Optional(basestring):               object
-})
+package_schema = Schema(
+    {
+        Optional("requires_rez_version"): And(basestring, Use(Version)),
+        Required("name"): basestring,
+        Optional("base"): basestring,
+        Optional("version"): Or(basestring, And(Version, Use(str))),
+        Optional("description"): basestring,
+        Optional("authors"): [basestring],
+        Optional("requires"): late_bound([package_request_schema]),
+        Optional("build_requires"): late_bound([package_request_schema]),
+        Optional("private_build_requires"): late_bound([package_request_schema]),
+        # deliberately not possible to late bind
+        Optional("variants"): [[package_request_schema]],
+        Optional("uuid"): basestring,
+        Optional("config"): dict,
+        Optional("tools"): late_bound([basestring]),
+        Optional("help"): late_bound(help_schema),
+        Optional("tests"): late_bound(tests_schema),
+        Optional("pre_commands"): _commands_schema,
+        Optional("commands"): _commands_schema,
+        Optional("post_commands"): _commands_schema,
+        # attributes specific to pre-built packages
+        Optional("build_system"): basestring,
+        Optional("build_command"): Or([basestring], basestring, False),
+        Optional("preprocess"): _function_schema,
+        # arbitrary fields
+        Optional(basestring): object,
+    }
+)
 
 
 class PackageMaker(AttrDictWrapper):
     """Utility class for creating packages."""
+
     def __init__(self, name, data=None, package_cls=None):
         """Create a package maker.
 
@@ -104,7 +107,8 @@ class PackageMaker(AttrDictWrapper):
             if _rez_Version < ver:
                 raise PackageMetadataError(
                     "Failed reading package definition file: rez version >= %s "
-                    "needed (current version is %s)" % (ver, _rez_Version))
+                    "needed (current version is %s)" % (ver, _rez_Version)
+                )
 
         # create a 'memory' package repository containing just this package
         version_str = package_data.get("version") or "_NO_VERSION"
@@ -114,7 +118,7 @@ class PackageMaker(AttrDictWrapper):
         # retrieve the package from the new repository
         family_resource = repo.get_package_family(self.name)
         it = repo.iter_packages(family_resource)
-        package_resource = it.next()
+        package_resource = next(it)
 
         package = self.package_cls(package_resource)
 
@@ -129,13 +133,14 @@ class PackageMaker(AttrDictWrapper):
         data.pop("skipped_variants", None)
         data.pop("package_cls", None)
 
-        data = dict((k, v) for k, v in data.iteritems() if v is not None)
+        data = dict((k, v) for k, v in data.items() if v is not None)
         return data
 
 
 @contextmanager
-def make_package(name, path, make_base=None, make_root=None, skip_existing=True,
-                 warn_on_skip=True):
+def make_package(
+    name, path, make_base=None, make_root=None, skip_existing=True, warn_on_skip=True
+):
     """Make and install a package.
 
     Example:
@@ -189,8 +194,10 @@ def make_package(name, path, make_base=None, make_root=None, skip_existing=True,
             else:
                 maker.skipped_variants.append(variant_)
                 if warn_on_skip:
-                    print_warning("Skipping installation: Package variant already "
-                                  "exists: %s" % variant_.uri)
+                    print_warning(
+                        "Skipping installation: Package variant already "
+                        "exists: %s" % variant_.uri
+                    )
     else:
         src_variants = package.iter_variants()
 

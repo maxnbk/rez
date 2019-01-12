@@ -2,12 +2,9 @@ name = "vfx_reference_platform"
 
 version = "2015"
 
-authors = [
-    "ajohns"
-]
+authors = ["ajohns"]
 
-description = \
-    """
+description = """
     Bundle for VFX Reference Platform.
     """
 
@@ -24,7 +21,7 @@ requires = [
     "~fbx",
     "~opencolorio-1.0.9",
     "~boost-1.55",
-    "~tbb-4.2"
+    "~tbb-4.2",
 ]
 
 uuid = "repository.vfx_reference_platform"

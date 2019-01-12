@@ -1,9 +1,14 @@
+from __future__ import print_function
+from builtins import next
+from builtins import str
+from past.builtins import basestring
+from builtins import object
 import os
 import subprocess
 import sys
 import pipes
 import re
-import UserDict
+from collections import MutableMapping
 import inspect
 import traceback
 from string import Formatter
@@ -16,12 +21,13 @@ from rez.utils.system import popen
 from rez.utils.sourcecode import SourceCode, SourceCodeError
 from rez.utils.data_utils import AttrDictWrapper
 from rez.utils.formatting import expandvars
-from rez.vendor.enum import Enum
+from enum import Enum
 
 
-#===============================================================================
+# ===============================================================================
 # Actions
-#===============================================================================
+# ===============================================================================
+
 
 class Action(object):
     _registry = []
@@ -30,8 +36,10 @@ class Action(object):
         self.args = args
 
     def __repr__(self):
-        return "%s(%s)" % (self.__class__.__name__,
-                           ', '.join(repr(x) for x in self.args))
+        return "%s(%s)" % (
+            self.__class__.__name__,
+            ", ".join(repr(x) for x in self.args),
+        )
 
     def __eq__(self, other):
         return (self.name == other.name) and (self.args == other.args)
@@ -61,12 +69,14 @@ class EnvAction(Action):
 
 
 class Unsetenv(EnvAction):
-    name = 'unsetenv'
+    name = "unsetenv"
+
+
 Unsetenv.register()
 
 
 class Setenv(EnvAction):
-    name = 'setenv'
+    name = "setenv"
 
     def pre_exec(self, interpreter):
         key, value = self.args
@@ -77,11 +87,13 @@ class Setenv(EnvAction):
     def post_exec(self, interpreter, result):
         interpreter._environ.add(self.key)
         return result
+
+
 Setenv.register()
 
 
 class Resetenv(EnvAction):
-    name = 'resetenv'
+    name = "resetenv"
 
     @property
     def friends(self):
@@ -97,77 +109,109 @@ class Resetenv(EnvAction):
     def post_exec(self, interpreter, result):
         interpreter._environ.add(self.key)
         return result
+
+
 Resetenv.register()
 
 
 class Prependenv(Setenv):
-    name = 'prependenv'
+    name = "prependenv"
+
+
 Prependenv.register()
 
 
 class Appendenv(Setenv):
-    name = 'appendenv'
+    name = "appendenv"
+
+
 Appendenv.register()
 
 
 class Alias(Action):
-    name = 'alias'
+    name = "alias"
+
+
 Alias.register()
 
 
 class Info(Action):
-    name = 'info'
+    name = "info"
+
+
 Info.register()
 
 
 class Error(Action):
-    name = 'error'
+    name = "error"
+
+
 Error.register()
 
 
 class Stop(Action):
-    name = 'stop'
+    name = "stop"
+
+
 Stop.register()
 
 
 class Command(Action):
-    name = 'command'
+    name = "command"
+
+
 Command.register()
 
 
 class Comment(Action):
-    name = 'comment'
+    name = "comment"
+
+
 Comment.register()
 
 
 class Source(Action):
-    name = 'source'
+    name = "source"
+
+
 Source.register()
 
 
 class Shebang(Action):
-    name = 'shebang'
+    name = "shebang"
+
+
 Shebang.register()
 
 
-#===============================================================================
+# ===============================================================================
 # Action Manager
-#===============================================================================
+# ===============================================================================
+
 
 class OutputStyle(Enum):
     """ Enum to represent the style of code output when using Rex.
     """
-    file = ("Code as it would appear in a script file.", )
-    eval = ("Code in a form that can be evaluated.", )
+
+    file = ("Code as it would appear in a script file.",)
+    eval = ("Code in a form that can be evaluated.",)
 
 
 class ActionManager(object):
     """Handles the execution book-keeping.  Tracks env variable values, and
     triggers the callbacks of the `ActionInterpreter`.
     """
-    def __init__(self, interpreter, parent_environ=None, parent_variables=None,
-                 formatter=None, verbose=False, env_sep_map=None):
-        '''
+
+    def __init__(
+        self,
+        interpreter,
+        parent_environ=None,
+        parent_variables=None,
+        formatter=None,
+        verbose=False,
+        env_sep_map=None,
+    ):
+        """
         interpreter: string or `ActionInterpreter`
             the interpreter to use when executing rex actions
         parent_environ: environment to execute the actions within. If None,
@@ -181,26 +225,27 @@ class ActionManager(object):
             if True, causes commands to print additional feedback (using info()).
             can also be set to a list of strings matching command names to add
             verbosity to only those commands.
-        '''
+        """
         self.interpreter = interpreter
         self.verbose = verbose
         self.parent_environ = os.environ if parent_environ is None else parent_environ
-        self.parent_variables = True if parent_variables is True \
-            else set(parent_variables or [])
+        self.parent_variables = (
+            True if parent_variables is True else set(parent_variables or [])
+        )
         self.environ = {}
         self.formatter = formatter or str
         self.actions = []
 
-        self._env_sep_map = env_sep_map if env_sep_map is not None \
-            else config.env_var_separators
+        self._env_sep_map = (
+            env_sep_map if env_sep_map is not None else config.env_var_separators
+        )
 
     def get_action_methods(self):
         """
         return a list of methods on this class for executing actions.
         methods are return as a list of (name, func) tuples
         """
-        return [(name, getattr(self, name))
-                for name, _ in Action.get_command_types()]
+        return [(name, getattr(self, name)) for name, _ in Action.get_command_types()]
 
     def get_public_methods(self):
         """
@@ -208,10 +253,11 @@ class ActionManager(object):
         API.
         """
         return self.get_action_methods() + [
-            ('getenv', self.getenv),
-            ('expandvars', self.expandvars),
-            ('defined', self.defined),
-            ('undefined', self.undefined)]
+            ("getenv", self.getenv),
+            ("expandvars", self.expandvars),
+            ("defined", self.defined),
+            ("undefined", self.undefined),
+        ]
 
     def _env_sep(self, name):
         return self._env_sep_map.get(name, os.pathsep)
@@ -253,8 +299,9 @@ class ActionManager(object):
 
     def undefined(self, key):
         _, expanded_key = self._key(key)
-        return (expanded_key not in self.environ
-                and expanded_key not in self.parent_environ)
+        return (
+            expanded_key not in self.environ and expanded_key not in self.parent_environ
+        )
 
     def defined(self, key):
         return not self.undefined(key)
@@ -267,11 +314,15 @@ class ActionManager(object):
     def getenv(self, key):
         _, expanded_key = self._key(key)
         try:
-            return self.environ[expanded_key] if expanded_key in self.environ \
+            return (
+                self.environ[expanded_key]
+                if expanded_key in self.environ
                 else self.parent_environ[expanded_key]
+            )
         except KeyError:
             raise RexUndefinedVariableError(
-                "Referenced undefined environment variable: %s" % expanded_key)
+                "Referenced undefined environment variable: %s" % expanded_key
+            )
 
     def setenv(self, key, value):
         unexpanded_key, expanded_key = self._key(key)
@@ -318,9 +369,10 @@ class ActionManager(object):
         unexpanded_value, expanded_value = self._value(value)
 
         # expose env-vars from parent env if explicitly told to do so
-        if (expanded_key not in self.environ) and \
-                ((self.parent_variables is True) or (expanded_key in self.parent_variables)):
-            self.environ[expanded_key] = self.parent_environ.get(expanded_key, '')
+        if (expanded_key not in self.environ) and (
+            (self.parent_variables is True) or (expanded_key in self.parent_variables)
+        ):
+            self.environ[expanded_key] = self.parent_environ.get(expanded_key, "")
             if self.interpreter.expand_env_vars:
                 key_ = expanded_key
             else:
@@ -339,8 +391,9 @@ class ActionManager(object):
             values = addfunc(expanded_value, parts)
             expanded_values = EscapedString.join(env_sep, values)
 
-            self.environ[expanded_key] = \
-                env_sep.join(addfunc(str(expanded_value), parts))
+            self.environ[expanded_key] = env_sep.join(
+                addfunc(str(expanded_value), parts)
+            )
         else:
             self.actions.append(Setenv(unexpanded_key, unexpanded_value))
             self.environ[expanded_key] = str(expanded_value)
@@ -368,12 +421,14 @@ class ActionManager(object):
             self.interpreter.setenv(key, value)
 
     def prependenv(self, key, value):
-        self._pendenv(key, value, Prependenv, self.interpreter.prependenv,
-                      lambda x, y: [x] + y)
+        self._pendenv(
+            key, value, Prependenv, self.interpreter.prependenv, lambda x, y: [x] + y
+        )
 
     def appendenv(self, key, value):
-        self._pendenv(key, value, Appendenv, self.interpreter.appendenv,
-                      lambda x, y: y + [x])
+        self._pendenv(
+            key, value, Appendenv, self.interpreter.appendenv, lambda x, y: y + [x]
+        )
 
     def alias(self, key, value):
         key = str(self._format(key))
@@ -381,7 +436,7 @@ class ActionManager(object):
         self.actions.append(Alias(key, value))
         self.interpreter.alias(key, value)
 
-    def info(self, value=''):
+    def info(self, value=""):
         value = self._format(value)
         self.actions.append(Info(value))
         self.interpreter.info(value)
@@ -393,6 +448,7 @@ class ActionManager(object):
 
     def stop(self, msg, *nargs):
         from rez.exceptions import RexStopError
+
         raise RexStopError(msg % nargs)
 
     def command(self, value):
@@ -418,9 +474,10 @@ class ActionManager(object):
         return self.interpreter.get_key_token(key)
 
 
-#===============================================================================
+# ===============================================================================
 # Interpreters
-#===============================================================================
+# ===============================================================================
+
 
 class ActionInterpreter(object):
     """
@@ -439,6 +496,7 @@ class ActionInterpreter(object):
     the `ActionManager` whether or not to expand the value of environment
     variables which reference other variables (e.g. "this-${THAT}").
     """
+
     expand_env_vars = False
 
     def get_output(self, style=OutputStyle.file):
@@ -515,30 +573,31 @@ class ActionInterpreter(object):
     # --- internal commands, not exposed to public rex API
 
     def _saferefenv(self, key):
-        '''
+        """
         make the var safe to reference, even if it does not yet exist. This is
         needed because of different behaviours in shells - eg, tcsh will fail
         on ref to undefined var, but sh will expand to the empty string.
-        '''
+        """
         raise NotImplementedError
 
     # --- internal functions
 
     def _bind_interactive_rez(self):
-        '''
+        """
         apply changes to the env needed to expose rez in an interactive shell,
         for eg prompt change, sourcing completion scripts etc. Do NOT add rez
         to PATH, this is done elsewhere.
-        '''
+        """
         raise NotImplementedError
 
 
 class Python(ActionInterpreter):
-    '''Execute commands in the current python session'''
+    """Execute commands in the current python session"""
+
     expand_env_vars = True
 
     def __init__(self, target_environ=None, passive=False):
-        '''
+        """
         target_environ: dict
             If target_environ is None or os.environ, interpreted actions are
             applied to the current python interpreter. Otherwise, changes are
@@ -548,7 +607,7 @@ class Python(ActionInterpreter):
         passive: bool
             If True, commands that do not update the environment (such as info)
             are skipped.
-        '''
+        """
         self.passive = passive
         self.manager = None
         if (target_environ is None) or (target_environ is os.environ):
@@ -565,8 +624,10 @@ class Python(ActionInterpreter):
         """Apply changes to target environ.
         """
         if self.manager is None:
-            raise RezSystemError("You must call 'set_manager' on a Python rex "
-                                 "interpreter before using it.")
+            raise RezSystemError(
+                "You must call 'set_manager' on a Python rex "
+                "interpreter before using it."
+            )
 
         self.target_environ.update(self.manager.environ)
 
@@ -576,7 +637,7 @@ class Python(ActionInterpreter):
 
     def setenv(self, key, value):
         if self.update_session:
-            if key == 'PYTHONPATH':
+            if key == "PYTHONPATH":
                 value = self.escape_string(value)
                 sys.path = value.split(os.pathsep)
 
@@ -588,43 +649,40 @@ class Python(ActionInterpreter):
 
     def prependenv(self, key, value):
         if self.update_session:
-            if key == 'PYTHONPATH':
+            if key == "PYTHONPATH":
                 value = self.escape_string(value)
                 sys.path.insert(0, value)
 
     def appendenv(self, key, value):
         if self.update_session:
-            if key == 'PYTHONPATH':
+            if key == "PYTHONPATH":
                 value = self.escape_string(value)
                 sys.path.append(value)
 
     def info(self, value):
         if not self.passive:
             value = self.escape_string(value)
-            print value
+            print(value)
 
     def error(self, value):
         if not self.passive:
             value = self.escape_string(value)
-            print >> sys.stderr, value
+            print(value, file=sys.stderr)
 
     def subprocess(self, args, **subproc_kwargs):
         if self.manager:
             self.target_environ.update(self.manager.environ)
 
-        shell_mode = not hasattr(args, '__iter__')
-        return popen(args,
-                     shell=shell_mode,
-                     env=self.target_environ,
-                     **subproc_kwargs)
+        shell_mode = not hasattr(args, "__iter__")
+        return popen(args, shell=shell_mode, env=self.target_environ, **subproc_kwargs)
 
     def command(self, value):
         if self.passive:
             return
 
-        if hasattr(value, '__iter__'):
+        if hasattr(value, "__iter__"):
             it = iter(value)
-            cmd = EscapedString.disallow(it.next())
+            cmd = EscapedString.disallow(next(it))
             value = [cmd] + [self.escape_string(x) for x in it]
         else:
             value = EscapedString.disallow(value)
@@ -635,7 +693,7 @@ class Python(ActionInterpreter):
             p.communicate()
         except Exception as e:
             cmd = shlex_join(value)
-            raise RexError('Error executing command: %s\n%s' % (cmd, str(e)))
+            raise RexError("Error executing command: %s\n%s" % (cmd, str(e)))
 
     def comment(self, value):
         pass
@@ -663,9 +721,10 @@ class Python(ActionInterpreter):
         return "${%s}" % key
 
 
-#===============================================================================
+# ===============================================================================
 # String manipulation
-#===============================================================================
+# ===============================================================================
+
 
 class EscapedString(object):
     """Class for constructing literal or expandable strings, or a combination
@@ -694,6 +753,7 @@ class EscapedString(object):
         you can use the `literal` and `expandable` free functions, rather than
         constructing a class instance directly.
     """
+
     def __init__(self, value, is_literal=False):
         self.strings = [(is_literal, value)]
 
@@ -725,17 +785,16 @@ class EscapedString(object):
 
     def __str__(self):
         """Return the string unescaped."""
-        return ''.join(x[1] for x in self.strings)
+        return "".join(x[1] for x in self.strings)
 
     def __repr__(self):
         return "%s(%r)" % (self.__class__.__name__, self.strings)
 
     def __eq__(self, other):
         if isinstance(other, basestring):
-            return (str(self) == str(other))
+            return str(self) == str(other)
         else:
-            return (isinstance(other, EscapedString)
-                    and other.strings == self.strings)
+            return isinstance(other, EscapedString) and other.strings == self.strings
 
     def __ne__(self, other):
         return not (self == other)
@@ -818,10 +877,10 @@ class EscapedString(object):
     @classmethod
     def join(cls, sep, values):
         if not values:
-            return EscapedString('')
+            return EscapedString("")
 
         it = iter(values)
-        result = EscapedString.promote(it.next())
+        result = EscapedString.promote(next(it))
 
         for value in it:
             result = result + sep
@@ -846,7 +905,9 @@ class EscapedString(object):
     @classmethod
     def disallow(cls, value):
         if isinstance(value, cls):
-            raise RexError("The command does not accept use of 'literal' or 'expandable'")
+            raise RexError(
+                "The command does not accept use of 'literal' or 'expandable'"
+            )
         return value
 
 
@@ -860,9 +921,10 @@ def expandable(value):
     return EscapedString(value, False)
 
 
-#===============================================================================
+# ===============================================================================
 # Rex Execution Namespace
-#===============================================================================
+# ===============================================================================
+
 
 class NamespaceFormatter(Formatter):
     """String formatter that, as well as expanding '{variable}' strings, also
@@ -872,12 +934,13 @@ class NamespaceFormatter(Formatter):
     across shells, and avoids some problems with non-curly-braced variables in
     some situations.
     """
+
     # Note: the regex used here matches more than just posix environment variable
     # names, because special shell expansion characters may be present.
-    ENV_VAR_REF_1   = "\\${([^\\{\\}]+?)}"  # ${ENVVAR}
-    ENV_VAR_REF_2   = "\\$([a-zA-Z_]+[a-zA-Z0-9_]*?)"  # $ENVVAR
-    ENV_VAR_REF     = "%s|%s" % (ENV_VAR_REF_1, ENV_VAR_REF_2)
-    ENV_VAR_REGEX   = re.compile(ENV_VAR_REF)
+    ENV_VAR_REF_1 = "\\${([^\\{\\}]+?)}"  # ${ENVVAR}
+    ENV_VAR_REF_2 = "\\$([a-zA-Z_]+[a-zA-Z0-9_]*?)"  # $ENVVAR
+    ENV_VAR_REF = "%s|%s" % (ENV_VAR_REF_1, ENV_VAR_REF_2)
+    ENV_VAR_REGEX = re.compile(ENV_VAR_REF)
 
     def __init__(self, namespace):
         Formatter.__init__(self)
@@ -886,7 +949,7 @@ class NamespaceFormatter(Formatter):
 
     def format(self, format_string, *args, **kwargs):
         def escape_envvar(matchobj):
-            value = (x for x in matchobj.groups() if x is not None).next()
+            value = next((x for x in matchobj.groups() if x is not None))
             return "${{%s}}" % value
 
         format_string_ = re.sub(self.ENV_VAR_REGEX, escape_envvar, format_string)
@@ -926,11 +989,12 @@ class NamespaceFormatter(Formatter):
             return Formatter.get_value(self, key, args, kwds)
 
 
-#===============================================================================
+# ===============================================================================
 # Environment Classes
-#===============================================================================
+# ===============================================================================
 
-class EnvironmentDict(UserDict.DictMixin):
+
+class EnvironmentDict(MutableMapping):
     """
     Provides a mapping interface to `EnvironmentVariable` instances,
     which provide an object-oriented interface for recording environment
@@ -939,6 +1003,7 @@ class EnvironmentDict(UserDict.DictMixin):
     `__getitem__` is always guaranteed to return an `EnvironmentVariable`
     instance: it will not raise a KeyError.
     """
+
     def __init__(self, manager):
         """Creates an `EnvironmentDict`.
 
@@ -949,14 +1014,15 @@ class EnvironmentDict(UserDict.DictMixin):
                 be appended/prepended to as usual.
         """
         self.manager = manager
-        self._var_cache = dict((k, EnvironmentVariable(k, self))
-                               for k in manager.parent_environ.iterkeys())
+        self._var_cache = dict(
+            (k, EnvironmentVariable(k, self)) for k in manager.parent_environ.keys()
+        )
 
     def keys(self):
-        return self._var_cache.keys()
+        return list(self._var_cache.keys())
 
     def __repr__(self):
-        return '%s(%s)' % (self.__class__.__name__, str(self._var_cache))
+        return "%s(%s)" % (self.__class__.__name__, str(self._var_cache))
 
     def __getitem__(self, key):
         if key not in self._var_cache:
@@ -967,15 +1033,16 @@ class EnvironmentDict(UserDict.DictMixin):
         self[key].set(value)
 
     def __contains__(self, key):
-        return (key in self._var_cache)
+        return key in self._var_cache
 
 
 class EnvironmentVariable(object):
-    '''
+    """
     class representing an environment variable
 
     combined with EnvironmentDict class, records changes to the environment
-    '''
+    """
+
     def __init__(self, name, environ_map):
         self._name = name
         self._environ_map = environ_map
@@ -1008,7 +1075,7 @@ class EnvironmentVariable(object):
         return self.get()
 
     def setdefault(self, value):
-        '''set value if the variable does not yet exist'''
+        """set value if the variable does not yet exist"""
         if not self:
             self.set(value)
 
@@ -1016,10 +1083,9 @@ class EnvironmentVariable(object):
         return self.value()
 
     def __repr__(self):
-        return '%s(%r, %r)' % (self.__class__.__name__, self._name,
-                               self.value())
+        return "%s(%r, %r)" % (self.__class__.__name__, self._name, self.value())
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self.value())
 
     def __eq__(self, value):
@@ -1031,9 +1097,10 @@ class EnvironmentVariable(object):
         return not self == value
 
 
-#===============================================================================
+# ===============================================================================
 # Executors
-#===============================================================================
+# ===============================================================================
+
 
 class RexExecutor(object):
     """
@@ -1045,8 +1112,16 @@ class RexExecutor(object):
     ex.env.FOO_SET = 1
     ex.alias('foo','foo -l')
     """
-    def __init__(self, interpreter=None, globals_map=None, parent_environ=None,
-                 parent_variables=None, shebang=True, add_default_namespaces=True):
+
+    def __init__(
+        self,
+        interpreter=None,
+        globals_map=None,
+        parent_environ=None,
+        parent_variables=None,
+        shebang=True,
+        add_default_namespaces=True,
+    ):
         """
         interpreter: `ActionInterpreter` or None
             the interpreter to use when executing rex actions. If None, creates
@@ -1068,17 +1143,19 @@ class RexExecutor(object):
         self.globals = globals_map or {}
         self.formatter = NamespaceFormatter(self.globals)
 
-        self.bind('format', self.expand)
-        self.bind('literal', literal)
-        self.bind('expandable', expandable)
+        self.bind("format", self.expand)
+        self.bind("literal", literal)
+        self.bind("expandable", expandable)
 
         if interpreter is None:
             interpreter = Python(target_environ={})
 
-        self.manager = ActionManager(interpreter,
-                                     formatter=self.expand,
-                                     parent_environ=parent_environ,
-                                     parent_variables=parent_variables)
+        self.manager = ActionManager(
+            interpreter,
+            formatter=self.expand,
+            parent_environ=parent_environ,
+            parent_variables=parent_variables,
+        )
 
         if isinstance(interpreter, Python):
             interpreter.set_manager(self.manager)
@@ -1087,13 +1164,13 @@ class RexExecutor(object):
             self.manager.shebang()
 
         self.environ = EnvironmentDict(self.manager)
-        self.bind('env', AttrDictWrapper(self.environ))
+        self.bind("env", AttrDictWrapper(self.environ))
 
         for cmd, func in self.manager.get_public_methods():
             self.bind(cmd, func)
 
         if add_default_namespaces:
-            self.bind('system', system)
+            self.bind("system", system)
 
     @property
     def interpreter(self):
@@ -1106,8 +1183,11 @@ class RexExecutor(object):
 
     def __getattr__(self, attr):
         """Allows for access such as: self.setenv('FOO','bah')."""
-        return self.globals[attr] if attr in self.globals \
+        return (
+            self.globals[attr]
+            if attr in self.globals
             else getattr(super(RexExecutor, self), attr)
+        )
 
     def bind(self, name, obj):
         """Binds an object to the execution context."""
@@ -1116,8 +1196,8 @@ class RexExecutor(object):
     def append_system_paths(self):
         """Append system paths to $PATH."""
         from rez.shells import Shell, create_shell
-        sh = self.interpreter if isinstance(self.interpreter, Shell) \
-            else create_shell()
+
+        sh = self.interpreter if isinstance(self.interpreter, Shell) else create_shell()
 
         paths = sh.get_syspaths()
         paths_str = os.pathsep.join(paths)
@@ -1158,7 +1238,7 @@ class RexExecutor(object):
             if isinstance(code, SourceCode):
                 pyc = code.compiled
             else:
-                pyc = compile(code, filename, 'exec')
+                pyc = compile(code, filename, "exec")
         except SourceCodeError as e:
             reraise(e, RexError)
         except Exception as e:
@@ -1173,7 +1253,7 @@ class RexExecutor(object):
                 if isinstance(code, SourceCode):
                     code.exec_(globals_=exec_namespace)
                 else:
-                    exec pyc in exec_namespace
+                    exec(pyc, exec_namespace)
             except RexError:
                 raise
             except SourceCodeError as e:
@@ -1193,10 +1273,9 @@ class RexExecutor(object):
             isolate (bool): If True, do not affect `self.globals` by executing
                 this code.
         """
+
         def _apply():
-            self.compile_code(code=code,
-                              filename=filename,
-                              exec_namespace=self.globals)
+            self.compile_code(code=code, filename=filename, exec_namespace=self.globals)
 
         # we want to execute the code using self.globals - if for no other
         # reason that self.formatter is pointing at self.globals, so if we
@@ -1223,12 +1302,15 @@ class RexExecutor(object):
         """
         # makes a copy of the func
         import types
-        fn = types.FunctionType(func.func_code,
-                                func.func_globals.copy(),
-                                name=func.func_name,
-                                argdefs=func.func_defaults,
-                                closure=func.func_closure)
-        fn.func_globals.update(self.globals)
+
+        fn = types.FunctionType(
+            func.__code__,
+            func.__globals__.copy(),
+            name=func.__name__,
+            argdefs=func.__defaults__,
+            closure=func.__closure__,
+        )
+        fn.__globals__.update(self.globals)
 
         error_class = Exception if config.catch_rex_errors else None
 

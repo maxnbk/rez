@@ -1,6 +1,8 @@
 """
 Mercurial version control
 """
+from __future__ import print_function
+from builtins import str
 from rez.release_vcs import ReleaseVCS
 from rez.exceptions import ReleaseVCSError
 from rez.utils.logging_ import print_debug, print_error
@@ -14,45 +16,51 @@ class HgReleaseVCSError(ReleaseVCSError):
 class HgReleaseVCS(ReleaseVCS):
     @classmethod
     def name(cls):
-        return 'hg'
+        return "hg"
 
     def __init__(self, pkg_root, vcs_root=None):
         super(HgReleaseVCS, self).__init__(pkg_root, vcs_root=vcs_root)
-        self.executable = self.find_executable('hg')
+        self.executable = self.find_executable("hg")
 
-        hgdir = os.path.join(self.vcs_root, '.hg')
+        hgdir = os.path.join(self.vcs_root, ".hg")
         if not os.path.isdir(hgdir):
             raise HgReleaseVCSError(
-                "'%s' is not a mercurial working copy" % self.vcs_root)
+                "'%s' is not a mercurial working copy" % self.vcs_root
+            )
         try:
-            assert self.hg('root')[0] == self.vcs_root
+            assert self.hg("root")[0] == self.vcs_root
         except AssertionError:
             raise HgReleaseVCSError(
-                "'%s' is not the root of a mercurial working copy" % self.vcs_root)
-        except Exception, err:
+                "'%s' is not the root of a mercurial working copy" % self.vcs_root
+            )
+        except Exception as err:
             raise HgReleaseVCSError("failed to call hg binary: " + str(err))
 
-        self.patch_path = os.path.join(hgdir, 'patches')
+        self.patch_path = os.path.join(hgdir, "patches")
         if not os.path.isdir(self.patch_path):
             self.patch_path = None
 
     @classmethod
     def is_valid_root(cls, path):
-        return os.path.isdir(os.path.join(path, '.hg'))
+        return os.path.isdir(os.path.join(path, ".hg"))
 
     @classmethod
     def search_parents_for_root(cls):
         return True
 
     def hg(self, *nargs, **kwargs):
-        if kwargs.pop('patch', False):
-            nargs += ('--mq',)
-        if ('-R' not in nargs and '--repository' not in nargs
-            and not any(x.startswith(('-R', '--repository=')) for x in nargs)):
-            nargs += ('--repository', self.vcs_root)
+        if kwargs.pop("patch", False):
+            nargs += ("--mq",)
+        if (
+            "-R" not in nargs
+            and "--repository" not in nargs
+            and not any(x.startswith(("-R", "--repository=")) for x in nargs)
+        ):
+            nargs += ("--repository", self.vcs_root)
         if kwargs:
-            raise HgReleaseVCSError("Unrecognized keyword args to hg command:"
-                                    " %s" % ", ".join(kwargs))
+            raise HgReleaseVCSError(
+                "Unrecognized keyword args to hg command:" " %s" % ", ".join(kwargs)
+            )
         return self._cmd(self.executable, *nargs)
 
     def _create_tag_highlevel(self, tag_name, message=None):
@@ -66,23 +74,20 @@ class HgReleaseVCS(ReleaseVCS):
         results = []
         if self.patch_path:
             # make a tag on the patch queue
-            tagged = self._create_tag_lowlevel(tag_name, message=message,
-                                               patch=True)
+            tagged = self._create_tag_lowlevel(tag_name, message=message, patch=True)
             if tagged:
-                results.append({'type': 'tag', 'patch': True})
+                results.append({"type": "tag", "patch": True})
 
             # use a bookmark on the main repo since we can't change it
-            self.hg('bookmark', '-f', tag_name)
-            results.append({'type': 'bookmark', 'patch': False})
+            self.hg("bookmark", "-f", tag_name)
+            results.append({"type": "bookmark", "patch": False})
         else:
-            tagged = self._create_tag_lowlevel(tag_name, message=message,
-                                               patch=False)
+            tagged = self._create_tag_lowlevel(tag_name, message=message, patch=False)
             if tagged:
-                results.append({'type': 'tag', 'patch': False})
+                results.append({"type": "tag", "patch": False})
         return results
 
-    def _create_tag_lowlevel(self, tag_name, message=None, force=True,
-                             patch=False):
+    def _create_tag_lowlevel(self, tag_name, message=None, force=True, patch=False):
         """Create a tag on the toplevel or patch repo
 
         If the tag exists, and force is False, no tag is made. If force is True,
@@ -113,31 +118,32 @@ class HgReleaseVCS(ReleaseVCS):
         if old_commit is not None:
             if not force:
                 return False
-            old_rev = old_commit['rev']
+            old_rev = old_commit["rev"]
             # ok, now check to see if direct ancestor...
-            if self.is_ancestor(old_rev, '.', patch=patch):
+            if self.is_ancestor(old_rev, ".", patch=patch):
                 # ...and if filestates are same
-                altered = self.hg('status', '--rev', old_rev, '--rev', '.',
-                                  '--no-status')
-                if not altered or altered == ['.hgtags']:
+                altered = self.hg(
+                    "status", "--rev", old_rev, "--rev", ".", "--no-status"
+                )
+                if not altered or altered == [".hgtags"]:
                     force = False
             if not force:
                 return False
 
-        tag_args = ['tag', tag_name]
+        tag_args = ["tag", tag_name]
         if message:
-            tag_args += ['--message', message]
+            tag_args += ["--message", message]
 
         # we should be ok with ALWAYS having force flag on now, since we should
         # have already checked if the commit exists.. but be paranoid, in case
         # we've missed some edge case...
         if force:
-            tag_args += ['--force']
+            tag_args += ["--force"]
         self.hg(patch=patch, *tag_args)
         return True
 
     def get_tags(self, patch=False):
-        lines = self.hg('tags', patch=patch)
+        lines = self.hg("tags", patch=patch)
 
         # results will look like:
         # tip                              157:2d82ff68b9f5
@@ -145,32 +151,37 @@ class HgReleaseVCS(ReleaseVCS):
 
         # since I don't know if spaces are allowed in tag names, we do an
         # rsplit, once, since we KNOW how the right side should be formatted
-        tags = dict(line.rstrip().rsplit(None, 1) for line in lines
-                    if line.strip())
-        for tag_name, tag_info in tags.iteritems():
-            rev, shortnode = tag_info.split(':')
-            tags[tag_name] = {'rev': rev, 'shortnode': shortnode}
+        tags = dict(line.rstrip().rsplit(None, 1) for line in lines if line.strip())
+        for tag_name, tag_info in tags.items():
+            rev, shortnode = tag_info.split(":")
+            tags[tag_name] = {"rev": rev, "shortnode": shortnode}
         return tags
 
     def tag_exists(self, tag_name):
         tags = self.get_tags()
-        return (tag_name in tags.keys())
+        return tag_name in list(tags.keys())
 
     def is_ancestor(self, commit1, commit2, patch=False):
         """Returns True if commit1 is a direct ancestor of commit2, or False
         otherwise.
 
         This method considers a commit to be a direct ancestor of itself"""
-        result = self.hg("log", "-r", "first(%s::%s)" % (commit1, commit2),
-                         "--template", "exists", patch=patch)
+        result = self.hg(
+            "log",
+            "-r",
+            "first(%s::%s)" % (commit1, commit2),
+            "--template",
+            "exists",
+            patch=patch,
+        )
         return "exists" in result
 
     def get_paths(self, patch=False):
         paths = self.hg("paths", patch=patch)
-        return dict(line.split(' = ', 1) for line in paths if line)
+        return dict(line.split(" = ", 1) for line in paths if line)
 
     def get_default_url(self, patch=False):
-        return self.get_paths(patch=patch).get('default')
+        return self.get_paths(patch=patch).get("default")
 
     def validate_repostate(self):
         def _check(modified, path):
@@ -178,23 +189,24 @@ class HgReleaseVCS(ReleaseVCS):
                 modified = [line.split()[-1] for line in modified]
                 raise ReleaseVCSError(
                     "%s is not in a state to release - please commit outstanding "
-                    "changes: %s" % (path, ', '.join(modified)))
+                    "changes: %s" % (path, ", ".join(modified))
+                )
 
-        _check(self.hg('status', '-m', '-a'), self.vcs_root)
+        _check(self.hg("status", "-m", "-a"), self.vcs_root)
         if self.patch_path:
-            _check(self.hg('status', '-m', '-a', '--mq'), self.patch_path)
+            _check(self.hg("status", "-m", "-a", "--mq"), self.patch_path)
 
     def get_current_revision(self):
         doc = {
-            'commit': self.hg("log", "--template", "{node}", "-r", ".")[0],
-            'branch': self.hg("branch")[0],
+            "commit": self.hg("log", "--template", "{node}", "-r", ".")[0],
+            "branch": self.hg("branch")[0],
         }
 
         def _get(key, fn):
             try:
                 value = fn()
                 doc[key] = value
-                return (value is not None)
+                return value is not None
             except Exception as e:
                 print_error("Error retrieving %s: %s" % (key, str(e)))
                 return False
@@ -210,8 +222,10 @@ class HgReleaseVCS(ReleaseVCS):
                 prev_commit = previous_revision["commit"]
             except:
                 if self.package.config.debug("package_release"):
-                    print_debug("couldn't determine previous commit from: %r"
-                                % previous_revision)
+                    print_debug(
+                        "couldn't determine previous commit from: %r"
+                        % previous_revision
+                    )
 
         args = ["log"]
         if max_revisions:
@@ -233,7 +247,7 @@ class HgReleaseVCS(ReleaseVCS):
             args.extend(["-r", commit_range])
 
         stdout = self.hg(*args)
-        return '\n'.join(stdout)
+        return "\n".join(stdout)
 
     def create_release_tag(self, tag_name, message=None):
         # check if tag already exists, and if it does, if it is a direct
@@ -252,21 +266,21 @@ class HgReleaseVCS(ReleaseVCS):
         # commit that created the 2nd tag.
 
         # create tag
-        print "Creating tag '%s'..." % tag_name
+        print("Creating tag '%s'..." % tag_name)
         created_tags = self._create_tag_highlevel(tag_name, message=message)
 
         # push tags / bookmarks
         for result in created_tags:
-            patch = result['patch']
+            patch = result["patch"]
             url = self.get_default_url(patch=patch)
             if not url:
                 continue
-            if result['type'] == 'bookmark':
-                self.hg('push', '--bookmark', tag_name, url, patch=patch)
-            elif result['type'] == 'tag':
-                self.hg('push', url, patch=patch)
+            if result["type"] == "bookmark":
+                self.hg("push", "--bookmark", tag_name, url, patch=patch)
+            elif result["type"] == "tag":
+                self.hg("push", url, patch=patch)
             else:
-                raise ValueError(result['type'])
+                raise ValueError(result["type"])
 
 
 def register_plugin():

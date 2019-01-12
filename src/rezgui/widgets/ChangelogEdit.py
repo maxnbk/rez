@@ -1,12 +1,13 @@
+from builtins import str
 from rezgui.qt import QtCore, QtGui
 import cgi
 
 
 def plaintext_to_html(txt):
     out = cgi.escape(txt)
-    out = out.replace('\t', "    ")
-    out = out.replace(' ', "&nbsp;")
-    out = out.replace('\n', "<br>")
+    out = out.replace("\t", "    ")
+    out = out.replace(" ", "&nbsp;")
+    out = out.replace("\n", "<br>")
     return out
 
 
@@ -26,15 +27,14 @@ class ChangelogEdit(QtGui.QPlainTextEdit):
             heading = str(package.version)
             body = (package.changelog or "-").strip()
             body = plaintext_to_html(body)
-            html = ("<p><font size='+2'><b>%s</b></font><br>%s<br></p>"
-                    % (heading, body))
+            html = "<p><font size='+2'><b>%s</b></font><br>%s<br></p>" % (heading, body)
             lines.append(html)
 
         busy_cursor = QtGui.QCursor(QtCore.Qt.WaitCursor)
         QtGui.QApplication.setOverrideCursor(busy_cursor)
         try:
             self.clear()
-            self.appendHtml(''.join(lines))
+            self.appendHtml("".join(lines))
             self.moveCursor(QtGui.QTextCursor.Start)
         finally:
             QtGui.QApplication.restoreOverrideCursor()

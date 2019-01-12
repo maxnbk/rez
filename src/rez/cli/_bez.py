@@ -1,3 +1,5 @@
+from __future__ import print_function
+from builtins import str
 import os
 import sys
 import os.path
@@ -9,18 +11,16 @@ from rez.config import config
 
 
 def run():
-    parser = argparse.ArgumentParser( \
-        description="Simple builtin Rez build system")
+    parser = argparse.ArgumentParser(description="Simple builtin Rez build system")
 
-    parser.add_argument("TARGET", type=str, nargs='*',
-                        help="build targets")
+    parser.add_argument("TARGET", type=str, nargs="*", help="build targets")
 
     opts = parser.parse_args()
 
     # check necessary files, load info about the build
     for file in ("build.rxt", ".bez.yaml"):
         if not os.path.isfile(file):
-            print >> sys.stderr, "no %s file found. Stop." % file
+            print("no %s file found. Stop." % file, file=sys.stderr)
             sys.exit(1)
 
     with open(".bez.yaml") as f:
@@ -29,13 +29,12 @@ def run():
     source_path = doc["source_path"]
     buildfile = os.path.join(source_path, "rezbuild.py")
     if not os.path.isfile(buildfile):
-        print >> sys.stderr, "no rezbuild.py at %s. Stop." % source_path
+        print("no rezbuild.py at %s. Stop." % source_path, file=sys.stderr)
         sys.exit(1)
 
     # run rezbuild.py:build() in python subprocess. Cannot import module here
     # because we're in a python env configured for rez, not the build
-    code = \
-    """
+    code = """
     stream=open("%(buildfile)s")
     env={}
     exec stream in env
@@ -58,12 +57,14 @@ def run():
 
     buildfunc(**kwargs)
 
-    """ % dict(buildfile=buildfile,
-               srcpath=source_path,
-               bldpath=doc["build_path"],
-               instpath=doc["install_path"],
-               targets=str(opts.TARGET or None),
-               build_args=str(doc.get("build_args") or []))
+    """ % dict(
+        buildfile=buildfile,
+        srcpath=source_path,
+        bldpath=doc["build_path"],
+        instpath=doc["install_path"],
+        targets=str(opts.TARGET or None),
+        build_args=str(doc.get("build_args") or []),
+    )
 
     cli_code = textwrap.dedent(code).replace("\\", "\\\\")
 
@@ -72,7 +73,7 @@ def run():
     with open(bezfile, "w") as fd:
         fd.write(cli_code)
 
-    print "executing rezbuild.py..."
+    print("executing rezbuild.py...")
     cmd = ["python", bezfile]
     p = subprocess.Popen(cmd)
     p.wait()

@@ -13,7 +13,7 @@ from rez.rex import EscapedString
 
 
 class SH(UnixShell):
-    norc_arg = '--noprofile'
+    norc_arg = "--noprofile"
     histfile = "~/.bash_history"
     histvar = "HISTFILE"
     _executable = None
@@ -21,16 +21,16 @@ class SH(UnixShell):
     @property
     def executable(cls):
         if cls._executable is None:
-            cls._executable = Shell.find_executable('sh')
+            cls._executable = Shell.find_executable("sh")
         return cls._executable
 
     @classmethod
     def name(cls):
-        return 'sh'
+        return "sh"
 
     @classmethod
     def file_extension(cls):
-        return 'sh'
+        return "sh"
 
     @classmethod
     def get_syspaths(cls):
@@ -42,15 +42,17 @@ class SH(UnixShell):
             return cls.syspaths
 
         # detect system paths using registry
-        cmd = "cmd=`which %s`; unset PATH; $cmd %s %s 'echo __PATHS_ $PATH'" \
-              % (cls.name(), cls.norc_arg, cls.command_arg)
-        p = popen(cmd, stdout=subprocess.PIPE,
-                  stderr=subprocess.PIPE, shell=True)
+        cmd = "cmd=`which %s`; unset PATH; $cmd %s %s 'echo __PATHS_ $PATH'" % (
+            cls.name(),
+            cls.norc_arg,
+            cls.command_arg,
+        )
+        p = popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out_, err_ = p.communicate()
         if p.returncode:
             paths = []
         else:
-            lines = out_.split('\n')
+            lines = out_.split("\n")
             line = [x for x in lines if "__PATHS_" in x.split()][0]
             paths = line.strip().split()[-1].split(os.pathsep)
 
@@ -61,19 +63,17 @@ class SH(UnixShell):
         return cls.syspaths
 
     @classmethod
-    def startup_capabilities(cls, rcfile=False, norc=False, stdin=False,
-                             command=False):
-        cls._unsupported_option('rcfile', rcfile)
+    def startup_capabilities(cls, rcfile=False, norc=False, stdin=False, command=False):
+        cls._unsupported_option("rcfile", rcfile)
         rcfile = False
         if command is not None:
-            cls._overruled_option('stdin', 'command', stdin)
+            cls._overruled_option("stdin", "command", stdin)
             stdin = False
         return (rcfile, norc, stdin, command)
 
     @classmethod
     def get_startup_sequence(cls, rcfile, norc, stdin, command):
-        _, norc, stdin, command = \
-            cls.startup_capabilities(rcfile, norc, stdin, command)
+        _, norc, stdin, command = cls.startup_capabilities(rcfile, norc, stdin, command)
 
         envvar = None
         files = []
@@ -83,7 +83,7 @@ class SH(UnixShell):
                 for file in ("~/.profile",):
                     if os.path.exists(os.path.expanduser(file)):
                         files.append(file)
-            envvar = 'ENV'
+            envvar = "ENV"
             path = os.getenv(envvar)
             if path and os.path.isfile(os.path.expanduser(path)):
                 files.append(path)
@@ -95,11 +95,14 @@ class SH(UnixShell):
             envvar=envvar,
             files=files,
             bind_files=[],
-            source_bind_files=False)
+            source_bind_files=False,
+        )
 
     def _bind_interactive_rez(self):
         if config.set_prompt and self.settings.prompt:
-            self._addline('if [ -z "$REZ_STORED_PROMPT" ]; then export REZ_STORED_PROMPT="$PS1"; fi')
+            self._addline(
+                'if [ -z "$REZ_STORED_PROMPT" ]; then export REZ_STORED_PROMPT="$PS1"; fi'
+            )
             if config.prefix_prompt:
                 cmd = 'export PS1="%s $REZ_STORED_PROMPT"'
             else:
@@ -108,7 +111,7 @@ class SH(UnixShell):
 
     def setenv(self, key, value):
         value = self.escape_string(value)
-        self._addline('export %s=%s' % (key, value))
+        self._addline("export %s=%s" % (key, value))
 
     def unsetenv(self, key):
         self._addline("unset %s" % key)
@@ -120,12 +123,12 @@ class SH(UnixShell):
 
     def source(self, value):
         value = self.escape_string(value)
-        self._addline('. %s' % value)
+        self._addline(". %s" % value)
 
     def escape_string(self, value):
         value = EscapedString.promote(value)
         value = value.expanduser()
-        result = ''
+        result = ""
 
         for is_literal, txt in value.strings:
             if is_literal:
@@ -133,7 +136,7 @@ class SH(UnixShell):
                 if not txt.startswith("'"):
                     txt = "'%s'" % txt
             else:
-                txt = txt.replace('\\', '\\\\')
+                txt = txt.replace("\\", "\\\\")
                 txt = txt.replace('"', '\\"')
                 txt = '"%s"' % txt
             result += txt
