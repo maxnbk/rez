@@ -793,6 +793,15 @@ class Config(object, metaclass=LazyAttributeMeta):
     def _validate_key(self, key, value, key_schema):
         if isinstance(value, DelayLoad):
             value = value.get_value()
+        elif callable(value):
+            # deferred setting value: resolved at first access of this
+            # setting, by which time config files have been fully evaluated.
+            # This is the callable analogue of DelayLoad - it lets a config
+            # value be computed with rez APIs (or read from sidecar data)
+            # without executing anything during config file evaluation
+            # itself. Resolved once per cache generation; re-resolves if the
+            # cache is invalidated (eg via override).
+            value = value()
 
         if type(key_schema) is type and issubclass(key_schema, Setting):
             key_schema = key_schema(self, key)

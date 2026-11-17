@@ -326,6 +326,37 @@ class TestConfig(TestBase):
 
             self.assertEqual(config.image_viewer, "plain")
 
+    def test_deferred_callable_value(self) -> None:
+        """A callable setting value resolves at first access, post-evaluation.
+
+        The callable may use rez APIs (here: canonical_path) and read sidecar
+        data files, since by resolution time config files have been fully
+        evaluated.
+        """
+        conf = os.path.join(self.config_path, "deferred_callable.py")
+        c = Config([self.root_config_file, conf], locked=True)
+
+        value = c.default_cachable_per_repository
+        # canonical_path was applied to the sidecar's raw (non-canonical)
+        # paths at resolution time: "/mnt/./repo/" -> "/mnt/repo"
+        self.assertEqual(value, {"/mnt/repo": True, "/mnt/other": False})
+
+    def test_deferred_callable_reresolve_on_override(self) -> None:
+        """A deferred callable re-resolves when the cache is invalidated."""
+        conf = os.path.join(self.config_path, "deferred_callable.py")
+        c = Config([self.root_config_file, conf], locked=True)
+        _ = c.default_cachable_per_repository
+
+        c.override("default_cachable_per_repository", lambda: {"overridden": True})
+        self.assertEqual(c.default_cachable_per_repository, {"overridden": True})
+
+    def test_deferred_callable_invalid_value(self) -> None:
+        """A deferred callable's resolved value is schema-validated."""
+        conf = os.path.join(self.config_path, "deferred_callable_bad.py")
+        c = Config([self.root_config_file, conf], locked=True)
+        with self.assertRaises(ConfigurationError):
+            _ = c.warn_all
+
     def test_11_all_settings_declare_environment_variable_support(self) -> None:
         """Test that env_var_json_only and _parse_env_var are aligned and agree.
 
