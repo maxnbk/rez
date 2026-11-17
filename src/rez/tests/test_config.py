@@ -381,6 +381,13 @@ class TestConfig(TestBase):
             {"/mnt/repo": True, "/mnt/other": False},
         )
 
+        # the relocatable sibling setting has the same canonical-key
+        # semantics (it is consumed identically: .get(repository.location))
+        self.assertEqual(
+            c.default_relocatable_per_repository,
+            {"/mnt/repo": True},
+        )
+
     def test_11_all_settings_declare_environment_variable_support(self) -> None:
         """Test that env_var_json_only and _parse_env_var are aligned and agree.
 

@@ -426,7 +426,7 @@ config_schema = Schema({
     "package_definition_build_python_paths":        PathList,
     "platform_map":                                 OptionalDict,
     "default_relocatable_per_package":              OptionalDict,
-    "default_relocatable_per_repository":           OptionalDict,
+    "default_relocatable_per_repository":           CanonicalPathDict,
     "default_cachable_per_package":                 OptionalDict,
     "default_cachable_per_repository":              CanonicalPathDict,
     "default_cachable":                             OptionalBool,
