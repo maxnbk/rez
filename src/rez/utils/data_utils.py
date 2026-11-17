@@ -41,6 +41,29 @@ class ModifyList(object):
         return (self.prepend or []) + v + (self.append or [])
 
 
+class Deferred(object):
+    """Used in config to defer a setting value's evaluation.
+
+    Wraps a callable; the callable is invoked at first access of the
+    setting, by which time config files have been fully evaluated. This
+    lets a setting value be computed with rez APIs (or read from sidecar
+    data) without executing anything during config file evaluation itself.
+
+    The wrapper is required (rather than accepting bare callables) because
+    some settings legitimately hold callables as their value (eg
+    package_preprocess_function); only explicit Deferred values are
+    resolved.
+    """
+    def __init__(self, fn) -> None:
+        self.fn = fn
+
+    def __repr__(self) -> str:
+        return "%s(%r)" % (self.__class__.__name__, self.fn)
+
+    def resolve(self):
+        return self.fn()
+
+
 class DelayLoad(object):
     """Used in config to delay load a config value from anothe file.
 

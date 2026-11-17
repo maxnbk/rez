@@ -7,7 +7,7 @@ from __future__ import annotations
 from rez import __version__
 from rez.utils.data_utils import AttrDictWrapper, RO_AttrDictWrapper, \
     convert_dicts, cached_property, cached_class_property, LazyAttributeMeta, \
-    deep_update, ModifyList, DelayLoad
+    deep_update, ModifyList, DelayLoad, Deferred
 from rez.utils.formatting import expandvars, expanduser
 from rez.utils.logging_ import get_debug_printer
 from rez.utils.scope import scoped_format
@@ -319,6 +319,31 @@ class OptionalDict(Dict):
                 dict)
 
 
+class CanonicalPathDict(Dict):
+    """Dict whose keys are canonicalised paths.
+
+    Users supply raw paths; rez canonicalises the keys itself, so the
+    documented trap of having to canonicalise keys in rezconfig.py (where
+    calling canonical_path can re-enter config loading - see the
+    resolve_links_on_windows read inside canonical_path) is removed.
+
+    Canonicalisation happens in validate(), i.e. on first access of the
+    setting, which is after config files have been fully evaluated - so
+    canonical_path's own setting read is safe here, and uses the real
+    (post-evaluation) configured value. Idempotent for keys that are
+    already canonical.
+    """
+    schema = Or(And(None, Use(lambda x: {})),
+                dict)
+
+    def validate(self, data: Any) -> Any:
+        # lazy import: canonical_path (and therefore filesystem) must not
+        # be imported at config-module scope
+        from rez.utils.filesystem import canonical_path  # noqa: PLC0415
+        data = super().validate(data)
+        return {canonical_path(k): v for k, v in data.items()}
+
+
 class OptionalDictOrDictList(Setting):
     schema = Or(And(None, Use(lambda x: [])),
                 And(dict, Use(lambda x: [x])),
@@ -403,7 +428,7 @@ config_schema = Schema({
     "default_relocatable_per_package":              OptionalDict,
     "default_relocatable_per_repository":           OptionalDict,
     "default_cachable_per_package":                 OptionalDict,
-    "default_cachable_per_repository":              OptionalDict,
+    "default_cachable_per_repository":              CanonicalPathDict,
     "default_cachable":                             OptionalBool,
     "implicit_packages":                            StrList,
     "parent_variables":                             StrList,
@@ -793,15 +818,17 @@ class Config(object, metaclass=LazyAttributeMeta):
     def _validate_key(self, key, value, key_schema):
         if isinstance(value, DelayLoad):
             value = value.get_value()
-        elif callable(value):
+        elif isinstance(value, Deferred):
             # deferred setting value: resolved at first access of this
             # setting, by which time config files have been fully evaluated.
             # This is the callable analogue of DelayLoad - it lets a config
             # value be computed with rez APIs (or read from sidecar data)
             # without executing anything during config file evaluation
-            # itself. Resolved once per cache generation; re-resolves if the
-            # cache is invalidated (eg via override).
-            value = value()
+            # itself. Explicitly wrapped, since some settings legitimately
+            # hold callables as their value. Resolved once per cache
+            # generation; re-resolves if the cache is invalidated (eg via
+            # override).
+            value = value.resolve()
 
         if type(key_schema) is type and issubclass(key_schema, Setting):
             key_schema = key_schema(self, key)
@@ -1056,7 +1083,8 @@ def _load_config_py(filepath: str) -> dict[str, Any]:
 
         rez_version=__version__,
         ModifyList=ModifyList,
-        DelayLoad=DelayLoad
+        DelayLoad=DelayLoad,
+        Deferred=Deferred
     )
 
     g = reserved.copy()

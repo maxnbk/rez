@@ -1,1 +1,1 @@
-warn_all = lambda: "not-a-bool"
+warn_all = Deferred(lambda: "not-a-bool")

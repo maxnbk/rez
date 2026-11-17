@@ -10,7 +10,7 @@ from rez.tests.util import TestBase, TempdirMixin, restore_os_environ
 from rez.exceptions import ConfigurationError
 from rez.config import Config, get_module_root_config, _replace_config, _Deprecation, Setting
 from rez.system import system
-from rez.utils.data_utils import RO_AttrDictWrapper
+from rez.utils.data_utils import RO_AttrDictWrapper, Deferred
 from rez.packages import get_developer_package
 from rez.deprecations import RezDeprecationWarning, warn
 import os
@@ -327,11 +327,11 @@ class TestConfig(TestBase):
             self.assertEqual(config.image_viewer, "plain")
 
     def test_deferred_callable_value(self) -> None:
-        """A callable setting value resolves at first access, post-evaluation.
+        """A Deferred setting value resolves at first access, post-evaluation.
 
-        The callable may use rez APIs (here: canonical_path) and read sidecar
-        data files, since by resolution time config files have been fully
-        evaluated.
+        The wrapped callable may use rez APIs (here: canonical_path) and read
+        sidecar data files, since by resolution time config files have been
+        fully evaluated.
         """
         conf = os.path.join(self.config_path, "deferred_callable.py")
         c = Config([self.root_config_file, conf], locked=True)
@@ -342,20 +342,44 @@ class TestConfig(TestBase):
         self.assertEqual(value, {"/mnt/repo": True, "/mnt/other": False})
 
     def test_deferred_callable_reresolve_on_override(self) -> None:
-        """A deferred callable re-resolves when the cache is invalidated."""
+        """A Deferred value re-resolves when the cache is invalidated."""
         conf = os.path.join(self.config_path, "deferred_callable.py")
         c = Config([self.root_config_file, conf], locked=True)
         _ = c.default_cachable_per_repository
 
-        c.override("default_cachable_per_repository", lambda: {"overridden": True})
-        self.assertEqual(c.default_cachable_per_repository, {"overridden": True})
+        # an override whose value is a callable REPLACES the config-file
+        # value (deep_update cannot merge into a non-dict); keys are
+        # canonicalised after resolution, whatever their source
+        c.override("default_cachable_per_repository",
+                   Deferred(lambda: {"/mnt/override": True}))
+        self.assertEqual(
+            c.default_cachable_per_repository,
+            {"/mnt/override": True},
+        )
 
     def test_deferred_callable_invalid_value(self) -> None:
-        """A deferred callable's resolved value is schema-validated."""
+        """A Deferred value's resolved result is schema-validated."""
         conf = os.path.join(self.config_path, "deferred_callable_bad.py")
         c = Config([self.root_config_file, conf], locked=True)
         with self.assertRaises(ConfigurationError):
             _ = c.warn_all
+
+    def test_default_cachable_per_repository_keys_canonicalised(self) -> None:
+        """Raw paths as default_cachable_per_repository keys are canonicalised by rez."""
+        conf = os.path.join(self.config_path, "canonical_keys.py")
+        c = Config([self.root_config_file, conf], locked=True)
+        self.assertEqual(
+            c.default_cachable_per_repository,
+            {"/mnt/repo": True, "/mnt/other": False},
+        )
+
+        # idempotent: already-canonical keys are unchanged. Note override()
+        # merges dict values (deep_update) with the config-file value.
+        c.override("default_cachable_per_repository", {"/mnt/repo": True})
+        self.assertEqual(
+            c.default_cachable_per_repository,
+            {"/mnt/repo": True, "/mnt/other": False},
+        )
 
     def test_11_all_settings_declare_environment_variable_support(self) -> None:
         """Test that env_var_json_only and _parse_env_var are aligned and agree.
