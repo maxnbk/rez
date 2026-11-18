@@ -130,12 +130,12 @@ Patched get_stats() for RESET (#1563). Updated (Nov 2026).
 <tr><td>
 packaging
 </td><td>
-19.0 (Jan 20, 2019)
+26.2 (Apr 24, 2026)
 </td><td>
-Duel license, Apache 2.0, BSD 2-Clause
+Dual license, Apache 2.0, BSD 2-Clause
 </td><td>
 https://github.com/pypa/packaging<br>
-Added (July 2019) to enable PEP440 compatible versions handling.
+Updated (Nov 2026)
 </td></tr>
 
 <!-- ######################################################### -->
