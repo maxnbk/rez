@@ -176,22 +176,6 @@
       },
       "patch": "patches/schema.patch"
     },
-    "six": {
-      "source": "pypi",
-      "version": "1.17.0",
-      "sha256": "ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81",
-      "strip_prefix": "six-1.17.0/",
-      "drop": [
-        "PKG-INFO",
-        "MANIFEST.in",
-        "documentation/*",
-        "setup.*",
-        "test_six.py",
-        "*.egg-info/*"
-      ],
-      "wrap_single_module": true,
-      "patch": "patches/six.patch"
-    },
     "yaml": {
       "source": "pypi",
       "pypi_name": "PyYAML",
