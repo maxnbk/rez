@@ -217,19 +217,6 @@ src/rez/tests/test_schema.py.
 
 <!-- ######################################################### -->
 <tr><td>
-six
-</td><td>
-1.17.0 (Dec 4, 2024)
-</td><td>
-MIT
-</td><td>
-https://github.com/benjaminp/six<br>
-Updated (April 2025) to help address py3.12 update.<br>
-No longer needed in rez itself, but still used by other vendored modules.
-</td></tr>
-
-<!-- ######################################################### -->
-<tr><td>
 yaml (PyYAML)
 
 </td><td>
