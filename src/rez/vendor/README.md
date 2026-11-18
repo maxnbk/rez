@@ -90,12 +90,12 @@ Updated (April 2025) to help address py3.12 update.
 <tr><td>
 importlib-metadata
 </td><td>
-6.7.0
+8.5.0 (Sep 11, 2024)
 </td><td>
 Apache 2.0
 </td><td>
 https://pypi.org/project/importlib-metadata/<br>
-Pinned to 6.7.0 to support Python 3.7. This dependency can be dropped once we drop support for Python 3.7.
+Updated (Nov 2026)
 </td></tr>
 
 <!-- ######################################################### -->
@@ -230,18 +230,6 @@ No longer needed in rez itself, but still used by other vendored modules.
 
 <!-- ######################################################### -->
 <tr><td>
-typing_extensions
-</td><td>
-4.7.1
-</td><td>
-PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2
-</td><td>
-https://pypi.org/project/zipp/<br>
-Dependency for importlib-metadata. Can be dropped once we drop support for Python 3.7.
-</td></tr>
-
-<!-- ######################################################### -->
-<tr><td>
 yaml (PyYAML)
 
 </td><td>
@@ -258,12 +246,13 @@ Updated (April 2025) to help address py3.12 update.
 <tr><td>
 zipp
 </td><td>
-3.15.0
+3.20.2 (Sep 13, 2024)
 </td><td>
 MIT
 </td><td>
 https://pypi.org/project/zipp/<br>
-Dependency for importlib-metadata. Can be dropped once we drop support for Python 3.7.
+Dependency for importlib-metadata.<br>
+Updated (Nov 2026)
 </td></tr>
 
 </table>
