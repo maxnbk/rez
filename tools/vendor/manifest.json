@@ -3,11 +3,11 @@
   "packages": {
     "argcomplete": {
       "source": "pypi",
-      "version": "3.6.3",
-      "sha256": "62e8ed4fd6a45864acc8235409461b72c9a28ee785a2011cc5eb78318786c89c",
-      "strip_prefix": "argcomplete-3.6.3/argcomplete/",
+      "version": "3.7.0",
+      "sha256": "afde224f753f874807b1dc1414e883ab8fe0cda9c04807b6047dcb8e1ac23913",
+      "strip_prefix": "argcomplete-3.7.0/argcomplete/",
       "extra_files": {
-        "LICENSE.rst": "argcomplete-3.6.3/LICENSE.rst"
+        "LICENSE.rst": "argcomplete-3.7.0/LICENSE.rst"
       },
       "patch": "patches/argcomplete.patch"
     },
@@ -32,11 +32,11 @@
     },
     "distlib": {
       "source": "pypi",
-      "version": "0.3.9",
-      "sha256": "a60f20dea646b8a33f3e7772f74dc0b2d0772d2837ee1342a00645c81edf9403",
-      "strip_prefix": "distlib-0.3.9/distlib/",
+      "version": "0.4.4",
+      "sha256": "ca4175b4ac7f71223cc30ed7248c45d2b38c2439d8ee6e498ab67ed63cf3508d",
+      "strip_prefix": "distlib-0.4.4/distlib/",
       "extra_files": {
-        "LICENSE.txt": "distlib-0.3.9/LICENSE.txt"
+        "LICENSE.txt": "distlib-0.4.4/LICENSE.txt"
       },
       "allow_binaries": [
         "*.exe"
@@ -51,114 +51,94 @@
         "LICENSE": "distro-1.9.0/LICENSE"
       }
     },
-    "enum": {
+    "filelock": {
       "source": "pypi",
-      "pypi_name": "enum34",
-      "version": "1.1.6",
-      "sha256": "8ad8c4783bf61ded74527bffb48ed9b54166685e4230386a9ed9b1279e2df5b1",
-      "strip_prefix": "enum34-1.1.6/enum/",
-      "drop": [
-        "README",
-        "doc/enum.pdf",
-        "test.py"
-      ],
-      "patch": "patches/enum.patch"
+      "version": "3.16.1",
+      "sha256": "c249fbfcd5db47e5e2d6d62198e565475ee65e4831e2561c8e313fa7eb961435",
+      "strip_prefix": "filelock-3.16.1/src/filelock/",
+      "extra_files": {
+        "LICENSE": "filelock-3.16.1/LICENSE"
+      }
     },
     "importlib_metadata": {
       "source": "pypi",
       "pypi_name": "importlib-metadata",
-      "version": "6.7.0",
-      "sha256": "1aaf550d4f73e5d6783e7acb77aec43d49da8017410afae93822cc9cca98c4d4",
-      "strip_prefix": "importlib_metadata-6.7.0/importlib_metadata/",
+      "version": "8.5.0",
+      "sha256": "71522656f0abace1d072b9e5481a48f07c138e00f079c38c8f883823f9c26bd7",
+      "strip_prefix": "importlib_metadata-8.5.0/importlib_metadata/",
       "extra_files": {
-        "LICENSE": "importlib_metadata-6.7.0/LICENSE"
+        "LICENSE": "importlib_metadata-8.5.0/LICENSE"
       },
       "rewrite_imports": {
-        "zipp": "rez.vendor.zipp",
-        "typing_extensions": "rez.vendor.typing_extensions.typing_extensions"
+        "zipp": "rez.vendor.zipp"
       }
-    },
-    "lockfile": {
-      "source": "pypi",
-      "version": "0.9.1",
-      "sha256": "23da589c91f59cb7c644d5ce5df539d448341bd479917d6dde973f82e2719147",
-      "strip_prefix": "lockfile-0.9.1/lockfile/",
-      "extra_files": {
-        "LICENSE": "lockfile-0.9.1/LICENSE",
-        "RELEASE-NOTES": "lockfile-0.9.1/RELEASE-NOTES"
-      },
-      "patch": "patches/lockfile.patch"
     },
     "memcache": {
       "source": "pypi",
       "pypi_name": "python-memcached",
-      "version": "1.59",
-      "sha256": "a2e28637be13ee0bf1a8b6843e7490f9456fd3f2a4cb60471733c7b5d5557e4f",
-      "strip_prefix": "python-memcached-1.59/",
+      "version": "1.62",
+      "sha256": "0285470599b7f593fbf3bec084daa1f483221e68c1db2cf1d846a9f7c2655103",
+      "strip_prefix": "python-memcached-1.62/",
       "drop": [
+        "PKG-INFO",
         "ChangeLog",
         "MANIFEST.in",
-        "PKG-INFO",
         "README.md",
-        "*.egg-info/*",
-        "*requirements.txt",
-        "setup.*"
+        "SECURITY.md",
+        "requirements.txt",
+        "test-requirements.txt",
+        "setup.*",
+        "tests/*",
+        "tox.ini",
+        "*.egg-info/*"
       ],
       "wrap_single_module": true,
-      "rewrite_imports": {
-        "six": "rez.vendor.six.six"
-      },
       "patch": "patches/memcache.patch"
     },
     "packaging": {
       "source": "pypi",
-      "version": "19.0",
-      "sha256": "0c98a5d0be38ed775798ece1b9727178c4469d9c3b4ada66e8e6b7849f8732af",
-      "strip_prefix": "packaging-19.0/packaging/",
+      "version": "26.2",
+      "sha256": "ff452ff5a3e828ce110190feff1178bb1f2ea2281fa2075aadb987c2fb221661",
+      "strip_prefix": "packaging-26.2/src/packaging/",
       "extra_files": {
-        "LICENSE": "packaging-19.0/LICENSE.BSD"
-      },
-      "rewrite_imports": {
-        "pyparsing": "rez.vendor.pyparsing",
-        "six": "rez.vendor.six.six"
+        "LICENSE": "packaging-26.2/LICENSE.BSD"
       }
     },
     "pika": {
       "source": "pypi",
-      "version": "1.2.0",
-      "sha256": "f023d6ac581086b124190cb3dc81dd581a149d216fa4540ac34f9be1e3970b89",
-      "strip_prefix": "pika-1.2.0/pika/",
+      "version": "1.5.0",
+      "sha256": "339afb9b2f55b31e03ebd1d96308e72e1d1d8e0e2c4ccea57d0f3d72fd10f333",
+      "strip_prefix": "pika-1.5.0/pika/",
       "drop": [
         "adapters/gevent_connection.py",
         "adapters/tornado_connection.py",
         "adapters/twisted_connection.py"
       ],
       "extra_files": {
-        "LICENSE": "pika-1.2.0/LICENSE"
+        "LICENSE": "pika-1.5.0/LICENSE"
       },
       "rewrite_imports": {
-        "pika": "rez.vendor.pika",
-        "enum": "rez.vendor.enum"
+        "pika": "rez.vendor.pika"
       },
       "patch": "patches/pika.patch"
     },
     "progress": {
       "source": "pypi",
-      "version": "1.6",
-      "sha256": "c9c86e98b5c03fa1fe11e3b67c1feda4788b8d0fe7336c2ff7d5644ccfba34cd",
-      "strip_prefix": "progress-1.6/progress/",
+      "version": "1.6.1",
+      "sha256": "c1ba719f862ce885232a759eab47971fe74dfc7bb76ab8a51ef5940bad35086c",
+      "strip_prefix": "progress-1.6.1/progress/",
       "extra_files": {
-        "LICENSE": "progress-1.6/LICENSE"
+        "LICENSE": "progress-1.6.1/LICENSE"
       }
     },
     "pydot": {
       "source": "pypi",
-      "version": "2.0.0",
-      "sha256": "60246af215123fa062f21cd791be67dda23a6f280df09f68919e637a1e4f3235",
-      "strip_prefix": "pydot-2.0.0/src/pydot/",
+      "version": "4.0.1",
+      "sha256": "c2148f681c4a33e08bf0e26a9e5f8e4099a82e0e2a068098f32ce86577364ad5",
+      "strip_prefix": "pydot-4.0.1/src/pydot/",
       "extra_files": {
-        "LICENSE": "pydot-2.0.0/LICENSE",
-        "README.md": "pydot-2.0.0/README.md"
+        "LICENSE": "pydot-4.0.1/LICENSES/MIT.txt",
+        "README.md": "pydot-4.0.1/README.md"
       },
       "rewrite_imports": {
         "pydot": "rez.vendor.pydot",
@@ -187,20 +167,13 @@
       }
     },
     "schema": {
-      "source": "url",
-      "url": "https://github.com/keleshev/schema/archive/916ba05e22b7b370b3586f97c40695e7b9e7fe33.tar.gz",
-      "filename": "schema-916ba05e.tar.gz",
-      "sha256": "620c80e1da62b899d4b216b0b058784ddebc718e4435cfc88b212e782c175c55",
-      "strip_prefix": "schema-916ba05e22b7b370b3586f97c40695e7b9e7fe33/",
-      "drop": [
-        ".gitignore",
-        ".travis.yml",
-        "MANIFEST.in",
-        "README.rst",
-        "setup.py",
-        "tox.ini"
-      ],
-      "wrap_single_module": true,
+      "source": "pypi",
+      "version": "0.7.8",
+      "sha256": "e86cc08edd6fe6e2522648f4e47e3a31920a76e82cce8937535422e310862ab5",
+      "strip_prefix": "schema-0.7.8/schema/",
+      "extra_files": {
+        "LICENSE-MIT": "schema-0.7.8/LICENSE-MIT"
+      },
       "patch": "patches/schema.patch"
     },
     "six": {
@@ -209,8 +182,8 @@
       "sha256": "ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81",
       "strip_prefix": "six-1.17.0/",
       "drop": [
-        "MANIFEST.in",
         "PKG-INFO",
+        "MANIFEST.in",
         "documentation/*",
         "setup.*",
         "test_six.py",
@@ -219,38 +192,23 @@
       "wrap_single_module": true,
       "patch": "patches/six.patch"
     },
-    "typing_extensions": {
-      "source": "pypi",
-      "pypi_name": "typing-extensions",
-      "version": "4.7.1",
-      "sha256": "b75ddc264f0ba5615db7ba217daeb99701ad295353c45f9e95963337ceeeffb2",
-      "strip_prefix": "typing_extensions-4.7.1/src/",
-      "drop": [
-        "_typed_dict_test_helper.py",
-        "test_typing_extensions.py"
-      ],
-      "extra_files": {
-        "LICENSE": "typing_extensions-4.7.1/LICENSE"
-      },
-      "wrap_single_module": true
-    },
     "yaml": {
       "source": "pypi",
       "pypi_name": "PyYAML",
-      "version": "6.0.1",
-      "sha256": "bfdf460b1736c775f2ba9f6a92bca30bc2095067b8a9d77876d1fad6cc3b4a43",
-      "strip_prefix": "PyYAML-6.0.1/lib/yaml/",
+      "version": "6.0.3",
+      "sha256": "d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f",
+      "strip_prefix": "pyyaml-6.0.3/lib/yaml/",
       "extra_files": {
-        "LICENSE": "PyYAML-6.0.1/LICENSE"
+        "LICENSE": "pyyaml-6.0.3/LICENSE"
       }
     },
     "zipp": {
       "source": "pypi",
-      "version": "3.15.0",
-      "sha256": "112929ad649da941c23de50f356a2b5570c954b65150642bccdd66bf194d224b",
-      "strip_prefix": "zipp-3.15.0/zipp/",
+      "version": "3.20.2",
+      "sha256": "bc9eb26f4506fda01b81bcde0ca78103b6e62f991b381fec825435c836edbc29",
+      "strip_prefix": "zipp-3.20.2/zipp/",
       "extra_files": {
-        "LICENSE": "zipp-3.15.0/LICENSE"
+        "LICENSE": "zipp-3.20.2/LICENSE"
       }
     }
   }
